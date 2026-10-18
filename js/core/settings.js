@@ -48,6 +48,7 @@ function initSettings(){
   const setOpen=o=>{ panel.hidden=!o; btn.setAttribute('aria-expanded',o?'true':'false'); };
   btn.onclick=()=>setOpen(panel.hidden);
   $('menuClose').onclick=()=>setOpen(false);
+  $('tutBtn').onclick=()=>{ setOpen(false); save.tutDone=false; persist(); startLevel(0,0); };
   addEventListener('keydown',e=>{ if(e.key==='Escape') setOpen(false); });
   document.addEventListener('pointerdown',e=>{ if(!panel.hidden&&!panel.contains(e.target)&&!btn.contains(e.target)) setOpen(false); });
 }

@@ -20,6 +20,7 @@ Kyrillisen latinaistus: SFS 4900 (Kotimaisten kielten keskuksen suositus). Kreik
 
 ## Versiot
 - 0.1 (18.10.2026): ensimmäinen julkinen versio – kyrillinen, kreikka, katakana, ruotsi, englanti; Halloween-teema.
+- 0.7 (18.10.2026): ohjattu harjoitus ensimmäisellä pelikerralla, aloittelija-apu (vastaava tyyppä hehkuu, vastinelaput), helpompi ensimmäinen taso, nimetyt loppuvastustajat jotka viskovat kirjaimiaan.
 - 0.6 (18.10.2026): loppuvastustajan sanat pitää vielä tuhota, aakkostaulu kartalla ja tason lopussa tuhotut määrät, juoksijatyypät, tempovaihtelu, tykin latausaika.
 - 0.5 (18.10.2026): satunnaisia vieraita kirjaimia jo ensimmäisistä tasoista, loppuvastustaja vapauttaa teemasanoja, Halloween-kurpitsatyypät ja -tykki, kartan koristeet.
 - 0.4 (18.10.2026): loppuvastustaja ja osa tyypistä ampuvat takaisin (väistä), selkeämmät kirjaimet, lyhyemmät ohjeet.

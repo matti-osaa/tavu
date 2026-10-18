@@ -9,7 +9,10 @@ const isTouch = matchMedia('(pointer: coarse)').matches;
 let drag = null;   // {id, x0, y0, t0, onCube, moved, steps}
 
 function canvasPoint(e){ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
-function aimAt(x){ if(G) G.didMove=true; if(G) G.tlane=Math.max(-.85,Math.min(.85,(x-W/2)/(HW*sc(ZCAN)))); }
+// Aim at the lane under the finger, taking perspective into account: tapping a tyyppä aims straight at it
+function aimAt(x,y){ if(!G) return; G.didMove=true;
+  let k=sc(ZCAN); if(y!==undefined&&y>HY+8&&y<BY){ k=Math.max(sc(ZF),(y-HY)/(BY-HY)); }
+  G.tlane=Math.max(-.85,Math.min(.85,(x-W/2)/(HW*k))); }
 // Hit area of the loaded ammo cube (generous, so it is easy to tap with a thumb)
 function onCube(p){ if(!G) return false; const u=Math.max(30,RB*.75), cx=px(G.lane,ZCAN), cy=BY+6-u*2.6;
   return Math.abs(p.x-cx)<u*1.2 && p.y>cy-u*1.3 && p.y<cy+u*1.2; }
@@ -18,7 +21,7 @@ cv.addEventListener('pointerdown',e=>{
   if(!G) return; audio();
   const p=canvasPoint(e), cube=onCube(p);
   drag={id:e.pointerId, x0:p.x, y0:p.y, t0:performance.now(), onCube:cube, moved:false, steps:0};
-  if(!cube) aimAt(p.x);              // the cannon starts sliding toward the finger
+  if(!cube) aimAt(p.x,p.y);              // the cannon starts sliding toward the finger
   try{cv.setPointerCapture(e.pointerId);}catch(_){}
 });
 cv.addEventListener('pointermove',e=>{
@@ -31,7 +34,7 @@ cv.addEventListener('pointermove',e=>{
     return;
   }
   if(Math.abs(dx)>10||Math.abs(dy)>10) drag.moved=true;
-  aimAt(p.x);
+  aimAt(p.x,p.y);
 });
 const endDrag=e=>{
   if(!drag||e.pointerId!==drag.id) return;
