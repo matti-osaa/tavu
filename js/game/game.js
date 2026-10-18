@@ -1,5 +1,6 @@
 /* Game rules: level setup, ammo, spawning, hits and misses, the update loop. */
 function startLevel(wi,si){
+  if(stagesOf(WORLDS[wi])[si].kind==='cipher'){ cancelAnimationFrame(raf); G=null; ov.innerHTML=''; return startCipher(wi,si); }
   const w=WORLDS[wi], stage=stagesOf(w)[si], li=stage.li, isWord=stage.kind==='words';
   const fresh=isWord?w.words[li].map(p=>p[0]):[...w.levels[li]], older=isWord?[]:w.levels.slice(0,li).join('').split('');
   G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,surge:1,playT:0,kills:{},lootMode:false,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
@@ -107,10 +108,16 @@ function burst(x,y,col,n=20,spd=260){
 }
 function floatText(x,y,txt,col,big){ G.texts.push({x,y,txt,col,life:1.3,big}); }
 
+/* Streak reward: every 5 hits in a row everything slows down for a while */
+const ZAP_Z0=1.75, ZAP_Z1=2.25;   // the electric strip (easy only)
+function comboReward(x,y){
+  if(G.combo>0&&G.combo%5===0){ G.slowT=6; floatText(W/2,H*.4,'HIDASTUS!','#5FD3FF',true);
+    [660,520,400,300].forEach((f,i)=>tone(f,.18,'triangle',.08,1,i*.09)); }
+}
 function pop(e,s){
   const s0=sc(e.z), ex=px(e.lane,e.z), ey=py(e.z)-RB*s0;
   G.enemies.splice(G.enemies.indexOf(e),1); s.dead=true;
-  G.correct++; G.combo++; G.popped++; prog(); G.kills[e.ch]=(G.kills[e.ch]||0)+1;
+  G.correct++; G.combo++; G.popped++; prog(); comboReward(ex,ey); G.kills[e.ch]=(G.kills[e.ch]||0)+1;
   const k=Math.max(.6,s0);
   burst(ex,ey,e.col,34,420*k);
   for(let i=0;i<9;i++){const a=i/9*Math.PI*2+Math.random()*.4, sp=(220+Math.random()*220)*k;
@@ -243,7 +250,7 @@ function hitLine(e){
 function update(dt){
   G.t+=dt;
   clouds.forEach(c=>{c.x+=c.v*dt; if(c.x>1.2)c.x=-.25});
-  G.recoil=Math.max(0,G.recoil-dt*6); G.reload=Math.min(1,G.reload+dt*7);
+  G.recoil=Math.max(0,G.recoil-dt*6); G.emT=Math.max(0,(G.emT||0)-dt); G.wind=Math.max(0,(G.wind||0)-dt); G.reload=Math.min(1,G.reload+dt*7);
   if(G.keys.ArrowLeft) G.aimA=(G.aimA||0)-1.1*dt; if(G.keys.ArrowRight) G.aimA=(G.aimA||0)+1.1*dt;
   G.aimA=Math.max(-1.1,Math.min(1.1,G.aimA||0));
   G.shake=Math.max(0,G.shake-dt); G.flash=Math.max(0,(G.flash||0)-dt);
@@ -266,7 +273,8 @@ function update(dt){
     spawn(); const fill=n/G.maxOn; G.spawnT=(fill<.25?.6:fill<.5?1.5:2.7)/(1+G.li*.1)/G.pace/G.surge;
   }
   refreshStacks();
-  const boost=n<=1?1.5:1;
+  const boost=(n<=1?1.5:1)*((G.slowT=Math.max(0,(G.slowT||0)-dt))>0?.4:1);
+  const zap=save.diff==='easy';   // easy: an electric strip near the line slows tyypät to a crawl
   for(const e of [...G.enemies]){
     if(e.frozen){ e.lane=e.bl; e.shake=Math.max(0,e.shake-dt); e.shield=Math.max(0,(e.shield||0)-dt); e.missT=Math.max(0,(e.missT||0)-dt); if(e.block>0)e.block-=dt; continue; }
     if(e.air>0){ e.air-=dt; const k=1-Math.max(0,e.air)/e.airMax; e.z=e.fromZ+(e.toZ-e.fromZ)*k; e.lane=e.lx=e.fromLane+(e.bl-e.fromLane)*k; e.lift=Math.sin(k*Math.PI); continue; }
@@ -277,6 +285,7 @@ function update(dt){
       if(e.dash>0){ e.dash-=dt; want=G.speed*4.5; }
     }
     if(e.block>0){e.block-=dt; e.vz=0;} else e.vz+=(want-e.vz)*Math.min(1,dt*(e.runner?4:1.5));
+    if(zap&&e.z<ZAP_Z1&&e.z>ZAP_Z0){ e.vz=Math.min(e.vz,G.speed*.3); e.dash=0; if(!e.zapped){ e.zapped=true; noise(.12,3000,2,.08); tone(900,.05,'square',.03,.5); } }
     e.z-=e.vz*dt; if(e.z>ZF+.6)e.z=ZF+.6;
     // no overtaking: a tyyppä stays behind one that overlaps it in the same lane, so the front one is always the one you hit
     if(!e.air) for(const o of G.enemies){ if(o===e||o.air||o.z>=e.z+.001) continue;
@@ -289,7 +298,7 @@ function update(dt){
     if(e.z<=ZLOSE) hitLine(e);
   }
   if(G.boss){ const b=G.boss;
-    b.vz+=(G.speed*.42-b.vz)*Math.min(1,dt*.8); b.z-=b.vz*dt; if(b.z>ZF+.6)b.z=ZF+.6;
+    b.vz+=(G.speed*.42*(G.slowT>0?.4:1)-b.vz)*Math.min(1,dt*.8); b.z-=b.vz*dt; if(b.z>ZF+.6)b.z=ZF+.6;
     b.shake=Math.max(0,b.shake-dt); b.segs.forEach(g=>{g.missT=Math.max(0,g.missT-dt); g.flash=Math.max(0,g.flash-dt);});
     b.fireT=(b.fireT??2)-dt;
     if(b.fireT<=0&&b.z<ZF){ const alive=b.segs.map((g,i)=>g.alive?i:-1).filter(i=>i>=0);
@@ -305,7 +314,8 @@ function update(dt){
     if(s.bounced){s.trail.push([s.sx,s.sy,s.r]); if(s.trail.length>7)s.trail.shift();
       s.sx+=s.vx*dt;s.sy+=s.vy*dt;s.vy+=1100*dt;s.spin+=s.vx*.02*dt;s.r=Math.min(RB*.75,s.r*(1+dt*1.6));s.life-=dt;continue;}
     const z0=s.z; s.z+=s.vz*dt;
-    { const [x]=shotXY(s,s.z); s.lane=(x-W/2)/(HW*sc(s.z)); if(Math.abs(s.lane)>1.7){ s.dead=true; continue; } }
+    { const [l]=rawLane(s,s.z), b=bounceNo(l); s.lane=foldLane(l);
+      if(b!==(s.bn||0)){ s.bn=b; const [bx,by]=shotXY(s,s.z); burst(bx,by,'#FFFFFF',8,160); tone(420+Math.random()*80,.06,'square',.05,.7); noise(.04,2500,3,.12); } }
     // any disc knocks an incoming red bolt out of the air
     { const bo=G.bolts.find(b=>!b.dead&&Math.abs(b.z-s.z)<.18&&Math.abs(b.lane-s.lane)<.2);
       if(bo){ bo.dead=true; s.dead=true; const [bx,by]=shotXY(s,s.z); burst(bx,by,'#FF8A1E',16,240); G.parts.push({ring:true,x:bx,y:by,r:RB*sc(s.z)*.6,life:.35,max:.35,col:'#FFD21E'}); tone(500,.1,'square',.05,.5); continue; } }

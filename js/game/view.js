@@ -2,7 +2,7 @@
 const cv=$('cv'), ctx=cv.getContext('2d'), stage=$('stage'), ov=$('ov'), ammoEl=$('ammo');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 // World space: lane -1..1 across the road, z = distance (ZN at the cannon, ZF where candies appear)
-const ZN=1, ZF=4.2, ZLOSE=1.32, ZCAN=1.0;
+const ZN=1, ZF=5.2, ZLOSE=1.32, ZCAN=1.0;
 let W=0,H=0,DPR=1,HY=0,BY=0,HW=0,RB=50;
 const sc=z=>ZN/z;
 const py=z=>HY+(BY-HY)*sc(z);

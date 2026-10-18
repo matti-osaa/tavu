@@ -1,0 +1,45 @@
+/* Salakirjoitus: a game-show board of letter tiles, a row of letter keys, answer boxes */
+#cipher{max-width:640px;margin:0 auto;left:0;right:0;background:linear-gradient(180deg,#2B6E8F,#1E4B66)}
+#cipher .hud{display:flex;align-items:center;gap:10px;padding:10px 14px 8px}
+#cipher .c-title{font-family:"Pixelify Sans",var(--font-display);font-weight:700;letter-spacing:.04em}
+.c-main{flex:1;display:flex;flex-direction:column;gap:16px;padding:6px 14px 18px;overflow-y:auto}
+.c-board{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:12px 18px;padding:18px 12px;min-height:150px;
+  background:#1B5C3A;border-radius:10px;box-shadow:inset 0 0 0 4px #2F8A57,inset 0 0 0 8px #164A2F,0 0 0 4px #2B2333}
+.cw{display:flex;gap:4px}
+.ct{--s:clamp(30px,9vw,48px);width:var(--s);height:calc(var(--s)*1.18);display:grid;place-items:center;position:relative;border-radius:4px;
+  font-family:var(--font-display);font-weight:900;font-size:calc(var(--s)*.62);line-height:1;color:#fff;background:#2E86C1;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.35),inset -3px -4px 0 rgba(0,0,0,.25),0 0 0 2px #2B2333;transition:transform .25s}
+.ct b{font-weight:900}
+.ct i{position:absolute;left:3px;top:1px;font-style:normal;font-size:calc(var(--s)*.26);opacity:.7}
+.ct.fixed{background:#F4EEDD;color:#8A7F70}
+.ct.guessed{background:#FFFDF7;color:#2B2333;animation:cflip .35s var(--d,0ms) both}
+.ct.ok{background:#7BD389;color:#123}
+.ct.bad{background:#FF8A8A;color:#2B2333}
+@keyframes cflip{0%{transform:rotateX(90deg)}100%{transform:none}}
+.c-keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.ck{width:54px;height:62px;border-radius:10px;background:#FFFDF7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.8),inset -3px -4px 0 rgba(0,0,0,.15),0 0 0 3px #2B2333}
+.ck b{font-family:var(--font-display);font-size:26px;line-height:1;color:#2E86C1}
+.ck i{font-style:normal;font-family:var(--font-display);font-weight:900;font-size:16px;color:#B0A6BC}
+.ck.set i{color:#2B2333}
+.ck:active{transform:translateY(2px)}
+.c-answer{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 14px;margin-top:4px}
+.c-in{--cw:1.25em;width:calc(var(--n)*var(--cw) + 10px);height:46px;padding:0 5px;border:0;border-radius:6px;font:900 24px/1 ui-monospace,Menlo,Consolas,monospace;
+  letter-spacing:calc(var(--cw) - 1ch);text-transform:uppercase;color:#2B2333;
+  background:#FFFDF7 repeating-linear-gradient(90deg,transparent 0 calc(var(--cw) - 3px),#D9D0C2 calc(var(--cw) - 3px) var(--cw)) 5px 100%/calc(100% - 10px) 4px no-repeat;
+  box-shadow:0 0 0 3px #2B2333}
+.c-in:focus{outline:3px solid #FFD23F;outline-offset:2px}
+.c-answer .btn{height:46px}
+.c-answer.shake{animation:cshake .4s}
+@keyframes cshake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.c-sheet{position:absolute;inset:0;background:rgba(20,15,30,.45);display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.c-pick{background:#FFFDF7;width:min(100%,520px);border-radius:18px 18px 0 0;padding:14px 14px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 0 0 4px #2B2333}
+.c-pf{font-family:var(--font-display);font-weight:900;font-size:44px;color:#2E86C1;text-align:center;line-height:1.1}
+.c-pf span{color:#B0A6BC;margin-left:10px;font-size:32px}
+.c-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:8px;margin-top:10px}
+.c-grid button{height:48px;border-radius:8px;background:#fff;font-family:var(--font-display);font-weight:900;font-size:22px;color:#2B2333;box-shadow:0 0 0 2px #2B2333,inset -2px -3px 0 rgba(0,0,0,.12)}
+.c-grid button.used{color:#B9B0C4}
+.c-grid button.on{background:#FFD23F}
+.c-grid button.clr{color:#8E8A96}
+.node button.ciphernode{border-radius:12px;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 6px,transparent 6px 12px)}
+.ct,.ct b,.ck b,.ck i,.c-pf,.c-grid button{font-family:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif!important;font-weight:900}

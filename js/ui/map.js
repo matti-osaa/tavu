@@ -9,9 +9,10 @@ function renderMap(){
     const ab=el.querySelector('.abc-btn'); if(ab) ab.onclick=()=>openAlphabet(wi);
     const path=el.querySelector('.path'), st=stagesOf(w);
     st.forEach((s,si)=>{
-      const stars=save.stars[s.key]||0, open=si===0||(save.stars[st[si-1].key]||0)>0;
+      const stars=save.stars[s.key]||0, open=si===0||(save.stars[st[si-1].key]||0)>0||stars>0
+        ||(si>1&&st[si-1].kind==='cipher'&&(save.stars[st[si-2].key]||0)>0);   // salakirjoitus is a bonus: it never blocks the path
       const n=document.createElement('div'); n.className='node';
-      n.innerHTML=`<button style="--c:${w.card.color}" class="${open?'':'locked'}" aria-label="Taso ${si+1}${open?'':' (lukittu)'}">${open?si+1:LOCK}</button>
+      n.innerHTML=`<button style="--c:${w.card.color}" class="${open?'':'locked'}${s.kind==='cipher'?' ciphernode':''}" aria-label="Taso ${si+1}${open?'':' (lukittu)'}">${open?si+1:LOCK}</button>
         <div class="stars">${[0,1,2].map(i=>`<i class="${i<stars?'on':''}"></i>`).join('')}</div>`;
       if(open) n.querySelector('button').onclick=()=>startLevel(wi,si);
       path.appendChild(n);

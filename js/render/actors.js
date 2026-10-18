@@ -110,12 +110,13 @@ function drawSling(){
   ctx.fillStyle='#4E3019'; ctx.fillRect(0,top,W,5); ctx.fillStyle='#A06A3E'; ctx.fillRect(0,top+5,W,3);
   // aim line (only with a disc in the band)
   if(G.cur&&(G.pull||G.kbAim||!isTouch||G.tut)){
-    const [ux,uy,l]=aimDir(), strong=!!G.pull||G.kbAim, steps=40;
-    ctx.save();
-    for(let i=2;i<steps;i++){ const d=i*16, x=g.cx+ux*d, y=g.cy+uy*d; if(y<HY+6||x<-10||x>W+10) break;
-      const a=(strong?.85:.35)*(1-i/steps), q=Math.max(3,7*(1-i/steps));
-      ctx.globalAlpha=a; ctx.fillStyle='#2B2333'; ctx.fillRect(x-q/2-1,y-q/2-1,q+2,q+2); ctx.fillStyle='#FFFFFF'; ctx.fillRect(x-q/2,y-q/2,q,q); }
-    ctx.restore();
+    const [ux,uy]=aimDir(), strong=!!G.pull||G.kbAim;
+    if(uy<-.15){ const pts=aimPath(ux,uy), N=Math.max(1,pts.length);
+      ctx.save();
+      pts.forEach(([x,y,bounce],i)=>{ if(i<2) return; const k=1-i/N, a=(strong?.9:.35)*(.25+.75*k), q=Math.max(3,7*(.4+.6*k));
+        ctx.globalAlpha=a; ctx.fillStyle='#2B2333'; ctx.fillRect(x-q/2-1,y-q/2-1,q+2,q+2); ctx.fillStyle=bounce?'#FFE15A':'#FFFFFF'; ctx.fillRect(x-q/2,y-q/2,q,q);
+        if(bounce){ ctx.fillStyle='#FFE15A'; ctx.fillRect(x-q*1.2,y-1,q*2.4,2); ctx.fillRect(x-1,y-q*1.2,2,q*2.4); } });
+      ctx.restore(); }
   }
   // posts
   const pw=r*.7, ph=r*1.3;
@@ -140,6 +141,19 @@ function drawSling(){
   ctx.save(); ctx.lineCap='round'; if(G.pull){ strap(g.cx-g.post,g.cy-ph*.35,P.x,P.y+r*.3); strap(g.cx+g.post,g.cy-ph*.35,P.x,P.y+r*.3); } ctx.restore();
   if(G.cur){ const sq=G.pull?1+Math.min(.15,Math.hypot(P.x-g.cx,P.y-g.cy)/g.maxPull*.15):1;
     drawDisc(P.x,P.y,r*sq,dispAns(G.cur),AMMO_COL,{maxW:Math.min(W*.5,r*7)}); }
+  // emergency button: blows everything back up the road, then recharges for a minute
+  if(!G.tut){ const m=emGeo(), ready=(G.emT||0)<=0, k=1-(G.emT||0)/EM_COOL;
+    ctx.save();
+    ctx.fillStyle='#2B2333'; ctx.beginPath(); ctx.arc(m.x,m.y+4,m.r+3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=ready?'#C8202E':'#5A5560'; ctx.beginPath(); ctx.arc(m.x,m.y+3,m.r,0,Math.PI*2); ctx.fill();
+    const pulse=ready?(Math.sin(G.t*4)+1)/2:0;
+    ctx.fillStyle=ready?`rgb(${235+pulse*20},${60+pulse*40},${60+pulse*30})`:'#7A7480'; ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.fill();
+    if(!ready){ ctx.fillStyle='rgba(95,211,255,.8)'; ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.arc(m.x,m.y,m.r*.9,-Math.PI/2,-Math.PI/2+Math.PI*2*k); ctx.closePath(); ctx.fill(); }
+    // wind swirl icon
+    ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=Math.max(2,m.r*.14); ctx.lineCap='round';
+    [[-.45,-.3,.5],[-.55,.05,.75],[-.35,.4,.45]].forEach(([ox,oy,w])=>{ ctx.beginPath(); ctx.moveTo(m.x+ox*m.r,m.y+oy*m.r); ctx.lineTo(m.x+(ox+w)*m.r,m.y+oy*m.r); ctx.stroke(); });
+    ctx.beginPath(); ctx.arc(m.x+.22*m.r,m.y-.45*m.r,m.r*.17,Math.PI*.9,Math.PI*2.4); ctx.stroke();
+    ctx.restore(); }
   if(G.carry) drawDisc(G.carry.x,G.carry.y-r*.4,r*1.1,dispAns(G.carry.ans),AMMO_COL,{maxW:Math.min(W*.5,r*7)});
 }
 function drawCannon(){ drawSling(); }

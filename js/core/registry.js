@@ -40,7 +40,8 @@ function toLatin(w, word){ return w.toLatin ? w.toLatin(word) : [...word].map(c 
    letter level (Latin-script worlds have only word levels). Star keys stay as before. */
 function stagesOf(w){
   const out=[], words=(w.words||[]).map((_,li)=>({kind:'words',li,key:w.id+'-w'+li}));
-  (w.levels||[]).forEach((_,li)=>{ out.push({kind:'letters',li,key:w.id+'-'+li}); if(li%2===1&&words.length) out.push(words.shift()); });
+  (w.levels||[]).forEach((_,li)=>{ out.push({kind:'letters',li,key:w.id+'-'+li});
+    if(li%2===1&&words.length){ const ws=words.shift(); out.push(ws); if(w.cipher) out.push({kind:'cipher',li:ws.li,key:w.id+'-c'+ws.li}); } });
   return out.concat(words);
 }
 

@@ -10,6 +10,7 @@ function draw(){
   ctx.save(); ctx.imageSmoothingEnabled=false;
   if(G.shake>0){ctx.translate(Math.round((Math.random()-.5)*14*G.shake/.35),Math.round((Math.random()-.5)*10*G.shake/.35));}
   drawBg();
+  if(save.diff==='easy') drawZap();
   const items=[...(G.boss?[{z:G.boss.z+.05,f:()=>drawBoss(G.boss)}]:[]),...G.enemies.map(e=>({z:e.z,f:()=>drawCandy(e)})),...(G.bolts||[]).map(b=>({z:b.z,f:()=>drawBolt(b)})),...G.shots.filter(s=>!s.bounced).map(s=>({z:s.z-.01,f:()=>drawShot(s)}))];
   items.sort((a,b)=>b.z-a.z).forEach(i=>i.f());
   G.shots.filter(s=>s.bounced).forEach(drawShot);
@@ -28,6 +29,10 @@ function draw(){
     ctx.globalAlpha=Math.min(1,a*1.5); ctx.fillStyle=p.col; const q=Math.max(2,p.sz); ctx.fillRect(Math.round(p.x-q/2),Math.round(p.y-q/2),q,q); ctx.globalAlpha=1;
   }
   drawSling();
+  if(G.slowT>0){ const a=Math.min(1,G.slowT)*.18; ctx.fillStyle=`rgba(80,180,255,${a})`; ctx.fillRect(-20,-20,W+40,BY+20);
+    ctx.fillStyle=`rgba(80,180,255,${a*2})`; for(let i=0;i<4;i++) ctx.fillRect(0,0,W,6-i), ctx.fillRect(0,BY-6+i,W,1); }
+  if(G.wind>0){ ctx.save(); ctx.globalAlpha=Math.min(1,G.wind*1.5)*.7; ctx.fillStyle='#FFFFFF';
+    for(let i=0;i<26;i++){ const y=HY+((i*53)%Math.max(1,BY-HY)), x=((i*97+(1-G.wind)*W*2.2)%(W+200))-100, len=40+(i%5)*20; ctx.fillRect(W-x-len,y,len,3); } ctx.restore(); }
   if(G.hurt>0){ctx.fillStyle=`rgba(232,40,50,${G.hurt*1.2})`;ctx.fillRect(-20,-20,W+40,H+40);}
   if(G.flash>0){ctx.fillStyle=`rgba(255,253,235,${G.flash*2.5})`;ctx.fillRect(-20,-20,W+40,H+40);}
   G.muzzle.forEach(drawMuzzle);
@@ -131,4 +136,20 @@ function drawTutorial(){
   smoothText(tgt.disp,cx+s*1.3,y+s*.86,s*1.05,tgt.col,false);
   ctx.restore();
   drawSlingDemo(T.t%3.4,tgt);
+}
+
+/* Easy mode: an electric strip across the road near the line; tyypät crawl through it */
+function drawZap(){
+  const t=G.t, fl=(Math.sin(t*23)+Math.sin(t*37))*.5;
+  ctx.save(); ctx.globalAlpha=.28+fl*.08;
+  quad(-1,1,ZAP_Z0,ZAP_Z1,'#4FC8FF'); ctx.globalAlpha=1;
+  // emitters on both kerbs
+  [-1,1].forEach(sd=>{ const x=px(sd*1.05,ZAP_Z1), y=py(ZAP_Z1), u=Math.max(6,RB*sc(ZAP_Z1)*.3);
+    cube(x-u/2,y-u*2.2,u,'#3A4A66',false); ctx.fillStyle='#BFF0FF'; ctx.fillRect(x-u*.25,y-u*2.6,u*.5,u*.5); });
+  // two lightning bolts zigzagging across
+  for(let k=0;k<2;k++){ const z=ZAP_Z0+(ZAP_Z1-ZAP_Z0)*(.3+.4*k), seg=12;
+    ctx.strokeStyle=k?'#FFFFFF':'#8FE3FF'; ctx.lineWidth=k?2:4; ctx.globalAlpha=.6+.4*Math.random(); ctx.beginPath();
+    for(let i=0;i<=seg;i++){ const l=-1.05+2.1*i/seg, x=px(l,z), y=py(z)-RB*sc(z)*(.15+Math.random()*.35); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.stroke(); }
+  ctx.restore();
 }
