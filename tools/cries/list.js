@@ -3,7 +3,7 @@ const fs=require('fs'), vm=require('vm'), base='../../js/';
 const ctx={window:{},document:{getElementById:()=>({}),addEventListener(){} ,body:{classList:{contains:()=>false}}},addEventListener(){},matchMedia:()=>({matches:false}),Math,JSON,console,performance:{now:()=>0}};
 vm.createContext(ctx);
 const run=f=>vm.runInContext(fs.readFileSync(base+f,'utf8'),ctx,{filename:f});
-run('core/registry.js'); ['cyrillic','greek','katakana','swedish','english'].forEach(w=>run('worlds/'+w+'.js')); run('seasons/halloween.js');
+run('core/registry.js'); ['cyrillic','greek','katakana','swedish','english','latin'].forEach(w=>run('worlds/'+w+'.js')); run('seasons/halloween.js');
 const audio=fs.readFileSync(base+'core/audio.js','utf8');
 const m=audio.match(/const VOWELS=[\s\S]*?\nfunction wailText[\s\S]*?\n}\n/); vm.runInContext(m[0].replace(/let voices[\s\S]*?\n(?=function wailText)/,''),ctx);
 vm.runInContext('this.W=WORLDS;this.S=SEASONS;this.wt=wailText',ctx);

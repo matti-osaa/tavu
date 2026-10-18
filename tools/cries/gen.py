@@ -4,7 +4,7 @@ from es import say, SR
 L=json.load(open('list.json'))
 maps={}
 import re
-VOICE={'cyr':'ru','gre':'el','kat':'ja','sv':'sv','en':'en'}
+VOICE={'cyr':'ru','gre':'el','kat':'ja','sv':'sv','en':'en','la':'la'}
 CONT=set('m n l r s z f v j Z S x T D Q S;'.split())
 STOP=set('p b t d k g ts tS ks ps'.split())
 VOW=set('a e i o u y'.split())
@@ -34,7 +34,7 @@ def fade(x,ms=15):
 out={}
 for w,d in L.items():
     v=VOICE[w]; wmap={}
-    src=open('../../js/worlds/'+{'cyr':'cyrillic','gre':'greek','kat':'katakana','sv':'swedish','en':'english'}[w]+'.js').read()
+    src=open('../../js/worlds/'+{'cyr':'cyrillic','gre':'greek','kat':'katakana','sv':'swedish','en':'english','la':'latin'}[w]+'.js').read()
     m=re.search(r'map\s*[:=]\s*\{([^}]*)\}',src)
     if m:
         for a,b in re.findall(r"(\S)\s*:\s*'([^']*)'",m.group(1)): wmap[a]=b

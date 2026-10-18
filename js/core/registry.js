@@ -42,7 +42,9 @@ function stagesOf(w){
   const out=[], words=(w.words||[]).map((_,li)=>({kind:'words',li,key:w.id+'-w'+li}));
   (w.levels||[]).forEach((_,li)=>{ out.push({kind:'letters',li,key:w.id+'-'+li});
     if(li%2===1&&words.length){ const ws=words.shift(); out.push(ws); if(w.cipher) out.push({kind:'cipher',li:ws.li,key:w.id+'-c'+ws.li}); } });
-  return out.concat(words);
+  const all=out.concat(words);
+  if(w.cipher) all.push({kind:'cipher',li:99,key:w.id+'-cx'});   // a last salakirjoitus with every letter learned
+  return all;
 }
 
 /* Long words are stacked syllable by syllable into 2–3 rows so the tyyppä stays narrow.

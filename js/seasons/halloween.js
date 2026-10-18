@@ -10,6 +10,7 @@ Tavu.addSeason({
     gre:[['ΚΟΛΟΚΥΘΑ','kurpitsa'],['ΜΑΓΙΣΣΑ','noita'],['ΦΑΝΤΑΣΜΑ','aave'],['ΑΡΑΧΝΗ','hämähäkki']],
     kat:[['カボチャ','kurpitsa','kabocha'],['オバケ','kummitus','obake'],['ゴースト','aave','goosuto'],['コウモリ','lepakko','koumori']],
     sv:[['PUMPA','kurpitsa'],['HÄXA','noita'],['SPÖKE','aave'],['SPINDEL','hämähäkki'],['FLADDERMUS','lepakko']],
+    la:[['CUCURBITA','kurpitsa'],['SAGA','noita'],['UMBRA','varjo'],['ARANEA','hämähäkki'],['VESPERTILIO','lepakko']],
     en:[['PUMPKIN','kurpitsa'],['WITCH','noita'],['GHOST','aave'],['SPIDER','hämähäkki'],['BAT','lepakko']]
   },
   // some tyypät are carved pumpkins: the letter glows like the carving

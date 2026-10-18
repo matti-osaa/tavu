@@ -94,7 +94,9 @@ function prog(){ const b=$('progbar');
 
 function showIntro(){
   const w=G.w;
+  const pv=pickProverb(w.id);
   ov.innerHTML=`<div class="overlay"><div class="card">
+    ${pv?`<div class="proverb"><div class="pv-o" lang="${w.lang}">${pv[0]}</div>${pv[1]?`<div class="pv-t">${pv[1]}</div>`:''}<div class="pv-fi">${pv[2]}</div>${pv[3]?`<div class="pv-en">${pv[3]}</div>`:''}</div>`:''}
     <div style="font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">${w.script} ${G.si+1}</div>
     <div class="row"><button class="btn" id="go">Aloita</button></div></div></div>`;
   $('go').onclick=()=>{audio(); ov.innerHTML=''; G.running=true; if(G.tut) tutStep(0);};

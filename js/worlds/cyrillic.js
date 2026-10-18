@@ -4,7 +4,7 @@
   const map = {А:'a',Б:'b',В:'v',Г:'g',Д:'d',Е:'e',Ж:'ž',З:'z',И:'i',Й:'j',К:'k',Л:'l',М:'m',Н:'n',О:'o',П:'p',Р:'r',С:'s',Т:'t',У:'u',Ф:'f',Х:'h',Ц:'ts',Ч:'tš',Ш:'š',Щ:'štš',Ы:'y',Э:'e',Ю:'ju',Я:'ja'};
   const VOW = 'АЕЁИОУЫЭЮЯ';
   Tavu.addWorld({
-    id:'cyr', name:'Koivumetsä', script:'Kyrillinen', lang:'ru-RU', map, cipher:true,
+    id:'cyr', name:'Koivumetsä', script:'Kyrillinen', lang:'ru-RU', map, cipher:true, cipherDigraphs:{ja:'Я',ju:'Ю'},
     // familiar shapes → false friends → new shapes → hard ones
     levels:['АОКМТ','ЕРСНВ','УХЛПД','БГЗИФ','ЖШЧЦЯЮ'],
     words:[

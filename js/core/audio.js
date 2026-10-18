@@ -33,7 +33,7 @@ const sHit=()=>{const f=LOW[Math.floor(Math.random()*LOW.length)]; tone(150,.22,
 /* Recorded cries: one audio sprite per world (audio/cries/<world>.mp3, made with espeak-ng and a
    "dying" slow-down), offsets in audio/cries/index.json. They play the same on every device, so they
    are used first; device speech is only the fallback (e.g. when the page runs from file://). */
-const ASSET_V='20261018c';
+const ASSET_V='20261019a';
 const CRY={idx:null, buf:{}, loading:{}};
 function loadCries(wid){
   const c=audio(); if(!c||CRY.buf[wid]||CRY.loading[wid]) return; CRY.loading[wid]=true;
