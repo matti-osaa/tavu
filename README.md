@@ -17,3 +17,6 @@ Settings → Pages → *Deploy from a branch*, haara `main`, kansio `/ (root)`. 
 
 ## Lähteet
 Kyrillisen latinaistus: SFS 4900 (Kotimaisten kielten keskuksen suositus). Kreikan ja katakanan (Hepburn) vastineet ovat alustavia.
+
+## Versiot
+- 0.1 (18.10.2026): ensimmäinen julkinen versio – kyrillinen, kreikka, katakana, ruotsi, englanti; Halloween-teema.
