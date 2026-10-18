@@ -20,6 +20,7 @@ Kyrillisen latinaistus: SFS 4900 (Kotimaisten kielten keskuksen suositus). Kreik
 
 ## Versiot
 - 0.1 (18.10.2026): ensimmäinen julkinen versio – kyrillinen, kreikka, katakana, ruotsi, englanti; Halloween-teema.
+- 0.5 (18.10.2026): satunnaisia vieraita kirjaimia jo ensimmäisistä tasoista, loppuvastustaja vapauttaa teemasanoja, Halloween-kurpitsatyypät ja -tykki, kartan koristeet.
 - 0.4 (18.10.2026): loppuvastustaja ja osa tyypistä ampuvat takaisin (väistä), selkeämmät kirjaimet, lyhyemmät ohjeet.
 - 0.3 (18.10.2026): loppuvastustajat ja hälytys, yksi tasopolku per maailma (kirjain- ja sanatasot samassa), kirjainasetus valikkoon, kausiteema vain päivämäärän mukaan.
 - 0.2 (18.10.2026): mobiiliohjaus ilman nappipalkkia – tykin kuutio on ampumanappi.

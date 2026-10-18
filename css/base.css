@@ -197,3 +197,7 @@ body.season-halloween .menu-panel .seg button[aria-checked="false"]{color:var(--
 .world .glyphs,.node .new{display:none}
 .world{padding:14px 16px 16px}
 .path{margin-top:10px}
+
+.loot{display:flex;flex-direction:column;gap:4px;font-weight:700;color:var(--ink)}
+.loot b{font-family:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif;font-weight:900;font-size:18px}
+.loot span{color:var(--ink-soft)}

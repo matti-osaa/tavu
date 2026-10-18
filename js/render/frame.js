@@ -35,6 +35,7 @@ function draw(){
   if(G.flash>0){ctx.fillStyle=`rgba(255,253,235,${G.flash*2.5})`;ctx.fillRect(-20,-20,W+40,H+40);}
   G.muzzle.forEach(drawMuzzle);
   if(G.phase==='alarm') drawAlarm();
+  if(G.loot) drawLoot();
   // help hand: only if after 15 s the player still hasn't both moved and fired
   if(G.running&&G.playT>15&&!(G.didMove&&G.didFire)&&G.endT<0&&G.phase!=='alarm') drawHelpHand();
   for(const t of G.texts){
@@ -91,4 +92,14 @@ function drawHelpHand(){
   ctx.font=`700 ${Math.round(Math.max(14,u*.4))}px ${PXF}`; ctx.textAlign='center'; ctx.textBaseline='top';
   const ly=oy+HAND.length*p+6; ctx.fillStyle='#2B2333'; ctx.fillText(label,hx+p*2+2,ly+2); ctx.fillStyle='#FFE15A'; ctx.fillText(label,hx+p*2,ly);
   ctx.restore();
+}
+
+/* Words released by a defeated boss: they burst out, then hover with a gentle bob */
+function drawLoot(){
+  G.loot.forEach((l,i)=>{
+    l.t=Math.min(1,l.t+(G.dt||0)*1.4); const e=1-Math.pow(1-l.t,3);
+    const x=l.x+(l.tx-l.x)*e, y=l.y+(l.ty-l.y)*e-Math.sin(e*Math.PI)*60+Math.sin(G.t*3+i)*4;
+    const h=Math.max(30,Math.min(46,W*.1))*(.4+.6*e);
+    sign(x,y,h,l.word,(l.lat?l.lat+' = ':'')+l.fi,G.season?'#E8781A':'#E9A800');
+  });
 }

@@ -4,6 +4,31 @@ Tavu.addSeason({
   active(d){ const m=d.getMonth(), day=d.getDate(); return (m===9&&day>=10)||(m===10&&day<=2); },
   palette:{sky:['#2A1846','#E0743A'], path:'#7E6A5A', edge:'#5E4C40', grass:'#3F6B3A', grass2:'#345C30', hill:'#2B1E40', far:'#7A4A7A'},
   colors:['#FF8A1E','#9B59D0','#5ED16A','#E8E2F0','#FF5A3C'],
+  // words the boss releases when it falls, per world: [word, Finnish, optional Latin form]
+  rewards:{
+    cyr:[['ТЫКВА','kurpitsa'],['ВЕДЬМА','noita'],['ПРИЗРАК','aave'],['ПАУК','hämähäkki'],['ЛУНА','kuu']],
+    gre:[['ΚΟΛΟΚΥΘΑ','kurpitsa'],['ΜΑΓΙΣΣΑ','noita'],['ΦΑΝΤΑΣΜΑ','aave'],['ΑΡΑΧΝΗ','hämähäkki']],
+    kat:[['カボチャ','kurpitsa','kabocha'],['オバケ','kummitus','obake'],['ゴースト','aave','goosuto'],['コウモリ','lepakko','koumori']],
+    sv:[['PUMPA','kurpitsa'],['HÄXA','noita'],['SPÖKE','aave'],['SPINDEL','hämähäkki'],['FLADDERMUS','lepakko']],
+    en:[['PUMPKIN','kurpitsa'],['WITCH','noita'],['GHOST','aave'],['SPIDER','hämähäkki'],['BAT','lepakko']]
+  },
+  // some tyypät are carved pumpkins: the letter glows like the carving
+  bodyChance:.35, bodyLetterColor:'#FFC93A',
+  body(cx,by,TW,TH,u,seed){
+    const S=Math.max(TW*1.15,TH*1.25); cube(cx-S/2,by-S*.98,S,'#E8781A',true,seed);
+    ctx.fillStyle='rgba(0,0,0,.18)'; for(let k=1;k<4;k++) ctx.fillRect(cx-S/2+S*k/4-1,by-S*.98,2,S);
+    ctx.fillStyle='#3E6A22'; ctx.fillRect(cx-u*.6,by-S*.98-u*1.6,u*1.2,u*1.7);
+    ctx.fillStyle=`rgba(255,200,60,${.35+.25*Math.sin(G.t*7+seed)})`; ctx.fillRect(cx-TW*.55,by-TH*1.05,TW*1.1,TH*1.1);
+  },
+  // the cannon is a carved pumpkin with a stem barrel
+  cannon(x,y,u,rec){
+    cube(x-u*.95,y-u*.95,u*1.9,'#E8781A',true,7);
+    const g=(Math.sin(G.t*6)>-.3)?'#FFE15A':'#FFB43A'; ctx.fillStyle=g;
+    ctx.fillRect(x-u*.6,y-u*.6,u*.35,u*.3); ctx.fillRect(x+u*.25,y-u*.6,u*.35,u*.3);
+    ctx.fillRect(x-u*.6,y-u*.05,u*1.2,u*.2); ctx.fillRect(x-u*.4,y+u*.15,u*.2,u*.15); ctx.fillRect(x+u*.2,y+u*.15,u*.2,u*.15);
+    cube(x-u*.3,y-u*1.75+rec,u*.6,'#3E6A22',true,5);
+    return true;
+  },
 
   sky(sx,sy,ss){ // stars, big moon, flapping bats
     for(let i=0;i<24;i++){ctx.fillStyle=(G.t*2+i)%5<.3?'#FFFFFF':'#E9D8FF'; ctx.fillRect(Math.floor(hash(i,1)*W),Math.floor(hash(i,2)*HY*.6),2,2);}

@@ -37,6 +37,7 @@ function drawCandy(e){
     ctx.fillStyle='#FFFFFF'; ctx.fillRect(cx-wv/2*inT+outT*u*6-u,midY-u*1.5,u*3,u*3); ctx.fillRect(cx+wv/2*inT+outT*u*6-u*2,midY-u*1.5,u*3,u*3);
   }
   ctx.globalAlpha=a;
+  if(e.pumpkin&&G.season&&G.season.body) G.season.body(cx,by,TW,TH,u,e.seed||1);
   smoothText(e.disp,cx,by,fs,e.col,e.shield>.2);
   if(e.shoots){ // shooter tyypät carry a small red marker
     ctx.fillStyle='#E8323C'; ctx.fillRect(cx-u*1.2,by+u*.4,u*2.4,u*1.1); ctx.fillStyle='#FFD21E'; ctx.fillRect(cx-u*.4,by+u*.6,u*.8,u*.7);
@@ -71,12 +72,14 @@ function drawShot(s){
 function drawCannon(){
   const x=Math.round(px(G.lane,ZCAN)), y=Math.round(BY+6), u=Math.max(30,RB*.75), rec=Math.round(G.recoil*6);
   ctx.fillStyle='rgba(30,20,40,.22)'; ctx.fillRect(x-u*1.1,y+u*.55,u*2.2,u*.35);
-  // stone base block with a dark muzzle
-  cube(x-u*.9,y-u*.9,u*1.8,'#8E8E96',true,3);
-  ctx.fillStyle='#2B2333'; ctx.fillRect(x-u*.35,y-u*.45,u*.7,u*.7); ctx.fillStyle='#4A4452'; ctx.fillRect(x-u*.25,y-u*.35,u*.5,u*.5);
-  // barrel block
-  cube(x-u*.45,y-u*1.75+rec,u*.9,'#C6C6CE',true,5);
-  ctx.fillStyle='#E63E78'; ctx.fillRect(x-u*.45,y-u*1.35+rec,u*.9,u*.18);
+  if(!(G.season&&G.season.cannon&&G.season.cannon(x,y,u,rec))){
+    // stone base block with a dark muzzle
+    cube(x-u*.9,y-u*.9,u*1.8,'#8E8E96',true,3);
+    ctx.fillStyle='#2B2333'; ctx.fillRect(x-u*.35,y-u*.45,u*.7,u*.7); ctx.fillStyle='#4A4452'; ctx.fillRect(x-u*.25,y-u*.35,u*.5,u*.5);
+    // barrel block
+    cube(x-u*.45,y-u*1.75+rec,u*.9,'#C6C6CE',true,5);
+    ctx.fillStyle='#E63E78'; ctx.fillRect(x-u*.45,y-u*1.35+rec,u*.9,u*.18);
+  }
   if(!G.cur)return;
   const col=G.curCol, ans=dispAns(G.cur), rl=1-Math.pow(1-G.reload,3);
   if(G.isWord){const sh=u*.95*(.6+.4*rl); sign(x,y-u*2.35+rec,sh,ans,G.fi[G.cur],col); drawCubeHint(x,y-u*2.35+rec-sh/2,sh*1.6,u); return;}

@@ -83,6 +83,7 @@ function endCard(win){
   ov.innerHTML=`<div class="overlay"><div class="card">
     <h3>${win?'Loppuvastustaja kaatui!':'Tyypät pääsivät läpi'}</h3>
     ${win?`<div class="big-stars">${[0,1,2].map(i=>`<i class="${i<stars?'on':''}"></i>`).join('')}</div>`:''}
+    ${win&&G.loot&&G.loot.length?`<div class="loot">${G.loot.map(l=>`<div><b>${l.word}</b>${l.lat?` <span>${l.lat}</span>`:''} = ${l.fi}</div>`).join('')}</div>`:''}
     <p>${G.correct} osumaa · tarkkuus ${Math.round(acc*100)} %</p>
     <div class="row">${hasNext?'<button class="btn" id="nx">Seuraava taso</button>':''}
     <button class="btn ${hasNext?'alt':''}" id="rt">${win?'Pelaa uudelleen':'Yritä uudelleen'}</button>
@@ -96,6 +97,8 @@ $('back').onclick=toMap;
 
 /* spawn: random letters from this level's pool, new letters weighted up */
 function pickLetter(){
+  // now and then a random letter from the whole alphabet, even ones not taught yet
+  if(!G.isWord&&Math.random()<.14){ const all=Object.keys(G.w.map); return all[Math.floor(Math.random()*all.length)]; }
   const pool=[]; G.fresh.forEach(c=>pool.push(c,c,c)); G.older.forEach(c=>pool.push(c));
   return pool[Math.floor(Math.random()*pool.length)];
 }
@@ -104,7 +107,9 @@ function spawn(){
   let lane=0; for(let k=0;k<10;k++){lane=G.isWord?-.55+Math.random()*1.1:-.72+Math.random()*1.44; if(G.enemies.every(e=>Math.abs(e.bl-lane)>(G.isWord?.75:.4)||e.z<ZF-1.4))break;}
   G.enemies.push({ch,disp:dispCh(ch),ans:ansOf(ch),wf:G.isWord?Math.min(2.2,1+(ch.length-1)*.3):1,bl:lane,lane,z:ZF,vz:G.speed*(.85+Math.random()*.3),ph:Math.random()*6,
     col:(c=>c[Math.floor(Math.random()*c.length)])(G.season?G.season.colors:CANDY),shake:0,born:G.t,hint:!G.seen.has(ch),
-    shoots:G.si>0&&Math.random()<Math.min(.35,.1+G.si*.05), fireT:1.5+Math.random()*2});
+    shoots:G.si>0&&Math.random()<Math.min(.35,.1+G.si*.05), fireT:1.5+Math.random()*2,
+    pumpkin:!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99)});
+  const e=G.enemies[G.enemies.length-1]; if(e.pumpkin&&G.season.bodyLetterColor) e.col=G.season.bodyLetterColor;
 }
 function fire(i){
   if(!G||!G.running)return; audio();
@@ -186,7 +191,11 @@ function bossDown(){
     for(let k=0;k<6;k++) G.parts.push({chunk:true,x,y,vx:(Math.random()-.5)*700,vy:-300-Math.random()*400,life:1.2,max:1.2,col:k%2?b.col:'#2B2333',sz:RB*s0*(.3+Math.random()*.3),rot:0}); }
   G.parts.push({flashball:true,x:px(0,b.z),y:py(b.z)-RB*s0*2,r:RB*s0*4,life:.35,max:.35});
   G.boss=null; G.flash=.3; G.shake=reduce?0:.6; sBossDown(); G.phase='done'; G.cur=null; paintFire();
-  if(G.endT<0) G.endT=1.8;
+  // the boss releases themed words: they fly out and hover, and are listed on the end card
+  const list=(G.season&&G.season.rewards&&G.season.rewards[G.w.id])||G.w.rewards||[];
+  G.loot=[...list].sort(()=>Math.random()-.5).slice(0,3).map(([word,fi,lat],i)=>({word:dispCh(word),fi,lat:G.w.latin?'':(lat||toLatin(G.w,word)),
+    x:px(0,b.z),y:py(b.z)-RB*s0*2,tx:W*(.25+i*.25),ty:H*(.22+(i%2)*.12),t:0}));
+  if(G.endT<0) G.endT=3.4;
 }
 function bossReachedLine(){
   const b=G.boss; G.lives--; G.combo=0; drawHearts(); G.shake=reduce?0:.5; sRoar();

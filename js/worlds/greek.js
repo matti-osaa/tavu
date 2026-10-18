@@ -8,6 +8,7 @@ Tavu.addWorld({
     [['ΓΑΤΑ','kissa'],['ΝΕΡΟ','vesi'],['ΜΗΛΟ','omena'],['ΤΡΕΝΟ','juna'],['ΣΠΙΤΙ','talo'],['ΚΑΦΕΣ','kahvi']],
     [['ΨΩΜΙ','leipä'],['ΗΛΙΟΣ','aurinko'],['ΘΑΛΑΣΣΑ','meri'],['ΒΙΒΛΙΟ','kirja'],['ΣΚΥΛΟΣ','koira']]
   ],
+  rewards:[['ΒΑΡΚΑ','vene'],['ΨΑΡΙ','kala'],['ΚΥΜΑ','aalto'],['ΗΛΙΟΣ','aurinko']],
   card:{color:'#1FB5D1', bg:'linear-gradient(160deg,#D8FBFF,#9EE6F2)'},
   palette:{sky:['#6FD0F7','#E3FBFF'], path:'#ECE6D6', edge:'#CFC5AE', grass:'#F0D58C', grass2:'#E4C574', hill:'#3FA9D8', far:'#8ED8F6'},
   scenery(x,y,u,seed){ // white house with a blue dome

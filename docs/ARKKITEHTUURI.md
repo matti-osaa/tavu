@@ -47,11 +47,13 @@ docs/ARKKITEHTUURI.md   tämä tiedosto
    - `card`, `palette`: kartan kortin ja pelimaailman värit
    - `scenery(x, y, u, seed, deco)`: tienvarsiesine palikoista (`cube()`)
    - valinnainen `ambient(dt)`: lisäkerros, esim. putoavat terälehdet
+   - `rewards`: sanat, jotka loppuvastustaja vapauttaa kaatuessaan `[[sana, suomennos, latinaistus?], …]`
 3. Lisää `index.html`:ään yksi rivi `<script src="js/worlds/<kieli>.js"></script>` muiden maailmojen joukkoon. Rivien järjestys määrää järjestyksen kartalla.
 
 ## Uuden kausiteeman lisääminen
 
-1. `js/seasons/<id>.js`: `Tavu.addSeason({ id, name, cssClass, active(date), palette, colors, sky(), scenery(), accessory() })`
+1. `js/seasons/<id>.js`: `Tavu.addSeason({ id, name, cssClass, active(date), palette, colors, sky(), scenery(), accessory(), body(), cannon(), rewards })`
+   - `body()` + `bodyChance`: osa tyypistä saa kausiasun (esim. kurpitsa). `cannon()`: tykin ulkoasu. `rewards[worldId]`: kauden saalissanat.
    - `active(date)` päättää, milloin teema kytkeytyy päälle automaattisesti.
    - Kaikki piirtokoukut ovat valinnaisia. Jos koukku puuttuu, käytetään maailman omaa piirtoa.
 2. `css/seasons/<id>.css`: kartan ja käyttöliittymän värit `body.<cssClass>`-valitsimella.
