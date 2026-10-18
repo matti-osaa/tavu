@@ -3,7 +3,7 @@ function startLevel(wi,si){
   if(stagesOf(WORLDS[wi])[si].kind==='cipher'){ cancelAnimationFrame(raf); G=null; ov.innerHTML=''; return startCipher(wi,si); }
   const w=WORLDS[wi], stage=stagesOf(w)[si], li=stage.li, isWord=stage.kind==='words';
   const fresh=isWord?w.words[li].map(p=>p[0]):[...w.levels[li]], older=isWord?[]:w.levels.slice(0,li).join('').split('');
-  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,surge:1,playT:0,kills:{},lootMode:false,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
+  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,surge:1,playT:0,kills:{},lootMode:false,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,hp:100,hpShown:-1,quietT:9,dmgTaken:0,pace:diff().pace,popped:0,
      goal:14+li*3,maxOn:4+li,speed:.5+li*.08,fired:0,correct:0,combo:0,spawnT:.4,t:0,running:false,hitstop:0,shake:0,cool:0,reload:1,recoil:0,
      season:activeSeason(),isWord,fiOf:isWord?Object.fromEntries(w.words[li].map(p=>[p[0],p[1]])):{},
      fi:isWord?Object.fromEntries(w.words[li].map(p=>w.latin?[p[1],'']:[toLatin(w,p[0]),p[1]])):{},
@@ -34,8 +34,18 @@ function targets(){
   if(G.boss) G.boss.segs.forEach(g=>{ if(g.alive) t.push({ans:g.ans,z:G.boss.z}); });
   return t;
 }
-const HEART='<svg viewBox="0 0 9 8" shape-rendering="crispEdges"><path fill="#2B2333" d="M1 0h3v1h1V0h3v1h1v3H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0V1h1z"/><path fill="#F23C5A" d="M1 1h2v1h1v1h1V2h1V1h2v3H7v1H6v1H5v1H4V6H3V5H2V4H1z"/><path fill="#FF9AAA" d="M1 1h1v1H1z"/></svg>';
-function drawHearts(){ $('hearts').innerHTML=Array.from({length:G.maxLives},(_,i)=>HEART.replace('<svg',`<svg class="${i<G.lives?'':'lost'}"`)).join(''); }
+const HEART_UNUSED='<svg viewBox="0 0 9 8" shape-rendering="crispEdges"><path fill="#2B2333" d="M1 0h3v1h1V0h3v1h1v3H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0V1h1z"/><path fill="#F23C5A" d="M1 1h2v1h1v1h1V2h1V1h2v3H7v1H6v1H5v1H4V6H3V5H2V4H1z"/><path fill="#FF9AAA" d="M1 1h1v1H1z"/></svg>';
+/* Health: one bar that heals back up when nothing gets through for a while.
+   A tyyppä reaching you hurts; at zero you fall into limbo. */
+const HP_REGEN=5, HP_QUIET=3;                       // hp per second, after this many quiet seconds
+const hpDamage=()=>Math.round(90/diff().lives);     // easy 18, normal 23, hard 30
+function drawHearts(){ const h=Math.max(0,Math.round(G.hp)); if(h===G.hpShown) return; G.hpShown=h;
+  const el=$('hearts'); if(!el.querySelector('.hpbar')) el.innerHTML='<div class="hpbar"><b></b></div>';
+  const b=el.querySelector('.hpbar b'); b.style.width=h+'%'; b.style.background=h<30?'#F23C5A':h<60?'#FFB020':'#45C46B'; }
+function hurt(n){
+  G.hp=Math.max(0,G.hp-n); G.dmgTaken+=n; G.quietT=0; G.combo=0; drawHearts(); G.hurt=.35;
+  if(G.hp<=0&&G.endT<0){ G.endT=1.1; G.lose=true; }
+}
 function prog(){ const b=$('progbar');
   if(G.boss){ const a=G.boss.segs.filter(g=>g.alive).length; b.style.width=(a/G.boss.segs.length*100)+'%'; b.classList.add('boss'); }
   else { b.style.width=Math.min(100,G.popped/G.goal*100)+'%'; b.classList.remove('boss'); } }
@@ -49,15 +59,15 @@ function showIntro(){
 }
 function endCard(win){
   G.running=false;
-  const lost=G.maxLives-G.lives, acc=G.fired?G.correct/G.fired:0;
-  let stars=0; if(win){stars=1; if(lost<=1&&acc>=.6)stars=2; if(lost===0&&acc>=.85)stars=3;}
+  const acc=G.fired?G.correct/G.fired:0;
+  let stars=0; if(win){stars=1; if(G.dmgTaken<=50&&acc>=.6)stars=2; if(G.dmgTaken===0&&acc>=.85)stars=3;}
   const k=G.key; if(stars>(save.stars[k]||0)){save.stars[k]=stars;}
   save.kills=save.kills||{}; const sk=save.kills[G.w.id]=save.kills[G.w.id]||{};
   for(const [c,n] of Object.entries(G.kills)) sk[c]=(sk[c]||0)+n; persist();
   const hasNext=win&&G.si+1<stagesOf(G.w).length;
   if(win) sWin();
   ov.innerHTML=`<div class="overlay"><div class="card">
-    <h3>${win?`${G.bossName||'Loppuvastustaja'} kaatui!`:'Tyypät pääsivät läpi'}</h3>
+    <h3>${win?`${G.bossName||'Loppuvastustaja'} kaatui!`:'Jouduit limboon'}</h3>
     ${win?`<div class="big-stars">${[0,1,2].map(i=>`<i class="${i<stars?'on':''}"></i>`).join('')}</div>`:''}
     ${killsHTML()}
     <p>${G.correct} osumaa, tarkkuus ${Math.round(acc*100)} %</p>
@@ -140,9 +150,8 @@ function updateBolts(dt){
   for(const b of G.bolts){ if(b.dead) continue; b.z-=b.vz*dt;
     if(b.z<=ZCAN+.12){ b.dead=true;
       if(Math.abs(b.lane)<.28){ // hit the sling
-        G.lives--; G.combo=0; drawHearts(); G.hurt=.35; G.shake=reduce?0:.35; sOuch();
+        hurt(hpDamage()); G.shake=reduce?0:.35; sOuch();
         burst(W/2,BY+10,'#FF4A2E',22,300);
-        if(G.lives<=0&&G.endT<0){G.endT=1.1;G.lose=true;}
       } else burst(px(b.lane,ZCAN+.12),py(ZCAN+.12)-10,'#FF8A1E',8,140);
     }
   }
@@ -233,18 +242,16 @@ function bossDown(){
   nextAmmo();
 }
 function bossReachedLine(){
-  const b=G.boss; G.lives--; G.combo=0; drawHearts(); G.shake=reduce?0:.5; sRoar();
+  const b=G.boss; hurt(hpDamage()*1.5); G.shake=reduce?0:.5; sRoar();
   b.z=ZLOSE+1.8; b.vz=-1; b.shake=.5;
   floatText(W/2,H*.35,'AUTS!','#E63E78',true);
-  if(G.lives<=0&&G.endT<0){G.endT=1.1;G.lose=true;}
 }
 function hitLine(e){
   const ex=px(e.lane,e.z), ey=py(e.z)-RB*sc(e.z);
   G.enemies.splice(G.enemies.indexOf(e),1);
-  G.lives--; G.combo=0; drawHearts(); G.shake=reduce?0:.35; sOuch();
+  hurt(hpDamage()); G.shake=reduce?0:.35; sOuch();
   burst(ex,ey,e.col,16,200);
   floatText(Math.min(Math.max(ex,80),W-80),ey-30,`${e.ch} = ${e.ans}`,'#E63E78',true);
-  if(G.lives<=0&&G.endT<0){G.endT=1.1;G.lose=true;}
 }
 
 function update(dt){
@@ -260,6 +267,9 @@ function update(dt){
   if(G.endT>=0){G.endT-=dt; if(G.endT<0){endCard(!G.lose);return;}}
   if(!G.running) return;
   G.playT+=dt;
+  G.quietT+=dt; if(G.quietT>HP_QUIET&&G.hp<100&&G.endT<0){ G.hp=Math.min(100,G.hp+HP_REGEN*dt); }
+  drawHearts();
+  if(G.hp<30&&G.endT<0){ G.beatT=(G.beatT||0)-dt; if(G.beatT<=0){ G.beatT=.9; tone(55,.12,'sine',.25); tone(50,.1,'sine',.18,1,.18); } }
   // tempo: ~7 s calm, ~3 s surge where tyypät come faster and closer together
   G.tempoT=(G.tempoT||0)+dt; const cyc=G.tempoT%10; G.surge=(G.phase==='wave'&&cyc>7)?1.6:1;
   if(G.hitstop>0){G.hitstop-=dt;return}

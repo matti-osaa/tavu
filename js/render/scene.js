@@ -32,8 +32,6 @@ function drawBg(){
     for(let side=-1;side<=1;side+=2){const h=hash(id,side*9); quad(side*1,side*1.1,za,zb,shade(T.edge,(h-.5)*20));}
     if(near>.35){ctx.strokeStyle='rgba(0,0,0,.07)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(px(-1,za),py(za)); ctx.lineTo(px(1,za),py(za)); ctx.stroke();}
   }
-  // finish line of black/white blocks
-  for(let i=0;i<12;i++){const l0=-1+i*2/12; quad(l0,l0+2/12,ZLOSE-.05,ZLOSE+.05,i%2?'#2B2333':'#FFFFFF');}
   // distance haze
   const hz=ctx.createLinearGradient(0,HY,0,HY+(BY-HY)*.22); hz.addColorStop(0,T.far); hz.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=hz; ctx.fillRect(0,HY,W,(BY-HY)*.22);

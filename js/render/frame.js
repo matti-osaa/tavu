@@ -33,6 +33,10 @@ function draw(){
     ctx.fillStyle=`rgba(80,180,255,${a*2})`; for(let i=0;i<4;i++) ctx.fillRect(0,0,W,6-i), ctx.fillRect(0,BY-6+i,W,1); }
   if(G.wind>0){ ctx.save(); ctx.globalAlpha=Math.min(1,G.wind*1.5)*.7; ctx.fillStyle='#FFFFFF';
     for(let i=0;i<26;i++){ const y=HY+((i*53)%Math.max(1,BY-HY)), x=((i*97+(1-G.wind)*W*2.2)%(W+200))-100, len=40+(i%5)*20; ctx.fillRect(W-x-len,y,len,3); } ctx.restore(); }
+  if(G.hp<40){ // badly hurt: the screen edges glow red, pulsing like a heartbeat
+    const k=(40-G.hp)/40, beat=Math.pow((Math.sin(G.t*7)+1)/2,3), a=k*(.35+.25*beat), g=ctx.createRadialGradient(W/2,H*.45,Math.min(W,H)*.2,W/2,H*.45,Math.max(W,H)*.75);
+    g.addColorStop(0,'rgba(200,20,30,0)'); g.addColorStop(1,`rgba(200,20,30,${a})`); ctx.fillStyle=g; ctx.fillRect(-20,-20,W+40,H+40);
+    ctx.fillStyle=`rgba(200,20,30,${k*.12})`; ctx.fillRect(-20,-20,W+40,H+40); }
   if(G.hurt>0){ctx.fillStyle=`rgba(232,40,50,${G.hurt*1.2})`;ctx.fillRect(-20,-20,W+40,H+40);}
   if(G.flash>0){ctx.fillStyle=`rgba(255,253,235,${G.flash*2.5})`;ctx.fillRect(-20,-20,W+40,H+40);}
   G.muzzle.forEach(drawMuzzle);
