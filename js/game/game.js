@@ -45,7 +45,47 @@ function drawHearts(){ const h=Math.max(0,Math.round(G.hp)); if(h===G.hpShown) r
   const b=el.querySelector('.hpbar b'); b.style.width=h+'%'; b.style.background=h<30?'#F23C5A':h<60?'#FFB020':'#45C46B'; }
 function hurt(n){
   G.hp=Math.max(0,G.hp-n); G.dmgTaken+=n; G.quietT=0; G.combo=0; drawHearts(); G.hurt=.35;
-  if(G.hp<=0&&G.endT<0){ G.endT=1.1; G.lose=true; }
+  if(G.hp<=0&&G.endT<0&&!G.limboOn){
+    if(G.limboUsed){ G.endT=1.1; G.lose=true; }               // second fall in the same level: out
+    else { G.limboOn=true; G.running=false; setTimeout(enterLimbo,700); } }
+}
+/* ---------- Limbo ----------
+   Out of health: you drop into limbo. Name the last 3 letters/words that got you (or that you saw)
+   within 10 seconds and you come back with half health and the field pushed back. Otherwise: back to the map.
+   One limbo per level. */
+const LIMBO_TIME=10;
+function limboItems(){
+  const out=[]; const add=ch=>{ if(ch&&!out.includes(ch)&&ansOf(ch)) out.push(ch); };
+  [...(G.leaks||[])].reverse().forEach(add);
+  [...G.enemies].sort((a,b)=>a.z-b.z).forEach(e=>add(e.ch));
+  [...(G.recent||[])].reverse().forEach(add);
+  (G.fresh||[]).forEach(add);
+  return out.slice(0,3);
+}
+function enterLimbo(){
+  if(!G) return; G.limboUsed=true;
+  const items=limboItems(), pool=answerPool(); let k=0, t0=performance.now(), done=false;
+  sRoar(); tone(110,1.2,'sine',.12,.5);
+  const render=()=>{
+    const ch=items[k], ans=ansOf(ch), opts=[ans,...pool.filter(a=>a!==ans).sort(()=>Math.random()-.5).slice(0,3)].sort(()=>Math.random()-.5);
+    ov.innerHTML=`<div class="overlay limbo"><div class="card">
+      <h3>LIMBO</h3><div class="limbo-bar"><b id="lbBar"></b></div>
+      <div class="limbo-dots">${items.map((_,i)=>`<i class="${i<k?'on':''}"></i>`).join('')}</div>
+      <div class="limbo-q">${dispCh(ch)}</div>
+      <div class="limbo-opts">${opts.map(o=>`<button class="btn alt" data-a="${o}">${dispAns(o)}${G.isWord&&G.fi[o]?`<small>${G.fi[o]}</small>`:''}</button>`).join('')}</div></div></div>`;
+    ov.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ if(done) return;
+      if(b.dataset.a===ans){ tone(520,.1,'triangle',.1); k++; if(k>=items.length) win(); else render(); }
+      else { b.classList.add('wrong'); sClank(); t0-=1500; } });          // a wrong guess costs 1.5 s
+  };
+  const timer=setInterval(()=>{ if(done||!G){ clearInterval(timer); return; }
+    const left=1-(performance.now()-t0)/1000/LIMBO_TIME, bar=$('lbBar'); if(bar) bar.style.width=Math.max(0,left*100)+'%';
+    if(left<=0){ done=true; clearInterval(timer); sOuch(); ov.innerHTML='<div class="overlay limbo"><div class="card"><h3>LIMBO</h3><p>Aika loppui.</p></div></div>'; setTimeout(()=>{ if(G) toMap(); },1300); } },80);
+  const win=()=>{ done=true; clearInterval(timer); ov.innerHTML=''; sWin();
+    G.hp=50; G.hpShown=-1; drawHearts(); G.limboOn=false; G.running=true; G.quietT=0; G.flash=.3;
+    for(const e of G.enemies){ e.z=Math.max(e.z,ZF-.4+Math.random()*.7); e.air=0; e.vz=0; }
+    if(G.boss){ G.boss.z=Math.max(G.boss.z,ZF); G.boss.vz=0; }
+    floatText(W/2,H*.35,'TAKAISIN!','#C9A8FF',true); };
+  render();
 }
 function prog(){ const b=$('progbar');
   if(G.boss){ const a=G.boss.segs.filter(g=>g.alive).length; b.style.width=(a/G.boss.segs.length*100)+'%'; b.classList.add('boss'); }
@@ -68,7 +108,7 @@ function endCard(win){
   const hasNext=win&&G.si+1<stagesOf(G.w).length;
   if(win) sWin();
   ov.innerHTML=`<div class="overlay"><div class="card">
-    <h3>${win?`${G.bossName||'Loppuvastustaja'} kaatui!`:'Jouduit limboon'}</h3>
+    <h3>${win?`${G.bossName||'Loppuvastustaja'} kaatui!`:'Tyypät voittivat tällä kertaa'}</h3>
     ${win?`<div class="big-stars">${[0,1,2].map(i=>`<i class="${i<stars?'on':''}"></i>`).join('')}</div>`:''}
     ${killsHTML()}
     <p>${G.correct} osumaa, tarkkuus ${Math.round(acc*100)} %</p>
@@ -166,7 +206,7 @@ function throwBack(e){
 function pop(e,s){
   const s0=sc(e.z), ex=px(e.lane,e.z), ey=py(e.z)-RB*s0;
   G.enemies.splice(G.enemies.indexOf(e),1); s.dead=true;
-  G.correct++; G.combo++; G.popped++; prog(); comboReward(ex,ey); G.kills[e.ch]=(G.kills[e.ch]||0)+1;
+  G.correct++; G.combo++; G.popped++; prog(); comboReward(ex,ey); G.kills[e.ch]=(G.kills[e.ch]||0)+1; (G.recent=G.recent||[]).push(e.ch);
   const k=Math.max(.6,s0);
   burst(ex,ey,e.col,34,420*k);
   for(let i=0;i<9;i++){const a=i/9*Math.PI*2+Math.random()*.4, sp=(220+Math.random()*220)*k;
@@ -281,13 +321,13 @@ function bossDown(){
   nextAmmo();
 }
 function bossReachedLine(){
-  const b=G.boss; hurt(hpDamage()*1.5); G.shake=reduce?0:.5; sRoar();
+  const b=G.boss; (G.leaks=G.leaks||[]).push(...b.segs.filter(g=>g.alive).map(g=>g.ch).slice(0,1)); hurt(hpDamage()*1.5); G.shake=reduce?0:.5; sRoar();
   b.z=ZLOSE+1.8; b.vz=-1; b.shake=.5;
   floatText(W/2,H*.35,'AUTS!','#E63E78',true);
 }
 function hitLine(e){
   const ex=px(e.lane,e.z), ey=py(e.z)-RB*sc(e.z);
-  G.enemies.splice(G.enemies.indexOf(e),1);
+  G.enemies.splice(G.enemies.indexOf(e),1); (G.leaks=G.leaks||[]).push(e.ch);
   hurt(hpDamage()); G.shake=reduce?0:.35; sOuch();
   burst(ex,ey,e.col,16,200);
   floatText(Math.min(Math.max(ex,80),W-80),ey-30,`${e.ch} = ${e.ans}`,'#E63E78',true);
