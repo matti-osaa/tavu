@@ -20,16 +20,6 @@ Tavu.addSeason({
     ctx.fillStyle='#3E6A22'; ctx.fillRect(cx-u*.6,by-S*.98-u*1.6,u*1.2,u*1.7);
     ctx.fillStyle=`rgba(255,200,60,${.35+.25*Math.sin(G.t*7+seed)})`; ctx.fillRect(cx-TW*.55,by-TH*1.05,TW*1.1,TH*1.1);
   },
-  // the cannon is a carved pumpkin with a stem barrel
-  cannon(x,y,u,rec){
-    cube(x-u*.95,y-u*.95,u*1.9,'#E8781A',true,7);
-    const g=(Math.sin(G.t*6)>-.3)?'#FFE15A':'#FFB43A'; ctx.fillStyle=g;
-    ctx.fillRect(x-u*.6,y-u*.6,u*.35,u*.3); ctx.fillRect(x+u*.25,y-u*.6,u*.35,u*.3);
-    ctx.fillRect(x-u*.6,y-u*.05,u*1.2,u*.2); ctx.fillRect(x-u*.4,y+u*.15,u*.2,u*.15); ctx.fillRect(x+u*.2,y+u*.15,u*.2,u*.15);
-    cube(x-u*.3,y-u*1.75+rec,u*.6,'#3E6A22',true,5);
-    return true;
-  },
-
   sky(sx,sy,ss){ // stars, big moon, flapping bats
     for(let i=0;i<24;i++){ctx.fillStyle=(G.t*2+i)%5<.3?'#FFFFFF':'#E9D8FF'; ctx.fillRect(Math.floor(hash(i,1)*W),Math.floor(hash(i,2)*HY*.6),2,2);}
     ctx.fillStyle='rgba(255,220,150,.2)'; ctx.fillRect(sx-ss*1.7,sy-ss*1.7,ss*3.4,ss*3.4);

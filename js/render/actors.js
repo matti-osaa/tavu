@@ -12,25 +12,27 @@ function drawCandy(e){
   ctx.fillStyle='rgba(30,20,40,.22)'; ctx.fillRect(x-TW*.45,gy-u*.4,TW*.9,u*.8);
   const by=gy-hop-u*1.2, cx=x+jx;
   const dark=shade(e.col,-80), PART=.45;   // feet, arms, eyes and hats stay see-through so the letter reads first
+  const plain=G.plain, blk=e.block>0?1-e.block/.75:-1, midY=by-TH*.55, half=TW/2;
   ctx.globalAlpha=a*PART;
+  if(!plain){
   // feet (pixel blocks), alternate stepping
   const fw=Math.max(2,u*2), fh=Math.max(2,u*1.2), fx=TW*.25;
   ctx.fillStyle=dark; ctx.fillRect(cx-fx-fw/2,by+(stepI?-u:0),fw,fh); ctx.fillRect(cx+fx-fw/2,by+(stepI?0:-u),fw,fh);
   // arms
-  const blk=e.block>0?1-e.block/.75:-1, midY=by-TH*.55, half=TW/2;
   if(blk<0){const up=Math.round(near*2+(Math.sin(G.t*(6+near*8)+e.ph)>0?1:0));
     ctx.fillStyle=dark; [-1,1].forEach(sd=>{ctx.fillRect(sd<0?cx-half-u*2:cx+half,midY-up*u,u*2,u); ctx.fillRect(sd<0?cx-half-u*3:cx+half+u*2,midY-up*u-u*(up>0?1:0),u,u*(up>0?2:1));});}
+  }
   const box={ox:cx-TW/2,oy:by-TH,w:TW,h:TH};
   // small eyes sitting just above the letter
   const eyY=box.oy-u*2.6, es=Math.max(3,u*1.7), blink=((G.t+e.ph)%4)<.12;
-  [-1,1].forEach(sd=>{const ex=cx+sd*u*2.2-es/2;
+  if(!plain) [-1,1].forEach(sd=>{const ex=cx+sd*u*2.2-es/2;
     ctx.fillStyle=dark; ctx.fillRect(ex-u*.5,eyY-u*.5,es+u,es+u);
     ctx.fillStyle='#FFFFFF'; ctx.fillRect(ex,eyY+(blink?es*.4:0),es,blink?es*.2:es);
     if(!blink){ctx.fillStyle='#1B1424'; ctx.fillRect(ex+(sd<0?es*.45:es*.1),eyY+es*.4,es*.45,es*.5);}
     // brow: two pixel steps, angrier when near
     ctx.fillStyle=dark; const by2=eyY-u*(1.2+near*.6);
     ctx.fillRect(ex+(sd<0?0:es*.5),by2+(sd<0?0:u*near),es*.5,u); ctx.fillRect(ex+(sd<0?es*.5:0),by2+(sd<0?u*near:0),es*.5,u);});
-  headroom=(G.season&&G.season.accessory)?G.season.accessory(cx,eyY,u,near)||0:0;
+  headroom=(!plain&&G.season&&G.season.accessory)?G.season.accessory(cx,eyY,u,near)||0:0;
   if(blk>=0){ // parry: block bar across the body, then knock aside
     const inT=Math.min(1,blk/.3), outT=Math.max(0,(blk-.55)/.45), wv=TW+u*4;
     ctx.fillStyle=dark; ctx.fillRect(cx-wv/2*inT+outT*u*6,midY-u,wv*inT,u*2);
@@ -79,28 +81,21 @@ function drawShot(s){
   ctx.font=`800 ${Math.round(r*(L.length>2?.85:L.length>1?1.05:1.4))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillText(L,x+2,y+3); ctx.fillStyle='#FFFFFF'; ctx.fillText(L,x,y+1);
 }
+// The ammo box: one block on the ground with the letter you shoot. Nothing else.
+function ammoBox(){ const u=Math.max(30,RB*.75), s=u*1.6; return {x:Math.round(px(G.lane,ZCAN)), y:Math.round(BY+6)-s/2, s, u}; }
 function drawCannon(){
-  const x=Math.round(px(G.lane,ZCAN)), y=Math.round(BY+6), u=Math.max(30,RB*.75), rec=Math.round(G.recoil*6);
-  ctx.fillStyle='rgba(30,20,40,.22)'; ctx.fillRect(x-u*1.1,y+u*.55,u*2.2,u*.35);
-  if(!(G.season&&G.season.cannon&&G.season.cannon(x,y,u,rec))){
-    // stone base block with a dark muzzle
-    cube(x-u*.9,y-u*.9,u*1.8,'#8E8E96',true,3);
-    ctx.fillStyle='#2B2333'; ctx.fillRect(x-u*.35,y-u*.45,u*.7,u*.7); ctx.fillStyle='#4A4452'; ctx.fillRect(x-u*.25,y-u*.35,u*.5,u*.5);
-    // barrel block
-    cube(x-u*.45,y-u*1.75+rec,u*.9,'#C6C6CE',true,5);
-    ctx.fillStyle='#E63E78'; ctx.fillRect(x-u*.45,y-u*1.35+rec,u*.9,u*.18);
-  }
   if(!G.cur)return;
+  const B=ammoBox(), x=B.x, u=B.u, ground=B.y+B.s/2;
   const ready=G.cool<=0, charge=1-Math.max(0,G.cool)/COOL;
-  const col=ready?G.curCol:'#8E8A96', ans=dispAns(G.cur), rl=1-Math.pow(1-G.reload,3);
-  if(wordMode()){const sh=u*.95*(.6+.4*rl); sign(x,y-u*2.35+rec,sh,ans,G.fi[G.cur],col);
-    if(!ready){ const bw=u*1.6; ctx.fillStyle='#2B2333'; ctx.fillRect(x-bw/2-2,y-u*2.35+rec-sh/2-12,bw+4,8); ctx.fillStyle=AMMO_COL; ctx.fillRect(x-bw/2,y-u*2.35+rec-sh/2-10,bw*charge,4); } drawCubeHint(x,y-u*2.35+rec-sh/2,sh*1.6,u); return;}
-  const bs=u*1.5*(.55+.45*rl), bx=x-bs/2, byy=y-u*1.8+rec-bs-4;
+  const col=ready?G.curCol:'#8E8A96', ans=dispAns(G.cur), rl=1-Math.pow(1-G.reload,3), rec=Math.round(G.recoil*4);
+  ctx.fillStyle='rgba(30,20,40,.25)'; ctx.fillRect(x-B.s*.6,ground-u*.12,B.s*1.2,u*.3);
+  if(wordMode()){const sh=u*.95*(.6+.4*rl); sign(x,ground-sh*.6+rec,sh,ans,G.fi[G.cur],col);
+    if(!ready){ const bw=u*1.6; ctx.fillStyle='#2B2333'; ctx.fillRect(x-bw/2-2,ground-sh*1.1-12,bw+4,8); ctx.fillStyle=AMMO_COL; ctx.fillRect(x-bw/2,ground-sh*1.1-10,bw*charge,4); } return;}
+  const bs=B.s*(.55+.45*rl), bx=x-bs/2, byy=ground-bs+rec;
   cube(bx,byy,bs,col,false);
   if(!ready){ const fh=bs*charge; ctx.fillStyle=AMMO_COL; ctx.fillRect(bx,byy+bs-fh,bs,fh); }   // gold fills up while recharging
   ctx.font=`800 ${Math.round(bs*(ans.length>2?.42:ans.length>1?.55:.75))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillText(ans,x+2,byy+bs/2+3); ctx.fillStyle='#FFFFFF'; ctx.fillText(ans,x,byy+bs/2+1);
-  drawCubeHint(x,byy,bs,u);
 }
 function drawCubeHint(){}   // the cube needs no decoration: tap it to switch, drag it to scroll
 function flashBtn(cls){const b=$('bf'); if(!b)return; b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(()=>b.classList.remove(cls),500);}

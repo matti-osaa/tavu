@@ -13,27 +13,25 @@ css/
   seasons/<id>.css      kausiteeman UI-värit (body.season-<id>)
 js/
   core/
-    registry.js         Tavu.addWorld / Tavu.addSeason, WORLDS, SEASONS, toLatin(), stagesOf()
+    registry.js         Tavu.addWorld / Tavu.addSeason, WORLDS, SEASONS, toLatin()
     storage.js          tallennus selaimen localStorageen (tähdet, nähdyt, asetukset)
-    settings.js         vaikeustaso, kirjainkoko, kausiteeman valinta päivämäärän mukaan
+    settings.js         vaikeustaso, kirjainkoko, kausiteema, kartan valitsimet
     audio.js            WebAudio-äänet (ei äänitiedostoja)
   worlds/               YKSI TIEDOSTO PER KIELI / KIRJOITUSJÄRJESTELMÄ
     cyrillic.js greek.js katakana.js swedish.js english.js
   seasons/              YKSI TIEDOSTO PER KAUSI
     halloween.js
-    halloween-map.js    kartan interaktiiviset hämähäkit ja pyyhittävät seitit
   game/
     view.js             canvas, pseudo-3D-projektio (z-syvyys, kaistat), mittasuhteet
-    game.js             säännöt: tason aloitus, ammus, tyyppien synty, osumat, loppuvastustaja, update()
+    game.js             säännöt: tason aloitus, ammus, tyyppien synty, osumat, update()
     input.js            kosketus, hiiri, näppäimistö
   render/
     draw-utils.js       värit, kuutiot, pehmeä kirjain, kyltit, merkit
     scene.js            taivas, mäet, palikkamaa, maali, tienvarsiesineet
-    actors.js           tyypät, ammukset, tykki, loppuvastustaja
-    frame.js            yhden ruudun piirto, hälytys + pääsilmukka
+    actors.js           tyypät, ammukset, tykki
+    frame.js            yhden ruudun piirto + pääsilmukka
   ui/
     map.js              maailmakartta
-    alphabet.js         aakkostaulu (kartalta avattava ja tason lopussa) tuhottujen määrineen
   main.js               käynnistys
 docs/ARKKITEHTUURI.md   tämä tiedosto
 ```
@@ -49,30 +47,23 @@ docs/ARKKITEHTUURI.md   tämä tiedosto
    - `card`, `palette`: kartan kortin ja pelimaailman värit
    - `scenery(x, y, u, seed, deco)`: tienvarsiesine palikoista (`cube()`)
    - valinnainen `ambient(dt)`: lisäkerros, esim. putoavat terälehdet
-   - `bosses`: loppuvastustajien nimiä (kansantarujen hirviöitä). Kirjaintasoilla nimi valitaan niin, että sen kaikki kirjaimet ovat jo pelissä, ja hirviön levyt muodostavat nimen.
-   - `rewards`: sanat, jotka loppuvastustaja vapauttaa kaatuessaan `[[sana, suomennos, latinaistus?], …]`
 3. Lisää `index.html`:ään yksi rivi `<script src="js/worlds/<kieli>.js"></script>` muiden maailmojen joukkoon. Rivien järjestys määrää järjestyksen kartalla.
 
 ## Uuden kausiteeman lisääminen
 
-1. `js/seasons/<id>.js`: `Tavu.addSeason({ id, name, cssClass, active(date), palette, colors, sky(), scenery(), accessory(), body(), cannon(), rewards })`
-   - `body()` + `bodyChance`: osa tyypistä saa kausiasun (esim. kurpitsa). `cannon()`: tykin ulkoasu. `rewards[worldId]`: kauden saalissanat.
+1. `js/seasons/<id>.js`: `Tavu.addSeason({ id, name, cssClass, active(date), palette, colors, sky(), scenery(), accessory() })`
    - `active(date)` päättää, milloin teema kytkeytyy päälle automaattisesti.
    - Kaikki piirtokoukut ovat valinnaisia. Jos koukku puuttuu, käytetään maailman omaa piirtoa.
 2. `css/seasons/<id>.css`: kartan ja käyttöliittymän värit `body.<cssClass>`-valitsimella.
-3. Lisää molemmat `index.html`:ään. Teema kytkeytyy päälle vain `active(date)`-ehdon mukaan; pelaaja ei valitse sitä. Testaukseen: lisää osoitteen perään `#<id>` (esim. `#halloween`) tai `#perus`.
-
-## Tason kulku
-
-- Maailman tasot muodostavat yhden polun (`stagesOf`): kirjaintasojen väliin tulee sanataso joka toisen kirjaintason jälkeen. Latinalaisilla kielillä on pelkkiä sanatasoja.
-- Tason vaiheet (`G.phase`): `wave` (tyyppiaalto) → `alarm` (hälytys noin 2,6 s) → `boss` (loppuvastustaja) → `loot` (hirviön vapauttamat teemasanat hyökkäävät) → `done`.
-- Loppuvastustajalla on 5 kirjainta tai 3 sanaa levyinä. Jokainen levy on oma osumakohtansa (`segLane`, `bossSegAt`) ja tuhoutuu vain omalla vastineellaan. Jos hirviö pääsee rajalle, menetetään elämä ja se työntyy taaksepäin.
+3. Lisää molemmat `index.html`:ään. Teema ilmestyy kartan *Teema*-valintaan automaattisesti.
 
 ## Pelin tila
 
 - `G` on käynnissä olevan tason koko tila (tyypät, ammukset, partikkelit, elämät, pisteet). Kartalla `G` on `null`.
 - `save` sisältää tallennetut tähdet, nähdyt kirjaimet ja asetukset. Avain `kotro-karkkijahti-v1` säilytettiin prototyypistä, jotta aiemmat tähdet säilyvät.
 - Maailma on pseudo-3D: `lane` −1…1 on tie poikittain ja `z` etäisyys (1 = tykki, 4,2 = horisontti). `px(lane,z)`, `py(z)` ja `sc(z)` muuntavat ruutukoordinaateiksi.
+- Ammus on yksi laatikko maan tasossa (`ammoBox()` actors.js:ssä); laukaus, kosketusalue ja piirto käyttävät samaa paikkaa.
+- Kahdella ensimmäisellä tasolla (`G.plain`) tyypät ovat pelkkiä kirjaimia: ei silmiä, raajoja, hattuja, kurpitsoja, juoksijoita eikä ampujia.
 
 ## Seuraavia mahdollisia askelia
 

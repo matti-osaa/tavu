@@ -14,8 +14,8 @@ function aimAt(x,y){ if(!G) return; G.didMove=true;
   let k=sc(ZCAN); if(y!==undefined&&y>HY+8&&y<BY){ k=Math.max(sc(ZF),(y-HY)/(BY-HY)); }
   G.tlane=Math.max(-.85,Math.min(.85,(x-W/2)/(HW*k))); }
 // Hit area of the loaded ammo cube (generous, so it is easy to tap with a thumb)
-function onCube(p){ if(!G) return false; const u=Math.max(30,RB*.75), cx=px(G.lane,ZCAN), cy=BY+6-u*2.6;
-  return Math.abs(p.x-cx)<u*1.2 && p.y>cy-u*1.3 && p.y<cy+u*1.2; }
+function onCube(p){ if(!G) return false; const B=ammoBox();
+  return Math.abs(p.x-B.x)<B.s*.8 && p.y>B.y-B.s*.8 && p.y<B.y+B.s*.8; }
 
 cv.addEventListener('pointerdown',e=>{
   if(!G) return; audio();

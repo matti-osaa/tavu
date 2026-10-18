@@ -30,6 +30,66 @@ function noise(dur,freq,q,vol,delay=0){
 }
 // Hit: a soft thump + crunchy candy burst + one warm note
 const sHit=()=>{const f=LOW[Math.floor(Math.random()*LOW.length)]; tone(150,.22,'sine',.38,.4); noise(.22,1100,.7,.45); tone(f,.4,'sine',.14,1,.05); tone(f*1.5,.3,'sine',.05,1,.08);};
+// Death wail: a synthesised voice crying "aaaa…". A sawtooth "voice" goes through three vowel
+// formant filters (a → o as it dies away), pitch cracks up, then sags and sobs with growing vibrato.
+let wails=0;
+function sScream(c){ c=c||ac;
+  if(!soundOn||!c||wails>=2)return; wails++;
+  const t=c.currentTime+.02, dur=.95+Math.random()*.35, p0=330+Math.random()*220, end=t+dur;
+  const out=c.createGain(); out.gain.setValueAtTime(0,t);
+  out.gain.linearRampToValueAtTime(.32,t+.04); out.gain.setValueAtTime(.32,t+.18);
+  // two sobbing dips, then fade
+  out.gain.linearRampToValueAtTime(.14,t+dur*.42); out.gain.linearRampToValueAtTime(.26,t+dur*.5);
+  out.gain.linearRampToValueAtTime(.1,t+dur*.72); out.gain.linearRampToValueAtTime(.18,t+dur*.78);
+  out.gain.exponentialRampToValueAtTime(.001,end);
+  out.connect(c.destination);
+  // vowel "a" formants sliding toward "o"
+  [[800,520,1],[1150,880,.55],[2800,2500,.18]].forEach(([fa,fo,lv])=>{
+    const f=c.createBiquadFilter(), g=c.createGain(); f.type='bandpass'; f.Q.value=7;
+    f.frequency.setValueAtTime(fa,t); f.frequency.setValueAtTime(fa,t+dur*.3); f.frequency.linearRampToValueAtTime(fo,end);
+    g.gain.value=lv*4; f.connect(g).connect(out); (out._f=out._f||[]).push(f); });
+  const toF=n=>out._f.forEach(f=>n.connect(f));
+  // the voice: two slightly detuned saws; pitch cracks up, then sags down
+  [0,1].forEach(k=>{ const o=c.createOscillator(); o.type='sawtooth'; const p=p0*(k?1.006:1);
+    o.frequency.setValueAtTime(p*.8,t); o.frequency.exponentialRampToValueAtTime(p*1.18,t+.07);
+    o.frequency.exponentialRampToValueAtTime(p,t+.2); o.frequency.exponentialRampToValueAtTime(p*.88,t+dur*.45);
+    o.frequency.exponentialRampToValueAtTime(p*.93,t+dur*.5);                       // sob hiccup
+    o.frequency.exponentialRampToValueAtTime(p*.5,end);
+    // wobbling, ever wider vibrato = whimpering
+    const l=c.createOscillator(), lg=c.createGain(); l.frequency.setValueAtTime(5,t); l.frequency.linearRampToValueAtTime(8,end);
+    lg.gain.setValueAtTime(p*.01,t); lg.gain.linearRampToValueAtTime(p*.07,end); l.connect(lg).connect(o.frequency);
+    toF(o); o.start(t); l.start(t); o.stop(end+.05); l.stop(end+.05); });
+  // breath
+  const n=Math.floor(c.sampleRate*dur), buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*.25;
+  const b=c.createBufferSource(); b.buffer=buf; toF(b); b.start(t);
+  setTimeout(()=>wails--,dur*1000);
+}
+// Death cry in the tyyppä's own language: the device voice says the letter's sound or the word,
+// with the last vowel dragged out into a wail ("бааа!", "тыкваааа!", "カーーー！"). No voice → synth wail.
+const VOWELS={'ru':'аеёиоуыэюя','el':'αεηιουωάέήίόύώ','sv':'aeiouyåäö','en':'aeiou'};
+const OPEN={'ru':'а','el':'α'};
+let voices=[]; const loadVoices=()=>{try{voices=speechSynthesis.getVoices()}catch(e){}};
+if(window.speechSynthesis){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+function wailText(text,lang){
+  const l=lang.slice(0,2), low=text.toLocaleLowerCase(lang);
+  if(l==='ja') return text+'ーーー！';
+  const V=VOWELS[l]||'aeiou';
+  let i=-1; for(let k=low.length-1;k>=0;k--) if(V.includes(low[k])){i=k;break;}
+  if(i<0) return OPEN[l]? low+OPEN[l].repeat(4)+'!' : null;              // a lone consonant: "б" → "бaaaa!"
+  return low.slice(0,i+1)+low[i].repeat(4)+low.slice(i+1)+'!';
+}
+function sDie(text,lang){
+  if(!soundOn) return;
+  const v=window.speechSynthesis&&lang&&voices.find(x=>x.lang.replace('_','-').toLowerCase().startsWith(lang.slice(0,2).toLowerCase()));
+  const say=v&&wailText(text,lang);
+  if(!say){ sScream(); return; }
+  try{ speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(say); u.voice=v; u.lang=v.lang;
+    u.pitch=1.5+Math.random()*.5; u.rate=.75+Math.random()*.15; u.volume=1;
+    speechSynthesis.speak(u);
+  }catch(e){ sScream(); }
+}
 // Ricochet: a sharp woody "tok" + springy boing, clearly different from a hit
 const sClank=()=>{noise(.05,2600,3,.35); tone(700,.07,'triangle',.16,.55); tone(170,.38,'sine',.17,2.1,.04); tone(255,.32,'sine',.06,2.1,.06);};
 const sPop=()=>{const f=LOW[Math.floor(Math.random()*LOW.length)]; tone(f,.32,'sine',.22,1.25); tone(f*1.5,.28,'sine',.07,0,.03); tone(f/2,.2,'sine',.12,.8);};

@@ -11,6 +11,7 @@ function startLevel(wi,si){
   if(isWord){G.goal=10+li*2;G.maxOn=3+li;G.speed=.4+li*.05;}
   G.speed*=G.pace;
   if(si===0){ G.speed*=.75; G.goal=Math.min(G.goal,10); }   // first level: slower and shorter
+  G.plain=si<2;                                                // first levels: tyypät are just letters, nothing else
   G.assist=si<2||save.diff==='easy';                          // beginner help: matching tyypät glow, vastine labels
   if(!save.tutDone&&!isWord&&w.levels.length){ G.tut={step:0,t:0}; }
   $('map').hidden=true; $('game').hidden=false; resize();
@@ -126,16 +127,16 @@ function spawn(){
 function makeEnemy(ch,lane,z){
   return {ch,disp:dispCh(ch),ans:ansOf(ch),wf:G.isWord?Math.min(2.2,1+(ch.length-1)*.3):1,bl:lane,lane,z,vz:G.speed*(.85+Math.random()*.3),ph:Math.random()*6,
     col:(c=>c[Math.floor(Math.random()*c.length)])(G.season?G.season.colors:CANDY),shake:0,born:G.t,hint:!G.seen.has(ch),
-    shoots:G.si>0&&Math.random()<Math.min(.35,.1+G.si*.05), fireT:1.5+Math.random()*2,
-    pumpkin:!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99),
-    runner:G.si>0&&Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0};
+    shoots:!G.plain&&G.si>0&&Math.random()<Math.min(.35,.1+G.si*.05), fireT:1.5+Math.random()*2,
+    pumpkin:!G.plain&&!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99),
+    runner:!G.plain&&G.si>0&&Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0};
 }
 function fire(i){
   if(!G||!G.running)return; audio();
   if(!G.cur)return;
   if(G.cool>0){ tone(110,.05,'square',.03); return; }   // still recharging: a dry click
   const b=$('bf'); b.classList.add('press'); setTimeout(()=>b.classList.remove('press'),90);
-  const z0=ZCAN+.05, u=Math.max(30,RB*.75), cubeY=BY+6-u*1.8-u*1.5*.5-4;
+  const z0=ZCAN+.05, cubeY=ammoBox().y;
   G.shots.push({E0:(py(z0)-cubeY)/sc(z0),z0,lane:G.lane,z:z0,vz:1.15,ans:G.cur,lab:dispAns(G.cur),col:G.curCol,bounced:false,vx:0,sx:0,sy:0,vy:0,life:1});
   G.didFire=true; G.fired++; G.cool=COOL; G.recoil=1; G.reload=0; sPew();
   G.muzzle.push({ans:dispAns(G.cur),col:G.curCol,life:.45,max:.45});
@@ -159,7 +160,7 @@ function pop(e,s){
   G.flash=.1; G.shake=Math.max(G.shake,reduce?0:.12);
   if(G.combo>=3) floatText(ex,ey-RB*s0-70,`putki ×${G.combo}`,'#FFB800',false);
   for(const o of G.enemies){const d=Math.abs(o.z-e.z)+Math.abs(o.lane-e.lane)*.8; if(d<1.6){o.vz=-1.6*(1-d/1.6)-.2;}}
-  G.hitstop=.06; sHit(); flashBtn('hit'); if(!G.tut) nextAmmo();
+  G.hitstop=.06; sHit(); sDie(e.ch,G.w.lang); flashBtn('hit'); if(!G.tut) nextAmmo();
   if(G.assist&&!G.tut&&G.combo>=2&&Math.random()<.6) floatText(ex,ey-RB*s0-40,['JEE!','HIENOA!','SUPER!','JES!','MAHTAVAA!'][Math.floor(Math.random()*5)],'#FFB800',true);
 
   if(!G.seen.has(e.ch)){G.seen.add(e.ch); save.seen[G.w.id]=[...G.seen]; persist();}
@@ -241,7 +242,7 @@ function hitBossSeg(i,s){
   burst(x,y,g.col,30,380*Math.max(.6,s0));
   G.parts.push({glyph:true,ch:g.disp,ans:dispAns(g.ans),fi:G.isWord?G.fi[g.ans]:'',x,y,vx:0,vy:-260,life:.9,max:.9,col:g.col,sz:RB*s0,rot:0});
   G.parts.push({ring:true,x,y,r:RB*s0,life:.45,max:.45,col:g.col},{flashball:true,x,y,r:RB*s0*1.4,life:.18,max:.18});
-  G.flash=.1; G.shake=Math.max(G.shake,reduce?0:.2); G.hitstop=.08; sHit(); flashBtn('hit'); prog();
+  G.flash=.1; G.shake=Math.max(G.shake,reduce?0:.2); G.hitstop=.08; sHit(); sDie(g.ch,G.w.lang); flashBtn('hit'); prog();
   if(!G.seen.has(g.ch)){G.seen.add(g.ch); save.seen[G.w.id]=[...G.seen]; persist();}
   if(b.segs.every(q=>!q.alive)) bossDown(); else nextAmmo();
 }
