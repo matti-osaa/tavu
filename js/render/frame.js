@@ -62,9 +62,11 @@ function loop(now){
 /* Small bug note in the corner (so a screenshot tells what broke) */
 function showBug(err){
   const m=(err&&(err.stack||err.message))||String(err); if(window._lastBug===m) return; window._lastBug=m;
+  console.error('[Tavu bugi]',err);
+  try{ localStorage.setItem('tavu-lastbug',new Date().toLocaleString('fi-FI')+'\n'+m); }catch(_){}
   let el=document.getElementById('bugnote'); if(!el){ el=document.createElement('div'); el.id='bugnote';
     el.style.cssText='position:fixed;left:6px;bottom:6px;right:6px;z-index:99;background:#2B2333;color:#FFB4B4;font:11px/1.3 monospace;padding:6px 8px;border-radius:6px;white-space:pre-wrap;max-height:30vh;overflow:auto;opacity:.92';
-    el.onclick=()=>el.remove(); document.body.appendChild(el); }
+    el.onclick=()=>{ if(navigator.clipboard) navigator.clipboard.writeText(el.textContent).catch(()=>{}); el.remove(); }; document.body.appendChild(el); }
   el.textContent='Bugi: '+m.split('\n').slice(0,4).join('\n');
 }
 addEventListener('error',e=>showBug(e.error||e.message));
@@ -158,3 +160,6 @@ function drawZap(){
     ctx.stroke(); }
   ctx.restore();
 }
+
+// the last bug survives a reload: open the game with #bugi to see it again
+if(location.hash==='#bugi'){ try{ const b=localStorage.getItem('tavu-lastbug'); if(b) setTimeout(()=>{ window._lastBug=''; showBug(b); },300); }catch(_){} }
