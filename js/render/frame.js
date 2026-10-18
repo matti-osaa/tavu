@@ -16,6 +16,8 @@ function draw(){
   G.shots.filter(s=>s.bounced).forEach(drawShot);
   for(const p of G.parts){
     const a=Math.max(0,p.life/p.max);
+    if(p.squash){ const k=1-a; ctx.save(); ctx.globalAlpha=a; ctx.translate(p.x,p.y); ctx.scale(1+k*.6,1-k*.45); smoothText(p.ch,0,0,p.sz*1.9,p.col,true); ctx.restore(); continue; }
+    if(p.conf){ ctx.save(); ctx.globalAlpha=Math.min(1,a*2); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.scale(1,Math.cos(p.rot*1.7)); ctx.fillStyle=p.col; ctx.fillRect(-p.sz/2,-p.sz*.3,p.sz,p.sz*.6); ctx.restore(); continue; }
     if(p.flashball){ctx.globalAlpha=a;ctx.fillStyle='#FFFDF0';const q=p.r*2*(1.2-a*.4);ctx.fillRect(p.x-q/2,p.y-q/2,q,q);ctx.globalAlpha=1;continue;}
     if(p.clang){ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#fff';const d=p.r*(.5+(1-a)*.9), q=Math.max(3,p.r*.14);
       for(let i=0;i<8;i++){const an=i/8*Math.PI*2; for(let k=.55;k<=1;k+=.15)ctx.fillRect(p.x+Math.cos(an)*d*k-q/2,p.y+Math.sin(an)*d*k-q/2,q,q);}
@@ -86,7 +88,7 @@ function drawAlarm(){
     ctx.textAlign='center'; ctx.textBaseline='middle';
     const fs=Math.round(Math.min(W*.14,64)); ctx.font=`700 ${fs}px ${PXF}`;
     ctx.fillStyle='#1B1424'; ctx.fillText('VAROITUS!',W/2+4,H*.38+4); ctx.fillStyle='#FFD21E'; ctx.fillText('VAROITUS!',W/2,H*.38);
-    ctx.font=`700 ${Math.round(fs*.36)}px ${PXF}`;
+    ctx.font=`900 ${Math.round(fs*.4)}px ${LTF}`;   // smooth font: the name may be Cyrillic, Greek or kana
     const nm=(G.bossNext||'LOPPUVASTUSTAJA')+' LÄHESTYY'; ctx.fillStyle='#1B1424'; ctx.fillText(nm,W/2+2,H*.38+fs*.85+2); ctx.fillStyle='#FFFFFF'; ctx.fillText(nm,W/2,H*.38+fs*.85);
   }
 }

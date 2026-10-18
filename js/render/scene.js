@@ -32,6 +32,11 @@ function drawBg(){
     for(let side=-1;side<=1;side+=2){const h=hash(id,side*9); quad(side*1,side*1.1,za,zb,shade(T.edge,(h-.5)*20));}
     if(near>.35){ctx.strokeStyle='rgba(0,0,0,.07)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(px(-1,za),py(za)); ctx.lineTo(px(1,za),py(za)); ctx.stroke();}
   }
+  // little things lying on the field: grass tufts, flowers, pebbles, worn patches (seasons swap flowers for leaves)
+  drawDecals(T);
+  // a row of far-away trees along the horizon
+  for(let x=-10;x<W+10;x+=14){ const h=6+hash(x,77)*10, w=8+hash(x,31)*6; ctx.fillStyle=shade(T.hill,-18-hash(x,5)*15);
+    ctx.beginPath(); ctx.moveTo(x-w/2,HY+3); ctx.lineTo(x,HY+3-h); ctx.lineTo(x+w/2,HY+3); ctx.fill(); }
   // distance haze
   const hz=ctx.createLinearGradient(0,HY,0,HY+(BY-HY)*.22); hz.addColorStop(0,T.far); hz.addColorStop(1,'rgba(255,255,255,0)');
   ctx.fillStyle=hz; ctx.fillRect(0,HY,W,(BY-HY)*.22);
@@ -44,4 +49,20 @@ function drawDeco(d){
   if(x<-u*4||x>W+u*4)return;
   const painter=(G.season&&G.season.scenery)||G.w.scenery;
   if(painter) painter(x,y,u,seed,d);
+}
+
+function drawDecals(T){
+  if(!G.decals) return; const hw=G.season&&G.season.id==='halloween';
+  for(const d of [...G.decals].sort((a,b)=>b.z-a.z)){
+    const s0=sc(d.z), x=Math.round(px(d.lane,d.z)), y=Math.round(py(d.z)), u=Math.max(1.5,RB*s0*.09);
+    if(x<-20||x>W+20) continue;
+    const onRoad=Math.abs(d.lane)<1;
+    if(d.type==='tuft'){ ctx.fillStyle=onRoad?shade(T.path,-28):shade(T.grass2,-25);
+      ctx.fillRect(x-u*1.5,y-u*2,u,u*2); ctx.fillRect(x,y-u*3,u,u*3); ctx.fillRect(x+u*1.5,y-u*2,u,u*2); }
+    else if(d.type==='flower'){ const c=hw?['#E8781A','#8A4A1E','#C9A23A'][d.seed%3]:['#FF6FA5','#FFE15A','#FFFFFF','#9B7BFF'][d.seed%4];
+      if(hw){ ctx.fillStyle=c; ctx.fillRect(x-u*1.5,y-u,u*3,u*1.2); ctx.fillRect(x-u*.5,y-u*1.6,u,u*.6); }
+      else { ctx.fillStyle=shade(T.grass,-30); ctx.fillRect(x,y-u*3,u*.8,u*3); ctx.fillStyle=c; ctx.fillRect(x-u,y-u*4.2,u*2.8,u*1.6); ctx.fillStyle='#FFE15A'; ctx.fillRect(x,y-u*3.8,u*.8,u*.8); } }
+    else if(d.type==='pebble'){ ctx.fillStyle='rgba(30,20,40,.18)'; ctx.fillRect(x-u*2,y-u*.3,u*4,u); ctx.fillStyle=shade('#A8A2B0',(hash(d.seed,2)-.5)*30); ctx.fillRect(x-u*1.6,y-u*1.6,u*3.2,u*1.6); ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(x-u*1.2,y-u*1.6,u*1.4,u*.5); }
+    else if(d.type==='wear'&&onRoad){ ctx.fillStyle='rgba(60,40,30,.08)'; ctx.beginPath(); ctx.ellipse(x,y,u*9,u*2.4,0,0,Math.PI*2); ctx.fill(); }
+  }
 }

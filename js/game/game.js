@@ -13,7 +13,8 @@ function startLevel(wi,si){
   G.speed*=G.pace;
   if(si===0){ G.speed*=.75; G.goal=Math.min(G.goal,10); }   // first level: slower and shorter
   G.plain=si<2;
-  G.rocks=makeRocks(si);                                                // first levels: tyypät are just letters, nothing else
+  G.rocks=makeRocks(si);
+  G.decals=Array.from({length:90},(_,i)=>({lane:(Math.random()*2-1)*2.4, z:1.05+Math.pow(Math.random(),.8)*(ZF-.6), type:['tuft','tuft','flower','pebble','wear','tuft'][i%6], seed:i}));                                                // first levels: tyypät are just letters, nothing else
   G.assist=si<2||save.diff==='easy';                          // beginner help: matching tyypät glow, vastine labels
   if(!save.tutDone&&!isWord&&w.levels.length){ G.tut={step:0,t:0}; }
   $('map').hidden=true; $('game').hidden=false; resize(); loadCries(w.id);
@@ -212,6 +213,10 @@ function pop(e,s){
   for(let i=0;i<9;i++){const a=i/9*Math.PI*2+Math.random()*.4, sp=(220+Math.random()*220)*k;
     G.parts.push({chunk:true,x:ex,y:ey,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-160,life:.9,max:.9,col:e.col,sz:RB*s0*(.22+Math.random()*.18),rot:Math.random()*6});}
   G.parts.push({glyph:true,ch:e.disp,ans:dispAns(e.ans),fi:wordMode()?(G.fi[e.ans]||''):'',col2:s.col,x:ex,y:ey,vx:0,vy:-300,life:.85,max:.85,col:e.col,sz:RB*s0,rot:0});
+  // squash, then pop into confetti in the letter's own colour
+  G.parts.push({squash:true,ch:e.disp,x:ex,y:ey+RB*s0*.4,sz:RB*s0,col:e.col,life:.16,max:.16,vx:0,vy:0});
+  for(let i=0;i<22;i++){ const a=Math.random()*Math.PI*2, sp=(160+Math.random()*320)*k;
+    G.parts.push({conf:true,x:ex,y:ey,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-260,life:1.3+Math.random()*.6,max:1.9,col:i%4?e.col:'#FFFFFF',sz:4+Math.random()*5,rot:Math.random()*6,spin:(Math.random()-.5)*14}); }
   G.parts.push({ring:true,x:ex,y:ey,r:RB*s0,life:.45,max:.45,col:e.col},{ring:true,x:ex,y:ey,r:RB*s0*.6,life:.6,max:.6,col:'#FFD23F'},{flashball:true,x:ex,y:ey,r:RB*s0*1.6,life:.18,max:.18});
   G.flash=.1; G.shake=Math.max(G.shake,reduce?0:.12);
   if(G.combo>=3) floatText(ex,ey-RB*s0-70,`putki ×${G.combo}`,'#FFB800',false);
@@ -453,7 +458,8 @@ function update(dt){
   }
   G.shots=G.shots.filter(s=>!s.dead&&(s.bounced?s.life>0:s.z<ZF+1));
   if(G.splat){ G.splat.t+=dt; if(G.splat.t>2.6) G.splat=null; }
-  for(const p of G.parts){p.life-=dt; if(!p.ring&&!p.clang&&!p.flashball){p.vy+=600*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=dt*8;}}
+  for(const p of G.parts){p.life-=dt; if(p.conf){ p.vy+=380*dt; p.vx*=1-dt*1.8; p.vy=Math.min(p.vy,160); p.x+=p.vx*dt+Math.sin(p.life*7+p.rot)*30*dt; p.y+=p.vy*dt; p.rot+=p.spin*dt; continue; }
+    if(!p.ring&&!p.clang&&!p.flashball&&!p.squash){p.vy+=600*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=dt*8;}}
   G.parts=G.parts.filter(p=>p.life>0);
   for(const t of G.texts){t.life-=dt;t.y-=40*dt;}
   G.texts=G.texts.filter(t=>t.life>0);

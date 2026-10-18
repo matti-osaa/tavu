@@ -38,7 +38,9 @@ function refreshStacks(){
   const g=slingGeo();
   if(!G.stacks||G.stacks.length!==g.n){ const old=G.stacks||[]; G.stacks=Array.from({length:g.n},(_,i)=>old[i]||{ans:'',t:1,wait:0}); G.stacks.forEach(s=>{ if(!s.ans) s.ans=newDiscAns(''); }); }
   const dt=G.dt||0;
-  G.stacks.forEach(s=>{ if(!s.ans){ s.wait-=dt; if(!s.next) s.next=newDiscAns(s.prev); if(s.wait<=0){ if(G.stacks.some(q=>q!==s&&q.ans===s.next)) s.next=newDiscAns(s.prev); s.ans=s.next; s.next=''; s.t=1; tone(380,.04,'sine',.04); noise(.03,2600,3,.05); } } });
+  G.stacks.forEach(s=>{ if(!s.ans){ s.wait-=dt; if(!s.next) s.next=newDiscAns(s.prev); if(s.wait<=0){ const taken=a=>G.stacks.some(q=>q!==s&&q.ans===a);
+        if(taken(s.next)){ const free=answerPool().filter(a=>!taken(a)&&a!==s.prev); s.next=free.length?free[Math.floor(Math.random()*free.length)]:s.next; }
+        s.ans=s.next; s.next=''; s.t=1; tone(380,.04,'sine',.04); noise(.03,2600,3,.05); } } });
   // the two nearest different answers on the road must always be in the row (a thrown letter, a boss plate…)
   const need=needed(), rank=a=>{ const i=need.indexOf(a); return i<0?1e9:i; }, has=a=>G.stacks.some(s=>s.ans===a);
   need.slice(0,2).forEach(a=>{ if(has(a)) return;

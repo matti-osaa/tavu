@@ -57,7 +57,9 @@ function drawCandy(e){
     ctx.globalAlpha=a;
   } else if(e.ans!==G.cur) e.pinged=false;
   if(e.pumpkin&&G.season&&G.season.body) G.season.body(cx,by,TW,TH,u,e.seed||1);
-  rows.forEach((r,i)=>smoothText(r,cx,by-(rows.length-1-i)*LH,fs,e.col,e.shield>.2));
+  // a soft squash-and-stretch with every step, so even plain letters walk with a bounce
+  { const sq=Math.sin(step*2)*.06*(e.vz>.05?1:.3); ctx.save(); ctx.translate(cx,by); ctx.scale(1+sq,1-sq); ctx.translate(-cx,-by);
+    rows.forEach((r,i)=>smoothText(r,cx,by-(rows.length-1-i)*LH,fs,e.col,e.shield>.2)); ctx.restore(); }
   if(e.shieldHp>0&&e.grab){ // hoarder's shield: the grabbed disc, held up in front, cracking with every right hit
     const sw=Math.max(TW*.8,R*1.6), sh=TH*.75, sx=cx-sw/2+Math.sin(G.t*3+e.ph)*u, sy=by-TH*.55-sh/2;
     ctx.save(); ctx.globalAlpha=a*.92;
@@ -105,10 +107,15 @@ function drawShot(s){
     ctx.save(); ctx.globalAlpha=a*.35; ctx.fillStyle='#9C93A8';
     s.trail.forEach((t,i)=>{const q=t[2]*(.5+.5*(i+1)/s.trail.length); ctx.beginPath(); ctx.arc(t[0],t[1],q/2,0,Math.PI*2); ctx.fill();});
     ctx.globalAlpha=a; drawDisc(s.sx,s.sy,r,s.lab||s.ans,'#9C93A8',{maxW:r*6}); ctx.restore(); return;}
-  const s0=sc(s.z), r=Math.max(12,RB*.55*s0), [x,y]=shotXY(s,s.z), L=s.lab||s.ans;
+  const s0=sc(s.z), r=Math.max(12,RB*.55*s0), [x,y0]=shotXY(s,s.z), L=s.lab||s.ans;
+  // a little hop in flight (back down by the time it reaches the tyypät) and a shadow on the ground
+  const k=Math.min(1,(s.z-s.z0)/1.4), arc=Math.sin(k*Math.PI)*RB*s0*.9, y=y0-arc, gyS=py(s.z);
+  { ctx.save(); ctx.globalAlpha=.25*(1-Math.min(1,arc/(RB*s0*2))); ctx.fillStyle='#1B1424'; ctx.beginPath(); ctx.ellipse(x,gyS,r*.9,r*.28,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
   ctx.save(); for(let i=1;i<=4;i++){const zt=Math.max(s.z0,s.z-i*.1), [tx,ty]=shotXY(s,zt), q=r*(1-i/5); ctx.globalAlpha=.35*(1-i/5); ctx.fillStyle=s.col; ctx.beginPath(); ctx.arc(tx,ty,q,0,Math.PI*2); ctx.fill();}
   ctx.restore();
   drawDisc(x,y,r,L,s.col,{maxW:r*6});
+  // spin: a bright notch running round the rim
+  { const an=(G.t-(s.t0||0))*14+s.z*3; ctx.save(); ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.lineWidth=Math.max(2,r*.16); ctx.lineCap='round'; ctx.beginPath(); ctx.arc(x,y,r*.88,an,an+.7); ctx.stroke(); ctx.restore(); }
   if(wordMode()&&G.fi[s.ans]){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(10,r*.6))}px ${LTF}`; ctx.textAlign='center'; ctx.fillStyle='#2B2333'; ctx.fillText(G.fi[s.ans],x+1,y+r*1.9+1); ctx.fillStyle='#FFF'; ctx.fillText(G.fi[s.ans],x,y+r*1.9); ctx.restore(); }
 }
 /* The board at the bottom: a row of discs, each in its own little rubber band; emergency button top-left */
@@ -184,6 +191,9 @@ function drawBoss(b){
   const dark=shade(b.col,-70);
   ctx.save(); ctx.globalAlpha=a;
   ctx.fillStyle='rgba(20,10,30,.3)'; ctx.fillRect(cx-bodyW*.55,gy-U*.25,bodyW*1.1,U*.5);
+  const skin=BOSS_SKINS[G.w.id];
+  if(skin){ skin({cx:cx+jx,gy,U,W:bodyW,H:bodyH,legH,top,X,step,t:G.t,col:b.col}); }
+  else {
   // legs, stomping
   const legW=bodyW*.22; ctx.fillStyle=dark;
   ctx.fillRect(cx-bodyW*.3-legW/2+jx,gy-legH-(step>0?U*.25:0),legW,legH); ctx.fillRect(cx+bodyW*.3-legW/2+jx,gy-legH-(step<0?U*.25:0),legW,legH);
@@ -212,6 +222,7 @@ function drawBoss(b){
   const my=top+bodyH*.42, mw=bodyW*.6;
   ctx.fillStyle='#1B1424'; ctx.fillRect(cx+jx-mw/2,my,mw,U*.45);
   ctx.fillStyle='#FFFFFF'; const tw=mw/8; for(let k=0;k<8;k++){ctx.fillRect(cx+jx-mw/2+k*tw+tw*.15,my,tw*.7,U*.16); if(k%2)ctx.fillRect(cx+jx-mw/2+k*tw+tw*.15,my+U*.29,tw*.7,U*.16);}
+  }
   // name banner above the horns, in the monster's own script
   if(b.name){ const bh=Math.max(20,U*.75); sign(cx+jx,top-U*1.9-bh*.2,bh,b.name,b.nameLat,'#1B1424'); }
   // plates = hitboxes
