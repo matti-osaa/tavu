@@ -1,5 +1,5 @@
 /* Actors: tyypät (letter creatures), shots and the cannon. */
-const RADAR_Z=2.6;   // how close (z) a tyyppä must come before the help radar picks it up
+const RADAR_Z=1.8;   // how close (z) a tyyppä must come before the help radar picks it up
 function drawCandy(e){
   let headroom=0;
   const s0=sc(e.z), R=RB*s0, x=px(e.lane,e.z), gy=py(e.z);
@@ -47,7 +47,7 @@ function drawCandy(e){
     for(let k=0;k<3;k++) ctx.fillRect(cx-TW*.6-u*(3+k*2),by-TH*(.25+k*.25),u*(2+k),Math.max(2,u*.5));
   }
   ctx.globalAlpha=a;
-  const radar=e.frozen?1:Math.max(0,Math.min(1,(RADAR_Z-e.z)/.4));   // tutorial targets always lit
+  const radar=e.frozen?1:Math.max(0,Math.min(1,(RADAR_Z-e.z)/.15));   // tutorial targets always lit
   if(G.assist&&G.cur&&e.ans===G.cur&&radar>0){ // beginner help "radar": the match lights up gold once it comes close
     if(!e.pinged){ e.pinged=true; G.parts.push({ring:true,x:cx,y:by-TH/2,r:Math.max(TW,TH),life:.5,max:.5,col:'#FFD21E'}); }
     const pulse=(Math.sin(G.t*6)+1)/2, m=u*(1.5+pulse);
