@@ -1,4 +1,5 @@
 /* Actors: tyypät (letter creatures), shots and the cannon. */
+const RADAR_Z=2.6;   // how close (z) a tyyppä must come before the help radar picks it up
 function drawCandy(e){
   let headroom=0;
   const s0=sc(e.z), R=RB*s0, x=px(e.lane,e.z), gy=py(e.z);
@@ -46,11 +47,15 @@ function drawCandy(e){
     for(let k=0;k<3;k++) ctx.fillRect(cx-TW*.6-u*(3+k*2),by-TH*(.25+k*.25),u*(2+k),Math.max(2,u*.5));
   }
   ctx.globalAlpha=a;
-  if(G.assist&&G.cur&&e.ans===G.cur){ // beginner help: the tyyppä your ammo works on glows gold
+  const radar=e.frozen?1:Math.max(0,Math.min(1,(RADAR_Z-e.z)/.4));   // tutorial targets always lit
+  if(G.assist&&G.cur&&e.ans===G.cur&&radar>0){ // beginner help "radar": the match lights up gold once it comes close
+    if(!e.pinged){ e.pinged=true; G.parts.push({ring:true,x:cx,y:by-TH/2,r:Math.max(TW,TH),life:.5,max:.5,col:'#FFD21E'}); }
     const pulse=(Math.sin(G.t*6)+1)/2, m=u*(1.5+pulse);
+    ctx.globalAlpha=a*radar;
     ctx.fillStyle=`rgba(255,210,40,${.25+pulse*.25})`; ctx.fillRect(cx-TW/2-m,by-TH-m,TW+m*2,TH+m*1.6);
     ctx.strokeStyle='#FFD21E'; ctx.lineWidth=Math.max(2,u*.5); ctx.strokeRect(cx-TW/2-m,by-TH-m,TW+m*2,TH+m*1.6);
-  }
+    ctx.globalAlpha=a;
+  } else if(e.ans!==G.cur) e.pinged=false;
   if(e.pumpkin&&G.season&&G.season.body) G.season.body(cx,by,TW,TH,u,e.seed||1);
   rows.forEach((r,i)=>smoothText(r,cx,by-(rows.length-1-i)*LH,fs,e.col,e.shield>.2));
   if(e.shoots){ // shooter tyypät carry a small red marker
