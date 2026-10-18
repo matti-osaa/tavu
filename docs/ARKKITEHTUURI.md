@@ -70,3 +70,4 @@ docs/ARKKITEHTUURI.md   tämä tiedosto
 - Käyttöliittymän tekstit omaan tiedostoon (`js/ui/text-fi.js`), jotta valikot voi kääntää englanniksi ja ruotsiksi.
 - Sanalistat JSON-tiedostoiksi, jos niitä halutaan muokata ilman koodia tai tuoda taulukosta. Tämä vaatii paikallisen palvelimen testaukseen.
 - Äänitetyt ääntämykset `assets/audio/<kieli>/`.
+- Välimuisti: index.html lataa tiedostot muodossa `?v=…`. Vaihda versio, kun julkaiset muutoksia, niin puhelimet eivät jää vanhaan versioon.
