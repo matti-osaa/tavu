@@ -12,6 +12,10 @@ Selainpeli, jossa opitaan kyrillisiä, kreikkalaisia ja katakanakirjaimia sekä 
 - Punainen tuulinappi puhaltaa kaikki tyypät kauas (lataus 1 min, näppäin X). Viiden osuman putki hidastaa kaikkea hetken. Helpolla tasolla tien poikki on sähköaita, joka hidastaa tyyppejä.
 - Kartalta valitaan teema (kauden mukaan / Halloween / perus), vaikeustaso ja kirjainkoko.
 
+## Tyyppien luonteet
+
+Tasolta 3 alkaen kentällä on kiviä (Halloweenina hautakiviä), joiden läpi kiekot eivät mene. Piileskelijät menevät kiven taakse ja kurkkivat välillä. Rohmu nappaa väärän kiekon, kasvaa ja pitää sitä kilpenä, joka kestää kolme oikeaa osumaa. Sieppari ottaa väärän kiekon kiinni ja viskaa sen päin näköä.
+
 ## Salakirjoitus
 
 Kyrillisen ja kreikan polulla on sanatason jälkeen salakirjoitustaso (raidallinen solmu, ei pakollinen): suomenkielinen lause opituilla kirjaimilla. Napauta kirjainta ja valitse vastine – kaikki samat kirjaimet vaihtuvat arvaukseksi, oikeellisuutta ei kerrota. Kun lause näyttää suomelta, kirjoita se ruutuihin. Lauseet: `js/content/sentences-fi.js`.

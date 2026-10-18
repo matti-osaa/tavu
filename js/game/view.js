@@ -8,7 +8,7 @@ const sc=z=>ZN/z;
 const py=z=>HY+(BY-HY)*sc(z);
 // The field fans out with distance: far away it is much wider, so tyypät come at you from a broad front
 // and converge on your position. lw(z) = screen pixels per lane unit at depth z.
-const FAN=.5, fan=z=>1+FAN*Math.max(0,z-1);
+const FAN=.85, fan=z=>1+FAN*Math.max(0,z-1);
 const lw=z=>HW*sc(z)*fan(z);
 const px=(lane,z)=>W/2+lane*lw(z);
 function resize(){

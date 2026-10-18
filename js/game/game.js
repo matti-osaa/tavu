@@ -12,7 +12,8 @@ function startLevel(wi,si){
   if(isWord){G.goal=10+li*2;G.maxOn=3+li;G.speed=.4+li*.05;}
   G.speed*=G.pace;
   if(si===0){ G.speed*=.75; G.goal=Math.min(G.goal,10); }   // first level: slower and shorter
-  G.plain=si<2;                                                // first levels: tyypät are just letters, nothing else
+  G.plain=si<2;
+  G.rocks=makeRocks(si);                                                // first levels: tyypät are just letters, nothing else
   G.assist=si<2||save.diff==='easy';                          // beginner help: matching tyypät glow, vastine labels
   if(!save.tutDone&&!isWord&&w.levels.length){ G.tut={step:0,t:0}; }
   $('map').hidden=true; $('game').hidden=false; resize(); loadCries(w.id);
@@ -110,7 +111,26 @@ function makeEnemy(ch,lane,z){
     shoots:false,   // tyypät no longer fire: the sling can't dodge
     fireT:1.5+Math.random()*2,
     pumpkin:!G.plain&&!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99),
-    runner:!G.plain&&G.si>0&&Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0};
+    runner:!G.plain&&G.si>0&&Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0, ...personality()};
+}
+/* Personalities (not on the first, plain levels):
+   hider   – walks to a rock, hides behind it and peeks out now and then
+   hoarder – grabs a wrong disc, grows and holds it as a shield that takes 3 right hits
+   catcher – catches a wrong disc and throws it back in your face */
+function personality(){
+  if(G.plain||G.isWord&&G.si<3) return {};
+  const r=Math.random();
+  if(r<.2&&G.rocks.length) return {kind:'hider'};
+  if(r<.33) return {kind:'hoarder'};
+  if(r<.43) return {kind:'catcher'};
+  return {};
+}
+/* Rocks / walls on the field: discs can't go through them, tyypät walk around or hide behind */
+function makeRocks(si){
+  if(si<2) return [];
+  const n=2+(si>4?1:0), out=[], lanes=[-.7,-.25,.25,.7].sort(()=>Math.random()-.5);
+  for(let i=0;i<n;i++) out.push({lane:lanes[i]+(Math.random()-.5)*.1, z:2.3+i*.55+Math.random()*.4, hw:.17+Math.random()*.06, seed:Math.floor(Math.random()*99)});
+  return out;
 }
 function burst(x,y,col,n=20,spd=260){
   for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=spd*(.3+Math.random());
@@ -123,6 +143,25 @@ const ZAP_Z0=1.75, ZAP_Z1=2.25;   // the electric strip (easy only)
 function comboReward(x,y){
   if(G.combo>0&&G.combo%5===0){ G.slowT=6; floatText(W/2,H*.4,'HIDASTUS!','#5FD3FF',true);
     [660,520,400,300].forEach((f,i)=>tone(f,.18,'triangle',.08,1,i*.09)); }
+}
+/* Personality reactions to a wrong disc */
+function grabDisc(e,s){   // hoarder: keeps the disc, grows, and holds it up as a 3-hit shield
+  s.dead=true; e.grab=s.lab; e.shieldHp=3; e.grow=0; e.vz=0; e.shake=.3;
+  tone(220,.12,'square',.06,1.6); tone(330,.15,'square',.05,1.4,.1); floatText(px(e.lane,e.z),py(e.z)-RB*sc(e.z)*2,'NAM!','#FFB020',false);
+}
+function shieldHit(e,s){
+  s.dead=true; e.shieldHp--; e.shake=.35; e.vz=0; const x=px(e.lane,e.z), y=py(e.z)-RB*sc(e.z);
+  burst(x,y,'#C9C3D6',14,260); noise(.1,1800,2,.25); tone(300-e.shieldHp*40,.1,'square',.06,.7);
+  if(e.shieldHp<=0){ floatText(x,y-40,'KILPI RIKKI!','#FFFFFF',false); noise(.25,700,1,.35); }
+}
+function catchDisc(e,s){  // catcher: holds the disc a moment, then throws it back
+  s.dead=true; e.held=s.lab; e.throwT=.7; e.vz=0; e.shake=.2; tone(500,.06,'triangle',.06); tone(380,.08,'triangle',.05,1,.06);
+}
+function throwBack(e){
+  if(!G||G.endT>=0) return; const lab=e.held; e.held='';
+  G.splat={lab, t:0, x:.3+Math.random()*.4, y:.3+Math.random()*.25, rot:(Math.random()-.5)*.6, from:[px(e.lane,e.z),py(e.z)-RB*sc(e.z)]};
+  noise(.2,500,1,.3); tone(140,.25,'sine',.2,.5,.35);
+  setTimeout(()=>{ if(G&&G.running){ hurt(Math.round(hpDamage()*.4)); G.shake=reduce?0:.3; sOuch(); } },350);
 }
 function pop(e,s){
   const s0=sc(e.z), ex=px(e.lane,e.z), ey=py(e.z)-RB*s0;
@@ -294,6 +333,18 @@ function update(dt){
       e.dashT-=dt; if(e.dashT<=0){ e.dash=.55; e.dashT=1.6+Math.random()*1.8; e.bl=Math.max(-.75,Math.min(.75,e.bl+(Math.random()<.5?-1:1)*(.3+Math.random()*.3))); }
       if(e.dash>0){ e.dash-=dt; want=G.speed*4.5; }
     }
+    // hiders: go to a rock, crouch behind it, peek out, then come round it
+    if(e.kind==='hider'&&!e.hidDone){
+      const rk=e.rock||(e.rock=[...G.rocks].filter(r=>r.z<e.z-.3).sort((a,b)=>Math.abs(a.lane-e.bl)-Math.abs(b.lane-e.bl))[0]);
+      if(!rk) e.hidDone=true;
+      else if(e.z<rk.z+1.4){ e.bl=rk.lane;
+        if(e.z<=rk.z+.16){ e.z=rk.z+.16; want=0; e.vz=0; e.hideT=(e.hideT??(3+Math.random()*3))-dt;
+          e.peekT=(e.peekT??1.2)-dt; if(e.peekT<=0){ e.peekT=1.6+Math.random()*1.4; e.peek=.8; e.peekSide=Math.random()<.5?-1:1; }
+          if(e.peek>0){ e.peek-=dt; e.bl=rk.lane+e.peekSide*(rk.hw+.13); }
+          if(e.hideT<=0){ e.hidDone=true; e.bl=rk.lane+(Math.random()<.5?-1:1)*(rk.hw+.2); } } }
+    } else if(G.rocks.length){ // everyone else walks round the rocks
+      for(const rk of G.rocks) if(e.z>rk.z&&e.z-rk.z<.9&&Math.abs(e.bl-rk.lane)<rk.hw+.12) e.bl=rk.lane+(e.bl<rk.lane?-1:1)*(rk.hw+.16);
+    }
     if(e.block>0){e.block-=dt; e.vz=0;} else e.vz+=(want-e.vz)*Math.min(1,dt*(e.runner?4:1.5));
     if(zap&&e.z<ZAP_Z1&&e.z>ZAP_Z0){ e.vz=Math.min(e.vz,G.speed*.3); e.dash=0; if(!e.zapped){ e.zapped=true; noise(.12,3000,2,.08); tone(900,.05,'square',.03,.5); } }
     e.z-=e.vz*dt; if(e.z>ZF+.6)e.z=ZF+.6;
@@ -301,7 +352,9 @@ function update(dt){
     if(!e.air) for(const o of G.enemies){ if(o===e||o.air||o.z>=e.z+.001) continue;
       const wid=((o.hw||RB*.6*sc(o.z))/lw(o.z)+(e.hw||RB*.6*sc(e.z))/lw(e.z))*.85, gap=G.isWord||G.lootMode?.5:.38;
       if(Math.abs((o.lx??o.lane)-(e.lx??e.lane))<wid&&e.z-o.z<gap){ e.z=o.z+gap; e.vz=Math.min(e.vz,o.vz); } }
-    e.lx=e.lx??e.bl; e.lx+=(e.bl-e.lx)*Math.min(1,dt*(e.runner?6:2));
+    e.lx=e.lx??e.bl; e.lx+=(e.bl-e.lx)*Math.min(1,dt*(e.runner||e.kind==='hider'?6:2));
+    if(e.grow<1) e.grow=Math.min(1,e.grow+dt*2);
+    if(e.throwT>0){ e.throwT-=dt; if(e.throwT<=0) throwBack(e); }
     e.lane=e.lx+Math.sin(G.t*1.3+e.ph)*.05;
     e.shake=Math.max(0,e.shake-dt); e.shield=Math.max(0,(e.shield||0)-dt); e.missT=Math.max(0,(e.missT||0)-dt);
     if(e.shoots&&e.z<ZF-.6&&e.z>2){ e.fireT-=dt; if(e.fireT<=0){ enemyFire(e.z,e.lane); e.fireT=3+Math.random()*2; } }
@@ -337,9 +390,15 @@ function update(dt){
         g.missAns=s.lab; g.missT=.8; g.flash=.25; b.shake=.3; G.hitstop=.05; G.combo=0;
         G.parts.push({clang:true,x:s.sx,y:s.sy,life:.3,max:.3,r:RB*s0}); sClank(); flashBtn('miss'); continue; }
     }
+    const rock=G.rocks.filter(r=>r.z>z0-.05&&r.z<s.z+.05&&Math.abs(s.lane-r.lane)<r.hw).sort((a,b)=>a.z-b.z)[0];
+    let hitE=false;
     for(const e of [...G.enemies].sort((a,b)=>a.z-b.z)){   // nearest first: the shot meets the front one
-      if(e.z>z0-.15&&e.z<s.z+.15&&Math.abs(s.lane-e.lane)<hitW(e)){
-        if(s.ans===e.ans){pop(e,s);}
+      if(rock&&e.z>rock.z) break;
+      if(e.z>z0-.15&&e.z<s.z+.15&&Math.abs(s.lane-e.lane)<hitW(e)){ hitE=true;
+        if(e.shieldHp>0&&s.ans===e.ans){ shieldHit(e,s); }
+        else if(s.ans===e.ans){pop(e,s);}
+        else if(e.kind==='hoarder'&&!e.grab){ grabDisc(e,s); }
+        else if(e.kind==='catcher'&&!(e.throwT>0)){ catchDisc(e,s); }
         else{ // bounce off in screen space
           const s0=sc(e.z); s.bounced=true; s.sx=px(e.lane,e.z); s.sy=py(e.z)-RB*s0*1.2; s.r=RB*.45*s0; s.trail=[]; s.spin=0; s.life=1.1;
           const dir=s.sx<W/2?-1:1; s.vx=dir*(260+Math.random()*140); s.vy=-420-Math.random()*120;
@@ -350,8 +409,10 @@ function update(dt){
         break;
       }
     }
+    if(rock&&!hitE&&!s.dead){ s.dead=true; const [x,y]=shotXY(s,rock.z); burst(x,y,'#9A9AA4',12,200); noise(.08,900,1.5,.2); tone(160,.08,'square',.05,.6); }
   }
   G.shots=G.shots.filter(s=>!s.dead&&(s.bounced?s.life>0:s.z<ZF+1));
+  if(G.splat){ G.splat.t+=dt; if(G.splat.t>2.6) G.splat=null; }
   for(const p of G.parts){p.life-=dt; if(!p.ring&&!p.clang&&!p.flashball){p.vy+=600*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=dt*8;}}
   G.parts=G.parts.filter(p=>p.life>0);
   for(const t of G.texts){t.life-=dt;t.y-=40*dt;}

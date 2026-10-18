@@ -2,7 +2,7 @@
 const RADAR_Z=1.8;   // how close (z) a tyyppä must come before the help radar picks it up
 function drawCandy(e){
   let headroom=0;
-  const s0=sc(e.z), R=RB*s0, x=px(e.lane,e.z), gy=py(e.z);
+  const s0=sc(e.z), R=RB*s0*(e.grab?1+.35*(e.grow??1):1), x=px(e.lane,e.z), gy=py(e.z);
   const near=Math.max(0,Math.min(1,(2.4-e.z)/1.1));
   const step=G.t*(5+near*5)+e.ph, stepI=Math.floor(step/Math.PI)%2;
   if(!e.rows) e.rows=wordRows(e.ch,e.disp,G.w.lang);                   // long words stack syllable rows
@@ -58,6 +58,17 @@ function drawCandy(e){
   } else if(e.ans!==G.cur) e.pinged=false;
   if(e.pumpkin&&G.season&&G.season.body) G.season.body(cx,by,TW,TH,u,e.seed||1);
   rows.forEach((r,i)=>smoothText(r,cx,by-(rows.length-1-i)*LH,fs,e.col,e.shield>.2));
+  if(e.shieldHp>0&&e.grab){ // hoarder's shield: the grabbed disc, held up in front, cracking with every right hit
+    const sw=Math.max(TW*.8,R*1.6), sh=TH*.75, sx=cx-sw/2+Math.sin(G.t*3+e.ph)*u, sy=by-TH*.55-sh/2;
+    ctx.save(); ctx.globalAlpha=a*.92;
+    ctx.fillStyle='#2B2333'; ctx.fillRect(sx-3,sy-3,sw+6,sh+6); ctx.fillStyle='#B9B3C6'; ctx.fillRect(sx,sy,sw,sh);
+    ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(sx,sy,sw,Math.max(2,sh*.12));
+    ctx.font=`900 ${Math.round(sh*.7)}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#4A4356'; ctx.fillText(e.grab,cx+Math.sin(G.t*3+e.ph)*u,sy+sh/2+1);
+    ctx.strokeStyle='#2B2333'; ctx.lineWidth=Math.max(1.5,u*.5); const cr=3-e.shieldHp;
+    for(let k=0;k<cr;k++){ const ox=sx+sw*(.25+.25*k); ctx.beginPath(); ctx.moveTo(ox,sy); ctx.lineTo(ox+sw*.08,sy+sh*.4); ctx.lineTo(ox-sw*.05,sy+sh*.7); ctx.lineTo(ox+sw*.04,sy+sh); ctx.stroke(); }
+    ctx.restore(); }
+  if(e.held){ // catcher holds the wrong disc up, ready to throw
+    const wob=Math.sin(G.t*20)*u*.6; ctx.save(); drawDisc(cx+wob,by-TH-R*.7,R*.45,e.held,'#9C93A8',{maxW:R*3}); ctx.restore(); }
   if(e.shoots){ // shooter tyypät carry a small red marker
     ctx.fillStyle='#E8323C'; ctx.fillRect(cx-u*1.2,by+u*.4,u*2.4,u*1.1); ctx.fillStyle='#FFD21E'; ctx.fillRect(cx-u*.4,by+u*.6,u*.8,u*.7);
   }
@@ -230,4 +241,18 @@ function drawBolt(b){
   ctx.fillStyle=`rgba(255,80,40,${.25+pulse*.25})`; ctx.fillRect(x-r*1.6,y-r*1.6,r*3.2,r*3.2);
   cube(x-r,y-r,r*2,pulse>.5?'#FF4A2E':'#E02A1C',false);
   ctx.fillStyle='#FFE15A'; ctx.fillRect(x-r*.4,y-r*.4,r*.8,r*.8);
+}
+
+/* A rock / low wall on the field (Halloween: a gravestone). Discs stop at it; tyypät hide behind it. */
+function drawRock(r){
+  const s0=sc(r.z), x=px(r.lane,r.z), y=py(r.z), w=r.hw*2*lw(r.z), h=RB*s0*1.35;
+  ctx.fillStyle='rgba(30,20,40,.25)'; ctx.fillRect(x-w*.55,y-2,w*1.1,Math.max(3,h*.12));
+  if(G.season&&G.season.id==='halloween'){
+    const gw=w*.8, gh=h*1.15; ctx.fillStyle='#2B2333'; ctx.beginPath(); ctx.moveTo(x-gw/2-3,y); ctx.lineTo(x-gw/2-3,y-gh+gw/2); ctx.arc(x,y-gh+gw/2,gw/2+3,Math.PI,0); ctx.lineTo(x+gw/2+3,y); ctx.fill();
+    ctx.fillStyle='#8A8596'; ctx.beginPath(); ctx.moveTo(x-gw/2,y); ctx.lineTo(x-gw/2,y-gh+gw/2); ctx.arc(x,y-gh+gw/2,gw/2,Math.PI,0); ctx.lineTo(x+gw/2,y); ctx.fill();
+    ctx.fillStyle='#6E6A7A'; ctx.font=`900 ${Math.round(gw*.28)}px ${PXF}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('RIP',x,y-gh*.55);
+    return; }
+  const b=Math.max(4,h/2.2), cols=Math.max(2,Math.round(w/b)), bw=w/cols;
+  for(let row=0;row<2;row++) for(let c=0;c<cols-(row?1:0);c++){
+    const bx=x-w/2+c*bw+(row?bw/2:0), by=y-(row+1)*b*.95; cube(bx,by,Math.min(bw,b)*.98,shade('#8E8E96',(hash(r.seed+c,row)-.5)*30),true,r.seed+c+row*7); }
 }

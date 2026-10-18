@@ -11,7 +11,7 @@ function draw(){
   if(G.shake>0){ctx.translate(Math.round((Math.random()-.5)*14*G.shake/.35),Math.round((Math.random()-.5)*10*G.shake/.35));}
   drawBg();
   if(save.diff==='easy') drawZap();
-  const items=[...(G.boss?[{z:G.boss.z+.05,f:()=>drawBoss(G.boss)}]:[]),...G.enemies.map(e=>({z:e.z,f:()=>drawCandy(e)})),...(G.bolts||[]).map(b=>({z:b.z,f:()=>drawBolt(b)})),...G.shots.filter(s=>!s.bounced).map(s=>({z:s.z-.01,f:()=>drawShot(s)}))];
+  const items=[...(G.boss?[{z:G.boss.z+.05,f:()=>drawBoss(G.boss)}]:[]),...G.enemies.map(e=>({z:e.z,f:()=>drawCandy(e)})),...(G.rocks||[]).map(r=>({z:r.z+.001,f:()=>drawRock(r)})),...(G.bolts||[]).map(b=>({z:b.z,f:()=>drawBolt(b)})),...G.shots.filter(s=>!s.bounced).map(s=>({z:s.z-.01,f:()=>drawShot(s)}))];
   items.sort((a,b)=>b.z-a.z).forEach(i=>i.f());
   G.shots.filter(s=>s.bounced).forEach(drawShot);
   for(const p of G.parts){
@@ -44,6 +44,7 @@ function draw(){
   // help hand: only if after 15 s the player still hasn't both moved and fired
   if(G.tut&&G.running) drawTutorial();
   else if(G.running&&G.playT>15&&!(G.didMove&&G.didFire)&&G.endT<0&&G.phase!=='alarm') drawHelpHand();
+  if(G.splat) drawSplat(G.splat);
   for(const t of G.texts){
     const a=Math.min(1,t.life*2), sz=t.big?30:22;
     ctx.save(); ctx.globalAlpha=a;
@@ -163,3 +164,19 @@ function drawZap(){
 
 // the last bug survives a reload: open the game with #bugi to see it again
 if(location.hash==='#bugi'){ try{ const b=localStorage.getItem('tavu-lastbug'); if(b) setTimeout(()=>{ window._lastBug=''; showBug(b); },300); }catch(_){} }
+
+/* A disc thrown back by a catcher: flies at the screen and splats there for a moment */
+function drawSplat(sp){
+  const tx=sp.x*W, ty=sp.y*H;
+  ctx.save();
+  if(sp.t<.35){ const k=sp.t/.35, x=sp.from[0]+(tx-sp.from[0])*k, y=sp.from[1]+(ty-sp.from[1])*k-Math.sin(k*Math.PI)*60, r=10+k*k*W*.18;
+    ctx.translate(x,y); ctx.rotate(k*6); drawDisc(0,0,r,sp.lab,'#9C93A8',{maxW:r*4}); ctx.restore(); return; }
+  const a=sp.t<1.6?1:Math.max(0,1-(sp.t-1.6)), R=W*.2;
+  ctx.globalAlpha=a*.9; ctx.translate(tx,ty); ctx.rotate(sp.rot);
+  ctx.fillStyle='#8E86A0';
+  for(let i=0;i<9;i++){ const an=i/9*Math.PI*2, d=R*(.8+.35*Math.sin(i*2.3)); ctx.beginPath(); ctx.arc(Math.cos(an)*d,Math.sin(an)*d,R*.28,0,Math.PI*2); ctx.fill(); }
+  for(let i=0;i<4;i++){ const dx=(i-1.5)*R*.45, len=R*(.5+.3*Math.sin(i))+ (sp.t-.35)*R*.4; ctx.fillRect(dx-R*.06,0,R*.12,R+len); ctx.beginPath(); ctx.arc(dx,R+len,R*.1,0,Math.PI*2); ctx.fill(); }
+  ctx.beginPath(); ctx.arc(0,0,R,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#FFFFFF'; ctx.font=`900 ${Math.round(R*.9)}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(sp.lab,0,R*.05);
+  ctx.restore();
+}
