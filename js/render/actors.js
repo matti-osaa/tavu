@@ -117,26 +117,33 @@ function drawSling(){
         if(bounce){ ctx.fillStyle='#FFE15A'; ctx.fillRect(x-q*1.2,y-1,q*2.4,2); ctx.fillRect(x-1,y-q*1.2,2,q*2.4); } });
       ctx.restore(); }
   }
-  const bw=Math.max(3,r*.18), pw=Math.max(5,r*.32);
-  const strap=(x1,y1,x2,y2)=>{ ctx.strokeStyle='#2B2333'; ctx.lineWidth=bw+3; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    ctx.strokeStyle='#D23A3A'; ctx.lineWidth=bw; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); };
-  const mw=g.slotW*.92;
+  // thin elastic between two small pegs; a short stack of discs under each, the next one pushed up from below
+  const bw=Math.max(1.5,r*.08), peg=Math.max(3,r*.14), mw=g.slotW*.92, ease=k=>1-Math.pow(1-k,3);
+  const band=(x1,y1,x2,y2,sag)=>{ ctx.strokeStyle='rgba(120,30,30,.35)'; ctx.lineWidth=bw+1.5; ctx.beginPath(); ctx.moveTo(x1,y1+1); ctx.quadraticCurveTo((x1+x2)/2,(y1+y2)/2+sag+1,x2,y2+1); ctx.stroke();
+    ctx.strokeStyle='#E0574A'; ctx.lineWidth=bw; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo((x1+x2)/2,(y1+y2)/2+sag,x2,y2); ctx.stroke(); };
   if(G.stacks) G.stacks.forEach((s,i)=>{
     const x=g.sx[i], y=g.sy, pulled=G.pull&&G.pull.i===i, P=pulled?G.pull:{x,y};
-    const half=Math.min(g.slotW*.46,r*1.5), py0=y-r*.15;
-    // two little posts
-    [-1,1].forEach(sd=>{ ctx.fillStyle='#4E3019'; ctx.fillRect(x+sd*half-pw/2,py0-pw,pw,pw*2.2); ctx.fillStyle='#8A5A34'; ctx.fillRect(x+sd*half-pw/2,py0-pw,pw,pw*.6); });
+    const half=Math.min(g.slotW*.44,r*1.35), by=y+r*.25, lab=s.ans||s.next||'';
+    const p=s.ans?1:ease(Math.max(0,1-(s.wait||0)/REFILL));   // how far the next disc has come up
+    // the stack below (disc edges), sinking a little while it pushes
+    const step=Math.max(3,r*.2);
+    for(let k=3;k>=1;k--){ ctx.save(); ctx.globalAlpha=.9; drawDisc(x,y+k*step+(1-p)*step,r*.96,'',shade(AMMO_COL,-18*k),{shadow:k===3,maxW:mw}); ctx.restore(); }
+    // pegs
     ctx.save(); ctx.lineCap='round';
-    if(!s.ans){ strap(x-half,py0,x+half,py0); ctx.restore();
-      ctx.save(); ctx.globalAlpha=.35; drawDisc(x,y+(s.wait/REFILL)*r*1.2,r*.8,'',AMMO_COL,{shadow:false}); ctx.restore(); return; }
-    strap(x-half,py0,P.x,P.y+r*.3); strap(x+half,py0,P.x,P.y+r*.3); ctx.restore();
-    s.t=Math.min(1,(s.t||0)+(G.dt||0)*4);
-    const pop=s.t<1?1+Math.sin(s.t*Math.PI)*.25:1, rise=s.t<1?(1-s.t)*r*.8:0;
-    if(G.tut&&G.tut.target&&s.ans===G.tut.target.ans&&!G.pull){ const pl=(Math.sin(G.t*6)+1)/2; ctx.save(); ctx.strokeStyle=`rgba(255,225,90,${.5+pl*.5})`; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(x,y,r*(1.35+pl*.2),0,Math.PI*2); ctx.stroke(); ctx.restore(); }
-    if(!isTouch&&G.kbAim&&(G.sel||0)===i){ ctx.save(); ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=3; ctx.setLineDash([6,5]); ctx.beginPath(); ctx.arc(x,y,r*1.4,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
-    const sq=pulled?1+Math.min(.15,Math.hypot(P.x-x,P.y-y)/g.maxPull*.15):1;
-    drawDisc(P.x,P.y+rise,r*pop*sq,dispAns(s.ans),AMMO_COL,{maxW:mw});
-    if(wordMode()&&G.fi[s.ans]&&!pulled){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(10,r*.42))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#FFE9C8'; ctx.fillText(G.fi[s.ans],x,y+r*1.3); ctx.restore(); }
+    [-1,1].forEach(sd=>{ ctx.fillStyle='#3E2614'; ctx.beginPath(); ctx.arc(x+sd*half,by,peg,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#B07A4A'; ctx.beginPath(); ctx.arc(x+sd*half-peg*.3,by-peg*.3,peg*.45,0,Math.PI*2); ctx.fill(); });
+    if(pulled){ band(x-half,by,P.x,P.y+r*.35,0); band(x+half,by,P.x,P.y+r*.35,0); }
+    else band(x-half,by,x+half,by,r*.12);
+    ctx.restore();
+    if(!lab) return;
+    // the top disc: rises out of the stack while a new one is being pushed up
+    const rise=(1-p)*(r*.9+3*step);
+    if(G.tut&&G.tut.target&&s.ans===G.tut.target.ans&&!G.pull){ const pl=(Math.sin(G.t*6)+1)/2; ctx.save(); ctx.strokeStyle=`rgba(255,225,90,${.5+pl*.5})`; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x,y,r*(1.3+pl*.15),0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+    if(!isTouch&&G.kbAim&&(G.sel||0)===i){ ctx.save(); ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=2; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.arc(x,y,r*1.35,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+    const sq=pulled?1+Math.min(.12,Math.hypot(P.x-x,P.y-y)/g.maxPull*.12):1;
+    ctx.save(); if(!s.ans) ctx.globalAlpha=.55+.45*p;
+    drawDisc(P.x,P.y+rise,r*sq,dispAns(lab),s.ans?AMMO_COL:shade(AMMO_COL,-25),{maxW:mw}); ctx.restore();
+    if(pulled&&s.ans){ band(x-half,by,P.x,P.y+r*.35,0); }   // the near strand goes over the disc
+    if(wordMode()&&G.fi[lab]&&!pulled&&s.ans){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(10,r*.42))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#FFE9C8'; ctx.fillText(G.fi[lab],x,y+r*1.2+3*step); ctx.restore(); }
   });
   // emergency button: blows everything back up the road, then recharges for a minute
   if(!G.tut){ const m=emGeo(), ready=(G.emT||0)<=0, k=1-(G.emT||0)/EM_COOL;

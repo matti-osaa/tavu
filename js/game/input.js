@@ -8,7 +8,7 @@
    Keyboard: 1–5 fire that disc at the nearest tyyppä, ↑ ↓ pick a disc, ← → aim, space fires the picked one. */
 const isTouch = matchMedia('(pointer: coarse)').matches;
 let drag = null;   // {id, i, x0, y0, t0, moved}
-const REFILL=.35;  // seconds before an empty slot gets a new disc
+const REFILL=1.1;  // seconds for the next disc to be pushed up from the stack below
 
 function canvasPoint(e){ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
 
@@ -38,7 +38,7 @@ function refreshStacks(){
   const g=slingGeo();
   if(!G.stacks||G.stacks.length!==g.n){ const old=G.stacks||[]; G.stacks=Array.from({length:g.n},(_,i)=>old[i]||{ans:'',t:1,wait:0}); G.stacks.forEach(s=>{ if(!s.ans) s.ans=newDiscAns(''); }); }
   const dt=G.dt||0;
-  G.stacks.forEach(s=>{ if(!s.ans){ s.wait-=dt; if(s.wait<=0){ s.ans=newDiscAns(s.prev); s.t=0; tone(380,.04,'sine',.04); } } });
+  G.stacks.forEach(s=>{ if(!s.ans){ s.wait-=dt; if(!s.next) s.next=newDiscAns(s.prev); if(s.wait<=0){ s.ans=s.next; s.next=''; s.t=1; tone(380,.04,'sine',.04); noise(.03,2600,3,.05); } } });
   // the two nearest different answers on the road must always be in the row (a thrown letter, a boss plate…)
   const need=needed(), rank=a=>{ const i=need.indexOf(a); return i<0?1e9:i; }, has=a=>G.stacks.some(s=>s.ans===a);
   need.slice(0,2).forEach(a=>{ if(has(a)) return;
