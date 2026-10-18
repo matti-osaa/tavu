@@ -65,15 +65,16 @@ function drawCandy(e){
   ctx.restore();
   const learnt=((save.kills||{})[G.w.id]||{})[e.ch]||0;
   if((e.hint||(G.assist&&learnt+(G.kills[e.ch]||0)<3))&&s0>.32){
-    const hs=Math.round(Math.max(12,R*.5)), hl=dispAns(e.ans);
-    badge(x,eyY-hs*1.6-headroom,hs*.7,hl,'#FFF6DE','#3A2A1E',false);
+    // small label, and it fades away as the tyyppä comes close so it never covers the road near the sling
+    const hs=Math.round(Math.max(12,Math.min(17,R*.4))), hl=dispAns(e.ans), fade=Math.max(0,Math.min(1,(e.z-1.5)/.35));
+    if(fade>0){ ctx.save(); ctx.globalAlpha=fade*.92; badge(x,eyY-hs*1.6-headroom,hs*.7,hl,'#FFF6DE','#3A2A1E',false); ctx.restore(); }
   }
 }
 function shotE(s,z){const t=Math.max(0,Math.min(1,(z-(s.z0||ZCAN))/.7)), e=1-Math.pow(1-t,2); return (s.E0||RB)*(1-e)+RB*.95*e;}
 /* A disc (kiekko): round wooden-rimmed puck with the letter on top. Long words make it a pill. */
 function drawDisc(x,y,r,label,col,o={}){
-  ctx.save(); ctx.font=`900 ${Math.round(r*(label.length>2?.78:label.length>1?.95:1.15))}px ${LTF}`;
-  let fs=parseFloat(ctx.font), tw=ctx.measureText(label).width;
+  ctx.save(); let fs=Math.round(r*(label.length>2?.78:label.length>1?.95:1.15)); ctx.font=`900 ${fs}px ${LTF}`;
+  let tw=ctx.measureText(label).width;
   const maxW=o.maxW||r*5; let w=Math.max(r*2,tw+r*.9); if(w>maxW){ fs*=(maxW-r*.9)/tw; w=maxW; ctx.font=`900 ${fs}px ${LTF}`; tw=ctx.measureText(label).width; }
   const hw=w/2, rr=r, dk=shade(col,-70), th=Math.max(3,r*.22);
   const shape=(dy,inset)=>{ ctx.beginPath(); const L=x-hw+inset, R=x+hw-inset, rad=rr-inset;
