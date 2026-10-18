@@ -2,7 +2,7 @@
 function startLevel(wi,si){
   const w=WORLDS[wi], stage=stagesOf(w)[si], li=stage.li, isWord=stage.kind==='words';
   const fresh=isWord?w.words[li].map(p=>p[0]):[...w.levels[li]], older=isWord?[]:w.levels.slice(0,li).join('').split('');
-  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
+  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,playT:0,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
      goal:14+li*3,maxOn:4+li,speed:.5+li*.08,fired:0,correct:0,combo:0,spawnT:.4,t:0,running:false,hitstop:0,shake:0,cool:0,reload:1,recoil:0,
      season:activeSeason(),isWord,fiOf:isWord?Object.fromEntries(w.words[li].map(p=>[p[0],p[1]])):{},
      fi:isWord?Object.fromEntries(w.words[li].map(p=>w.latin?[p[1],'']:[toLatin(w,p[0]),p[1]])):{},
@@ -67,7 +67,7 @@ function showIntro(){
     <div><div style="font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">${w.script} · taso ${G.si+1}${G.isWord?' · sanat':''}</div>
     <h3>${G.isWord?'Sanatyypät hyökkäävät!':unseen.length?'Uudet tyypät hyökkäävät!':'Tyypät hyökkäävät!'}</h3></div>
     <div class="tiles">${show.map((c,i)=>`<div class="tile" style="--c:${CANDY[i%CANDY.length]}"><b>${introCh(c)}</b><span>${dispAns(ansOf(c))}</span>${G.isWord?`<em>${G.fi[ansOf(c)]}</em>`:''}</div>`).join('')}</div>
-    <p>${G.isWord?(G.w.latin?'Ammu tyyppä sen suomennoksella.':'Ammu tyyppä samalla sanalla.'):'Ammu tyyppä sen vastineella.'} Väistä punaiset ammukset.
+    <p>${G.w.latin?'Ammu suomenkielisiä sanoja. Ne tehoavat, kun ne tarkoittavat samaa kuin vieras tyyppä.':G.isWord?'Ammu tuttuja sanoja. Ne tehoavat, kun ne vastaavat vierasta tyyppää.':'Ammu tuttuja kirjaimia. Ne tehoavat, kun ne vastaavat vierasta tyyppää.'} Väistä punaiset ammukset.
     <span class="touch-hint">Vedä: liiku · Napauta kuutiota: ammu · Pyyhkäise kuutiota: vaihda</span>
     <span class="keys-hint">← →: liiku · välilyönti: ammu · ↑ ↓: vaihda</span></p>
     <div class="row"><button class="btn" id="go">Aloita</button></div></div></div>`;
@@ -112,7 +112,7 @@ function fire(i){
   const b=$('bf'); b.classList.add('press'); setTimeout(()=>b.classList.remove('press'),90);
   const z0=ZCAN+.05, u=Math.max(30,RB*.75), cubeY=BY+6-u*1.8-u*1.5*.5-4;
   G.shots.push({E0:(py(z0)-cubeY)/sc(z0),z0,lane:G.lane,z:z0,vz:1.15,ans:G.cur,lab:dispAns(G.cur),col:G.curCol,bounced:false,vx:0,sx:0,sy:0,vy:0,life:1});
-  G.fired++; G.cool=.3; G.recoil=1; G.reload=0; sPew();
+  G.didFire=true; G.fired++; G.cool=.3; G.recoil=1; G.reload=0; sPew();
   G.muzzle.push({ans:dispAns(G.cur),col:G.curCol,life:.45,max:.45});
 }
 function burst(x,y,col,n=20,spd=260){
@@ -216,6 +216,8 @@ function update(dt){
   for(const d of G.deco){d.z-=drift; if(d.z<ZN*.7){d.z+=ZF*1.6;d.k=Math.random();}}
   if(G.endT>=0){G.endT-=dt; if(G.endT<0){endCard(!G.lose);return;}}
   if(!G.running) return;
+  G.playT+=dt;
+  if(G.keys.ArrowLeft||G.keys.ArrowRight) G.didMove=true;
   if(G.hitstop>0){G.hitstop-=dt;return}
   G.cool=Math.max(0,G.cool-dt);
   const n=G.enemies.length;

@@ -35,6 +35,8 @@ function draw(){
   if(G.flash>0){ctx.fillStyle=`rgba(255,253,235,${G.flash*2.5})`;ctx.fillRect(-20,-20,W+40,H+40);}
   G.muzzle.forEach(drawMuzzle);
   if(G.phase==='alarm') drawAlarm();
+  // help hand: only if after 15 s the player still hasn't both moved and fired
+  if(G.running&&G.playT>15&&!(G.didMove&&G.didFire)&&G.endT<0&&G.phase!=='alarm') drawHelpHand();
   for(const t of G.texts){
     const a=Math.min(1,t.life*2), sz=t.big?30:22;
     ctx.save(); ctx.globalAlpha=a;
@@ -65,4 +67,28 @@ function drawAlarm(){
     ctx.font=`700 ${Math.round(fs*.36)}px ${PXF}`;
     ctx.fillStyle='#1B1424'; ctx.fillText('LOPPUVASTUSTAJA LÄHESTYY',W/2+2,H*.38+fs*.85+2); ctx.fillStyle='#FFFFFF'; ctx.fillText('LOPPUVASTUSTAJA LÄHESTYY',W/2,H*.38+fs*.85);
   }
+}
+
+/* Help animation when the player hasn't managed to move and fire within 15 s:
+   a pointing finger drags the cannon left and right, then taps the ammo cube. Loops until the player acts. */
+function drawHelpHand(){
+  const t=(G.playT-15)%3.2, u=Math.max(30,RB*.75), cx=px(G.lane,ZCAN), cubeY=BY+6-u*2.6, roadY=BY-u*.2;
+  let hx, hy, press=0, label;
+  if(t<1.6){ // drag along the road
+    const k=t/1.6; hx=cx+Math.sin(k*Math.PI*2)*u*1.8; hy=roadY; press=.6; label=isTouch?'VEDÄ':'← →';
+  } else if(t<2.2){ // move up to the cube
+    const k=(t-1.6)/.6, e=k*k*(3-2*k); hx=cx; hy=roadY+(cubeY-roadY)*e; label=isTouch?'NAPAUTA':'VÄLILYÖNTI';
+  } else { // tap
+    const k=(t-2.2)/1; hx=cx; hy=cubeY+(k<.25?k*4*6:Math.max(0,(.5-k)*4*6)); press=k<.5?1:0; label=isTouch?'NAPAUTA':'VÄLILYÖNTI';
+    if(k>.2&&k<.8){ const r=u*(.4+(k-.2)*2); ctx.strokeStyle=`rgba(255,255,255,${.8-(k-.2)})`; ctx.lineWidth=4; ctx.strokeRect(hx-r,hy-r,r*2,r*2); }
+  }
+  const p=Math.max(3,Math.round(u*.11)); // pixel size of the hand
+  // pointing hand in pixel blocks (fingertip at hx,hy)
+  const HAND=['..XX......','.XWWX.....','.XWWX.....','.XWWXXX...','.XWWXWWXX.','XXWWXWWXWX','XWWWWWWWWX','XWWWWWWWWX','.XWWWWWWX.','..XWWWWX..','..XXXXXX..'];
+  const ox=hx-p*3, oy=hy-p*.5;
+  ctx.save(); ctx.globalAlpha=.95;
+  HAND.forEach((row,ry)=>[...row].forEach((c,rx)=>{ if(c==='.')return; ctx.fillStyle=c==='X'?'#2B2333':(press?'#FFF1C9':'#FFFFFF'); ctx.fillRect(Math.round(ox+rx*p),Math.round(oy+ry*p),p,p); }));
+  ctx.font=`700 ${Math.round(Math.max(14,u*.4))}px ${PXF}`; ctx.textAlign='center'; ctx.textBaseline='top';
+  const ly=oy+HAND.length*p+6; ctx.fillStyle='#2B2333'; ctx.fillText(label,hx+p*2+2,ly+2); ctx.fillStyle='#FFE15A'; ctx.fillText(label,hx+p*2,ly);
+  ctx.restore();
 }

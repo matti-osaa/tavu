@@ -8,7 +8,7 @@ const isTouch = matchMedia('(pointer: coarse)').matches;
 let drag = null;   // {id, x0, y0, onCube, moved}
 
 function canvasPoint(e){ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
-function aimAt(x){ if(G) G.tlane=Math.max(-.85,Math.min(.85,(x-W/2)/(HW*sc(ZCAN)))); }
+function aimAt(x){ if(G) G.didMove=true; if(G) G.tlane=Math.max(-.85,Math.min(.85,(x-W/2)/(HW*sc(ZCAN)))); }
 // Hit area of the loaded ammo cube (generous, so it is easy to tap with a thumb)
 function onCube(p){ if(!G) return false; const u=Math.max(30,RB*.75), cx=px(G.lane,ZCAN), cy=BY+6-u*2.5;
   return Math.abs(p.x-cx)<u*1.4 && p.y>cy-u*1.6 && p.y<BY+u; }
