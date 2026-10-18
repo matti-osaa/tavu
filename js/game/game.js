@@ -1,8 +1,8 @@
 /* Game rules: level setup, ammo, spawning, hits and misses, the update loop. */
-function startLevel(wi,li,kind){
-  const w=WORLDS[wi], isWord=kind==='words';
+function startLevel(wi,si){
+  const w=WORLDS[wi], stage=stagesOf(w)[si], li=stage.li, isWord=stage.kind==='words';
   const fresh=isWord?w.words[li].map(p=>p[0]):[...w.levels[li]], older=isWord?[]:w.levels.slice(0,li).join('').split('');
-  G={w,wi,li,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
+  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
      goal:14+li*3,maxOn:4+li,speed:.5+li*.08,fired:0,correct:0,combo:0,spawnT:.4,t:0,running:false,hitstop:0,shake:0,cool:0,reload:1,recoil:0,
      season:activeSeason(),isWord,fiOf:isWord?Object.fromEntries(w.words[li].map(p=>[p[0],p[1]])):{},
      fi:isWord?Object.fromEntries(w.words[li].map(p=>w.latin?[p[1],'']:[toLatin(w,p[0]),p[1]])):{},
@@ -34,29 +34,37 @@ function paintFire(){const b=$('bf'); if(!b)return; b.style.setProperty('--c',G.
   if(G.isWord&&G.cur){const i=document.createElement('i'); i.textContent=G.fi[G.cur]; t.appendChild(i);} b.classList.remove('swap'); void b.offsetWidth; b.classList.add('swap');}
 // The cannon holds one fixed answer. It changes only after a hit, or if no candy on the road matches it any more.
 // ↑/↓ or tapping the loaded cube cycles through the answers of the tyypät on the road, nearest first
+// Everything the cannon could aim at: tyypät and the boss's remaining plates
+function targets(){
+  const t=G.enemies.map(e=>({ans:e.ans,z:e.z}));
+  if(G.boss) G.boss.segs.forEach(g=>{ if(g.alive) t.push({ans:g.ans,z:G.boss.z}); });
+  return t;
+}
 function switchAmmo(dir=1){
   if(!G||!G.running)return; audio();
-  const list=[]; [...G.enemies].filter(e=>e.z<ZF-.1).sort((a,b)=>a.z-b.z).forEach(e=>{if(!list.includes(e.ans))list.push(e.ans);});
+  const list=[]; targets().filter(e=>e.z<ZF+.5).sort((a,b)=>a.z-b.z).forEach(e=>{if(!list.includes(e.ans))list.push(e.ans);});
   if(!list.length||(list.length===1&&list[0]===G.cur)){tone(150,.1,'sine',.08);return;}
   const i=list.indexOf(G.cur), next=i<0?list[0]:list[(i+dir+list.length)%list.length];
   G.cur=next; let col; do{col=CANDY[Math.floor(Math.random()*CANDY.length)]}while(col===G.curCol); G.curCol=col; G.reload=0; paintFire();
   tone(dir>0?262:330,.08,'sine',.1,1.3); tone(dir>0?392:247,.1,'sine',.08,1,.06);
 }
 function nextAmmo(){
-  const vis=G.enemies.filter(e=>e.z<ZF-.25), from=vis.length?vis:G.enemies;
+  const all=targets(), vis=all.filter(e=>e.z<ZF-.25), from=vis.length?vis:all;
   if(!from.length){G.cur=null;paintFire();return;}
   const others=from.filter(e=>e.ans!==G.cur), pick=(others.length?others:from)[Math.floor(Math.random()*(others.length?others:from).length)];
   G.cur=pick.ans; let c; do{c=CANDY[Math.floor(Math.random()*CANDY.length)]}while(c===G.curCol); G.curCol=c; G.reload=0; paintFire();
 }
 const HEART='<svg viewBox="0 0 9 8" shape-rendering="crispEdges"><path fill="#2B2333" d="M1 0h3v1h1V0h3v1h1v3H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0V1h1z"/><path fill="#F23C5A" d="M1 1h2v1h1v1h1V2h1V1h2v3H7v1H6v1H5v1H4V6H3V5H2V4H1z"/><path fill="#FF9AAA" d="M1 1h1v1H1z"/></svg>';
 function drawHearts(){ $('hearts').innerHTML=Array.from({length:G.maxLives},(_,i)=>HEART.replace('<svg',`<svg class="${i<G.lives?'':'lost'}"`)).join(''); }
-function prog(){ $('progbar').style.width=Math.min(100,G.popped/G.goal*100)+'%'; }
+function prog(){ const b=$('progbar');
+  if(G.boss){ const a=G.boss.segs.filter(g=>g.alive).length; b.style.width=(a/G.boss.segs.length*100)+'%'; b.classList.add('boss'); }
+  else { b.style.width=Math.min(100,G.popped/G.goal*100)+'%'; b.classList.remove('boss'); } }
 
 function showIntro(){
   const w=G.w, unseen=G.fresh.filter(c=>!G.seen.has(c));
   const show=(unseen.length?unseen:G.fresh);
   ov.innerHTML=`<div class="overlay"><div class="card">
-    <div><div style="font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">${w.script} · ${G.isWord?'sanataso':'taso'} ${G.li+1}</div>
+    <div><div style="font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">${w.script} · taso ${G.si+1}${G.isWord?' · sanat':''}</div>
     <h3>${G.isWord?'Sanatyypät hyökkäävät!':unseen.length?'Uudet tyypät hyökkäävät!':'Tyypät hyökkäävät!'}</h3></div>
     <div class="tiles">${show.map((c,i)=>`<div class="tile" style="--c:${CANDY[i%CANDY.length]}"><b>${introCh(c)}</b><span>${dispAns(ansOf(c))}</span>${G.isWord?`<em>${G.fi[ansOf(c)]}</em>`:''}</div>`).join('')}</div>
     <p>${G.isWord?(G.w.latin?'Tykissä on suomenkielinen sana. Etsi tieltä tyyppä, joka tarkoittaa samaa, ja ammu.':'Tykissä on sana latinalaisin kirjaimin ja sen suomennos. Etsi tieltä tyyppä, joka on sama sana, ja ammu.'):'Tykissä on yksi vastine kerrallaan. Etsi tieltä tyyppä, jonka kirjain vastaa sitä, siirry sen kohdalle ja ammu.'}
@@ -70,18 +78,18 @@ function endCard(win){
   G.running=false;
   const lost=G.maxLives-G.lives, acc=G.fired?G.correct/G.fired:0;
   let stars=0; if(win){stars=1; if(lost<=1&&acc>=.6)stars=2; if(lost===0&&acc>=.85)stars=3;}
-  const k=G.w.id+(G.isWord?'-w':'-')+G.li; if(stars>(save.stars[k]||0)){save.stars[k]=stars;persist();}
-  const hasNext=win&&G.li+1<(G.isWord?G.w.words.length:G.w.levels.length);
+  const k=G.key; if(stars>(save.stars[k]||0)){save.stars[k]=stars;persist();}
+  const hasNext=win&&G.si+1<stagesOf(G.w).length;
   if(win) sWin();
   ov.innerHTML=`<div class="overlay"><div class="card">
-    <h3>${win?'Tyypät tuhottu!':'Tyypät pääsivät läpi'}</h3>
+    <h3>${win?'Loppuvastustaja kaatui!':'Tyypät pääsivät läpi'}</h3>
     ${win?`<div class="big-stars">${[0,1,2].map(i=>`<i class="${i<stars?'on':''}"></i>`).join('')}</div>`:''}
     <p>${G.correct} osumaa · tarkkuus ${Math.round(acc*100)} %</p>
     <div class="row">${hasNext?'<button class="btn" id="nx">Seuraava taso</button>':''}
     <button class="btn ${hasNext?'alt':''}" id="rt">${win?'Pelaa uudelleen':'Yritä uudelleen'}</button>
     <button class="btn alt" id="mp">Kartta</button></div></div></div>`;
-  if(hasNext) $('nx').onclick=()=>startLevel(G.wi,G.li+1,G.isWord?'words':'');
-  $('rt').onclick=()=>startLevel(G.wi,G.li,G.isWord?'words':'');
+  if(hasNext) $('nx').onclick=()=>startLevel(G.wi,G.si+1);
+  $('rt').onclick=()=>startLevel(G.wi,G.si);
   $('mp').onclick=toMap;
 }
 function toMap(){ cancelAnimationFrame(raf); G=null; ov.innerHTML=''; $('game').hidden=true; $('map').hidden=false; renderMap(); }
@@ -129,7 +137,48 @@ function pop(e,s){
   G.hitstop=.06; sHit(); flashBtn('hit'); nextAmmo();
 
   if(!G.seen.has(e.ch)){G.seen.add(e.ch); save.seen[G.w.id]=[...G.seen]; persist();}
-  if(G.popped>=G.goal&&G.endT<0) G.endT=.9;
+  if(G.popped>=G.goal&&G.phase==='wave') startAlarm();
+}
+/* ---------- Loppuvastustaja (boss) ---------- */
+function startAlarm(){ G.phase='alarm'; G.alarmT=2.6; sAlarm(); }
+function spawnBoss(){
+  // letters: 5 plates from this level's letters; words: 3 plates with words
+  const pool=[...new Set(G.isWord?G.fresh:G.fresh.concat(G.older))].sort(()=>Math.random()-.5);
+  const seen=new Set(), chosen=[];
+  for(const ch of pool){ const a=ansOf(ch); if(seen.has(a))continue; seen.add(a); chosen.push(ch); if(chosen.length===(G.isWord?3:5))break; }
+  const n=chosen.length, segW=Math.min(G.isWord?.7:.44, 1.95/n);
+  G.boss={z:ZF+.4, vz:G.speed*.42, segW, n, shake:0, born:G.t, flash:0,
+    col:G.season?'#4A2E6B':'#6B3FA0', segs:chosen.map((ch,i)=>({ch,disp:dispCh(ch),ans:ansOf(ch),alive:true,missT:0,missAns:'',flash:0,
+      col:(c=>c[i%c.length])(G.season?G.season.colors:CANDY)}))};
+  G.phase='boss'; sRoar(); prog(); nextAmmo();
+}
+const segLane=(i)=>(i-(G.boss.n-1)/2)*G.boss.segW;
+function bossSegAt(lane){ const b=G.boss, i=Math.floor((lane+b.n*b.segW/2)/b.segW); return (i>=0&&i<b.n)?i:-1; }
+function hitBossSeg(i,s){
+  const b=G.boss, g=b.segs[i], s0=sc(b.z), x=px(segLane(i),b.z), y=py(b.z)-RB*s0*1.3;
+  s.dead=true; g.alive=false; g.flash=.4; b.shake=.35; b.vz=-.8;
+  G.correct++; G.combo++;
+  burst(x,y,g.col,30,380*Math.max(.6,s0));
+  G.parts.push({glyph:true,ch:g.disp,ans:dispAns(g.ans),fi:G.isWord?G.fi[g.ans]:'',x,y,vx:0,vy:-260,life:.9,max:.9,col:g.col,sz:RB*s0,rot:0});
+  G.parts.push({ring:true,x,y,r:RB*s0,life:.45,max:.45,col:g.col},{flashball:true,x,y,r:RB*s0*1.4,life:.18,max:.18});
+  G.flash=.1; G.shake=Math.max(G.shake,reduce?0:.2); G.hitstop=.08; sHit(); flashBtn('hit'); prog();
+  if(!G.seen.has(g.ch)){G.seen.add(g.ch); save.seen[G.w.id]=[...G.seen]; persist();}
+  if(b.segs.every(q=>!q.alive)) bossDown(); else nextAmmo();
+}
+function bossDown(){
+  const b=G.boss, s0=sc(b.z);
+  for(let i=0;i<b.n;i++){ const x=px(segLane(i),b.z), y=py(b.z)-RB*s0*(1+Math.random()*2);
+    burst(x,y,b.col,40,520*Math.max(.6,s0));
+    for(let k=0;k<6;k++) G.parts.push({chunk:true,x,y,vx:(Math.random()-.5)*700,vy:-300-Math.random()*400,life:1.2,max:1.2,col:k%2?b.col:'#2B2333',sz:RB*s0*(.3+Math.random()*.3),rot:0}); }
+  G.parts.push({flashball:true,x:px(0,b.z),y:py(b.z)-RB*s0*2,r:RB*s0*4,life:.35,max:.35});
+  G.boss=null; G.flash=.3; G.shake=reduce?0:.6; sBossDown(); G.phase='done'; G.cur=null; paintFire();
+  if(G.endT<0) G.endT=1.8;
+}
+function bossReachedLine(){
+  const b=G.boss; G.lives--; G.combo=0; drawHearts(); G.shake=reduce?0:.5; sRoar();
+  b.z=ZLOSE+1.8; b.vz=-1; b.shake=.5;
+  floatText(W/2,H*.35,'AUTS!','#E63E78',true);
+  if(G.lives<=0&&G.endT<0){G.endT=1.1;G.lose=true;}
 }
 function hitLine(e){
   const ex=px(e.lane,e.z), ey=py(e.z)-RB*sc(e.z);
@@ -157,11 +206,12 @@ function update(dt){
   G.cool=Math.max(0,G.cool-dt);
   const n=G.enemies.length;
   G.spawnT-=dt;
-  if(G.spawnT<=0 && n<G.maxOn && G.popped+n<G.goal+2 && G.endT<0){
+  if(G.phase==='alarm'){ G.alarmT-=dt; if(G.alarmT<=0) spawnBoss(); }
+  if(G.phase==='wave' && G.spawnT<=0 && n<G.maxOn && G.popped+n<G.goal+2 && G.endT<0){
     spawn(); const fill=n/G.maxOn; G.spawnT=(fill<.25?.6:fill<.5?1.5:2.7)/(1+G.li*.1)/G.pace;
   }
-  if(!G.cur&&G.enemies.some(e=>e.z<ZF-.25)) nextAmmo();
-  else if(G.cur&&!G.enemies.some(e=>e.ans===G.cur)&&!G.shots.some(s=>!s.bounced&&s.ans===G.cur&&!s.dead)) nextAmmo();
+  if(!G.cur&&targets().some(e=>e.z<ZF+.5)) nextAmmo();
+  else if(G.cur&&!targets().some(e=>e.ans===G.cur)&&!G.shots.some(s=>!s.bounced&&s.ans===G.cur&&!s.dead)) nextAmmo();
   const boost=n<=1?1.5:1;
   for(const e of [...G.enemies]){
     if(e.block>0){e.block-=dt; e.vz=0;} else e.vz+=(G.speed*boost-e.vz)*Math.min(1,dt*1.5);
@@ -170,11 +220,23 @@ function update(dt){
     e.shake=Math.max(0,e.shake-dt); e.shield=Math.max(0,(e.shield||0)-dt); e.missT=Math.max(0,(e.missT||0)-dt);
     if(e.z<=ZLOSE) hitLine(e);
   }
+  if(G.boss){ const b=G.boss;
+    b.vz+=(G.speed*.42-b.vz)*Math.min(1,dt*.8); b.z-=b.vz*dt; if(b.z>ZF+.6)b.z=ZF+.6;
+    b.shake=Math.max(0,b.shake-dt); b.segs.forEach(g=>{g.missT=Math.max(0,g.missT-dt); g.flash=Math.max(0,g.flash-dt);});
+    if(b.z<=ZLOSE+.15) bossReachedLine(); }
   const LT=RB*.9/HW;
   for(const s of G.shots){
     if(s.bounced){s.trail.push([s.sx,s.sy,s.r]); if(s.trail.length>7)s.trail.shift();
       s.sx+=s.vx*dt;s.sy+=s.vy*dt;s.vy+=1100*dt;s.spin+=s.vx*.02*dt;s.r=Math.min(RB*.75,s.r*(1+dt*1.6));s.life-=dt;continue;}
     const z0=s.z; s.z+=s.vz*dt;
+    if(G.boss&&G.boss.z>z0-.2&&G.boss.z<s.z+.2){ const b=G.boss, i=bossSegAt(s.lane);
+      if(i>=0&&b.segs[i].alive){ const g=b.segs[i];
+        if(g.ans===s.ans){ hitBossSeg(i,s); continue; }
+        const s0=sc(b.z); s.bounced=true; s.sx=px(s.lane,b.z); s.sy=py(b.z)-RB*s0*1.3; s.r=RB*.45*s0; s.trail=[]; s.spin=0; s.life=1.1;
+        s.vx=(s.sx<W/2?-1:1)*(260+Math.random()*140); s.vy=-420-Math.random()*120;
+        g.missAns=s.lab; g.missT=.8; g.flash=.25; b.shake=.3; G.hitstop=.05; G.combo=0;
+        G.parts.push({clang:true,x:s.sx,y:s.sy,life:.3,max:.3,r:RB*s0}); sClank(); flashBtn('miss'); continue; }
+    }
     for(const e of G.enemies){
       if(e.z>z0-.15&&e.z<s.z+.15&&Math.abs(s.lane-e.lane)<LT*e.wf){
         if(s.ans===e.ans){pop(e,s);}

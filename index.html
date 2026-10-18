@@ -13,22 +13,26 @@
 </head>
 <body>
 <section id="map" class="screen">
+  <button class="menu-btn" id="menuBtn" aria-label="Valikko" aria-expanded="false" aria-controls="menuPanel"><i></i><i></i><i></i></button>
+  <div class="menu-panel" id="menuPanel" hidden>
+    <div class="menu-head"><span>Asetukset</span><button class="menu-close" id="menuClose" aria-label="Sulje valikko">✕</button></div>
+    <div class="menu-row">
+      <div class="menu-label">Kirjaimet</div>
+      <div class="seg" id="caseSeg" role="radiogroup" aria-label="Kirjainkoko">
+      <button data-m="upper" role="radio">Isot</button><button data-m="lower" role="radio">Pienet</button><button data-m="mixed" role="radio">Sekaisin</button><button data-m="pair" role="radio">Rinnakkain</button>
+    </div>
+      <p class="menu-help">Isot: Т ja T · Pienet: т ja t · Sekaisin: satunnaisesti · Rinnakkain: Тт ja Tt</p>
+    </div>
+  </div>
   <div class="map-inner">
     <header class="brand">
       <div class="logo" aria-label="Tavu" title="Т kyrillinen, Α kreikkalainen, V ja U latinalaiset"><span>Т</span><span>Α</span><span>V</span><span>U</span></div>
       <div class="slogan">Tyypät hyökkäävät!</div>
       <div class="tag">Tyypät ovat kirjaimia ja sanoja tutuista ja vieraista kirjoitusjärjestelmistä. Ammu, erehdy ja opi, kunnes jokainen tyyppä on tuhottu!</div>
     </header>
-    <div class="seg" id="themeSeg" role="radiogroup" aria-label="Teema">
-      <span class="seg-l">Teema</span>
-    </div>
     <div class="seg" id="diffSeg" role="radiogroup" aria-label="Vaikeustaso">
       <span class="seg-l">Taso</span>
       <button data-m="easy" role="radio">Helppo</button><button data-m="normal" role="radio">Normaali</button><button data-m="hard" role="radio">Vaikea</button>
-    </div>
-    <div class="seg" id="caseSeg" role="radiogroup" aria-label="Kirjainkoko">
-      <span class="seg-l">Kirjaimet</span>
-      <button data-m="upper" role="radio">Isot</button><button data-m="lower" role="radio">Pienet</button><button data-m="mixed" role="radio">Sekaisin</button><button data-m="pair" role="radio">Rinnakkain</button>
     </div>
     <div id="worlds"></div>
     <p class="note">Luonnos. Kyrillinen latinaistus SFS 4900 -taulun mukaan. Kreikan ja katakanan (Hepburn) vastineet ovat alustavia ja odottavat tarkistusta. Ruotsin ja englannin tasoilla ammutaan suomenkielisellä sanalla.</p>

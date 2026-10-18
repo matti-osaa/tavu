@@ -171,3 +171,29 @@ canvas{image-rendering:pixelated}
 /* letters themselves stay smooth so they are easy to tell apart */
 .ammo .fire .t,.tile b,.tile span,.tile em,.node .new,.node button.wordnode,.world .glyphs{font-family:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif;font-weight:900}
 @media (prefers-reduced-motion:reduce){.logo span,.card,.big-stars i.on,.ammo button.swap{animation:none}}
+
+/* ---- Hamburger menu on the map ---- */
+#map{position:absolute}
+.menu-btn{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));z-index:20;width:48px;height:48px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;background:var(--cream);
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.8),inset -3px -3px 0 rgba(0,0,0,.15),0 0 0 3px #2B2333}
+.menu-btn i{display:block;width:24px;height:4px;background:#2B2333}
+.menu-btn:active{transform:translateY(2px)}
+.menu-panel{position:fixed;top:calc(70px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));z-index:21;width:min(340px,calc(100vw - 24px));
+  background:var(--cream);padding:14px;display:flex;flex-direction:column;gap:12px;
+  box-shadow:inset 4px 4px 0 rgba(255,255,255,.8),inset -4px -4px 0 rgba(0,0,0,.12),0 0 0 4px #2B2333,6px 6px 0 4px rgba(43,35,51,.35)}
+.menu-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-display);font-size:20px}
+.menu-close{width:36px;height:36px;font-size:18px;font-weight:700}
+.menu-label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+.menu-panel .seg{box-shadow:none;background:transparent;padding:0;justify-content:flex-start}
+.menu-help{margin:6px 0 0;font-size:13px;color:var(--ink-soft)}
+body.season-halloween .menu-panel .seg button{color:var(--ink)}
+body.season-halloween .menu-panel .seg{background:transparent}
+body.season-halloween .menu-panel .seg button[aria-checked="false"]{color:var(--ink)}
+.menu-help{font-family:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif;font-weight:800}
+
+.prog b.boss{background:repeating-linear-gradient(90deg,#E8323C 0 10px,#B81E28 10px 12px)}
+/* compact world cards */
+.world .glyphs,.node .new{display:none}
+.world{padding:14px 16px 16px}
+.path{margin-top:10px}

@@ -102,3 +102,61 @@ function drawCubeHint(x,top,bs,u){
 function flashBtn(cls){const b=$('bf'); if(!b)return; b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(()=>b.classList.remove(cls),500);}
 function pill(x,y,h,col,txt,sub){sign(x,y,h,txt,sub,col);}
 function drawPair(){}
+
+/* Loppuvastustaja: a huge block monster carrying one letter/word plate per hitbox.
+   Each plate sits exactly over its hitbox lane (segLane), so aiming at a plate is aiming at the hitbox. */
+function drawBoss(b){
+  const s0=sc(b.z), cx=px(0,b.z), gy=py(b.z), U=RB*s0*1.6;
+  const bodyW=b.n*b.segW*HW*s0+U*1.4, bodyH=U*3.6, legH=U*.9, d=bodyW*.1;
+  const step=Math.sin(G.t*3.2), bob=Math.abs(step)*U*.14, jx=b.shake>0?Math.round(Math.sin(b.shake*70)*3):0;
+  const X=cx-bodyW/2+jx, top=gy-legH-bodyH-bob, a=Math.min(1,(G.t-b.born)*1.5);
+  const dark=shade(b.col,-70);
+  ctx.save(); ctx.globalAlpha=a;
+  ctx.fillStyle='rgba(20,10,30,.3)'; ctx.fillRect(cx-bodyW*.55,gy-U*.25,bodyW*1.1,U*.5);
+  // legs, stomping
+  const lw=bodyW*.22; ctx.fillStyle=dark;
+  ctx.fillRect(cx-bodyW*.3-lw/2+jx,gy-legH-(step>0?U*.25:0),lw,legH); ctx.fillRect(cx+bodyW*.3-lw/2+jx,gy-legH-(step<0?U*.25:0),lw,legH);
+  ctx.fillStyle='#1B1424'; ctx.fillRect(cx-bodyW*.3-lw/2-U*.1+jx,gy-U*.2-(step>0?U*.25:0),lw+U*.2,U*.2); ctx.fillRect(cx+bodyW*.3-lw/2-U*.1+jx,gy-U*.2-(step<0?U*.25:0),lw+U*.2,U*.2);
+  // arms swinging at the sides
+  const sw=Math.sin(G.t*4)*U*.4;
+  ctx.fillStyle=shade(b.col,-25); ctx.fillRect(X-U*.9,top+bodyH*.25+sw,U*.9,bodyH*.5); ctx.fillRect(X+bodyW,top+bodyH*.25-sw,U*.9,bodyH*.5);
+  ctx.fillStyle='#EDE6D6'; for(let k=0;k<3;k++){ctx.fillRect(X-U*.9+k*U*.3,top+bodyH*.75+sw,U*.2,U*.3); ctx.fillRect(X+bodyW+k*U*.3,top+bodyH*.75-sw,U*.2,U*.3);}
+  // body block: top + side + front with pixel texture
+  ctx.fillStyle=shade(b.col,35); ctx.beginPath(); ctx.moveTo(X,top); ctx.lineTo(X+d,top-d*.7); ctx.lineTo(X+bodyW+d,top-d*.7); ctx.lineTo(X+bodyW,top); ctx.fill();
+  ctx.fillStyle=shade(b.col,-40); ctx.beginPath(); ctx.moveTo(X+bodyW,top); ctx.lineTo(X+bodyW+d,top-d*.7); ctx.lineTo(X+bodyW+d,top+bodyH-d*.7); ctx.lineTo(X+bodyW,top+bodyH); ctx.fill();
+  ctx.fillStyle=b.col; ctx.fillRect(X,top,bodyW,bodyH);
+  const cs=Math.max(4,U*.35);
+  for(let yy=0;yy<bodyH;yy+=cs)for(let xx=0;xx<bodyW;xx+=cs){const h=hash(Math.floor(xx/cs)+7,Math.floor(yy/cs)+3); if(h>.7){ctx.fillStyle=shade(b.col,h>.88?-20:14); ctx.fillRect(X+xx,top+yy,Math.min(cs,bodyW-xx),Math.min(cs,bodyH-yy));}}
+  // horns
+  ctx.fillStyle='#EDE6D6';
+  [[X+bodyW*.12,1],[X+bodyW*.88,-1]].forEach(([hx,sd])=>{ctx.fillRect(hx-U*.25,top-U*.5,U*.5,U*.5); ctx.fillRect(hx-U*.15-sd*U*.15,top-U*1,U*.3,U*.5); ctx.fillRect(hx-U*.08-sd*U*.3,top-U*1.35,U*.16,U*.35);});
+  // eyes with glowing red pupils and angry brows
+  const ey=top+bodyH*.16, es=U*.75, glow=(Math.sin(G.t*8)+1)/2;
+  [-1,1].forEach(sd=>{const ex=cx+jx+sd*bodyW*.2-es/2;
+    ctx.fillStyle='#1B1424'; ctx.fillRect(ex-U*.08,ey-U*.08,es+U*.16,es+U*.16);
+    ctx.fillStyle='#FFF6DE'; ctx.fillRect(ex,ey,es,es);
+    ctx.fillStyle=glow>.5?'#FF2E2E':'#C81E1E'; ctx.fillRect(ex+es*.3,ey+es*.35,es*.4,es*.45);
+    ctx.fillStyle='#1B1424'; ctx.fillRect(ex+(sd<0?0:es*.5),ey-U*.35,es*.5,U*.18); ctx.fillRect(ex+(sd<0?es*.5:0),ey-U*.22,es*.5,U*.18);});
+  // jagged mouth
+  const my=top+bodyH*.42, mw=bodyW*.6;
+  ctx.fillStyle='#1B1424'; ctx.fillRect(cx+jx-mw/2,my,mw,U*.45);
+  ctx.fillStyle='#FFFFFF'; const tw=mw/8; for(let k=0;k<8;k++){ctx.fillRect(cx+jx-mw/2+k*tw+tw*.15,my,tw*.7,U*.16); if(k%2)ctx.fillRect(cx+jx-mw/2+k*tw+tw*.15,my+U*.29,tw*.7,U*.16);}
+  // plates = hitboxes
+  const py0=top+bodyH*.6, ps=Math.min(b.segW*HW*s0*.9, bodyH*.34);
+  b.segs.forEach((g,i)=>{
+    const x=px(segLane(i),b.z)+jx, X0=x-ps/2*(G.isWord?1.35:1), w=ps*(G.isWord?1.35:1);
+    ctx.fillStyle='#1B1424'; ctx.fillRect(X0-3,py0-3,w+6,ps+6);
+    if(g.alive){
+      const pulse=(Math.sin(G.t*5+i)+1)/2;
+      ctx.fillStyle=g.flash>0?'#FFFFFF':shade(g.col,Math.round(pulse*18)); ctx.fillRect(X0,py0,w,ps);
+      ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(X0,py0,w,ps*.12);
+      let fs=ps*.8; ctx.font=`900 ${fs}px ${LTF}`; const mw=ctx.measureText(g.disp).width; if(mw>w*.88)fs*=w*.88/mw;
+      smoothText(g.disp,x,py0+ps*.5+fs*.36,fs,g.col,g.flash>0);
+      if(g.missT>0) badge(x+w*.35,py0-ps*.1,Math.max(10,ps*.22),g.missAns,'#9C93A8','#fff',true);
+    } else {
+      ctx.fillStyle='#2B2333'; ctx.fillRect(X0,py0,w,ps);
+      ctx.fillStyle='#4A4058'; for(let k=0;k<4;k++){ctx.fillRect(X0+w*(.15+k*.2),py0+ps*(.2+(k%2)*.3),w*.12,ps*.12);}
+    }
+  });
+  ctx.restore();
+}

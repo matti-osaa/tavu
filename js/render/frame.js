@@ -13,7 +13,7 @@ function draw(){
   // aim guide: dotted blocks down the lane
   ctx.fillStyle='rgba(43,35,51,.25)';
   for(let z=ZCAN+.35;z<ZF;z+=.28){const q=Math.max(2,6*sc(z)); ctx.fillRect(px(G.lane,z)-q/2,py(z)-q/2,q,q);}
-  const items=[...G.enemies.map(e=>({z:e.z,f:()=>drawCandy(e)})),...G.shots.filter(s=>!s.bounced).map(s=>({z:s.z-.01,f:()=>drawShot(s)}))];
+  const items=[...(G.boss?[{z:G.boss.z+.05,f:()=>drawBoss(G.boss)}]:[]),...G.enemies.map(e=>({z:e.z,f:()=>drawCandy(e)})),...G.shots.filter(s=>!s.bounced).map(s=>({z:s.z-.01,f:()=>drawShot(s)}))];
   items.sort((a,b)=>b.z-a.z).forEach(i=>i.f());
   G.shots.filter(s=>s.bounced).forEach(drawShot);
   for(const p of G.parts){
@@ -33,6 +33,7 @@ function draw(){
   drawCannon();
   if(G.flash>0){ctx.fillStyle=`rgba(255,253,235,${G.flash*2.5})`;ctx.fillRect(-20,-20,W+40,H+40);}
   G.muzzle.forEach(drawMuzzle);
+  if(G.phase==='alarm') drawAlarm();
   for(const t of G.texts){
     const a=Math.min(1,t.life*2), sz=t.big?30:22;
     ctx.save(); ctx.globalAlpha=a;
@@ -45,4 +46,22 @@ function draw(){
 function loop(now){
   if(!G)return; const dt=Math.min(.05,(now-last)/1000); last=now;
   G.dt=dt; update(dt); if(G){draw(); raf=requestAnimationFrame(loop);}
+}
+
+/* Boss warning: red pulse, scrolling hazard stripes and blinking text */
+function drawAlarm(){
+  const t=2.6-G.alarmT, pulse=(Math.sin(t*14)+1)/2;
+  ctx.fillStyle=`rgba(230,30,40,${.12+pulse*.18})`; ctx.fillRect(0,0,W,H);
+  const bh=Math.max(22,H*.045), off=(t*120)%40;
+  [H*.18,H*.62].forEach(y=>{ ctx.fillStyle='#1B1424'; ctx.fillRect(0,y,W,bh);
+    ctx.save(); ctx.beginPath(); ctx.rect(0,y,W,bh); ctx.clip(); ctx.fillStyle='#FFD21E';
+    for(let x=-40+off;x<W+40;x+=40){ctx.beginPath(); ctx.moveTo(x,y+bh); ctx.lineTo(x+20,y); ctx.lineTo(x+34,y); ctx.lineTo(x+14,y+bh); ctx.fill();}
+    ctx.restore(); });
+  if(Math.floor(t*4)%2===0){
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const fs=Math.round(Math.min(W*.14,64)); ctx.font=`700 ${fs}px ${PXF}`;
+    ctx.fillStyle='#1B1424'; ctx.fillText('VAROITUS!',W/2+4,H*.38+4); ctx.fillStyle='#FFD21E'; ctx.fillText('VAROITUS!',W/2,H*.38);
+    ctx.font=`700 ${Math.round(fs*.36)}px ${PXF}`;
+    ctx.fillStyle='#1B1424'; ctx.fillText('LOPPUVASTUSTAJA LÄHESTYY',W/2+2,H*.38+fs*.85+2); ctx.fillStyle='#FFFFFF'; ctx.fillText('LOPPUVASTUSTAJA LÄHESTYY',W/2,H*.38+fs*.85);
+  }
 }

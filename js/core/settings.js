@@ -1,14 +1,15 @@
-/* Player settings shown on the map: season theme, difficulty and letter case. */
+/* Player settings: difficulty (on the map), letter case (hamburger menu). The season follows the calendar. */
 
 /* ---- Difficulty: overall pace and lives ---- */
 const DIFF = {easy:{pace:.55,lives:5}, normal:{pace:.72,lives:4}, hard:{pace:1,lives:3}};
 const diff = () => DIFF[save.diff] || DIFF.normal;
 
-/* ---- Season: 'auto' follows the calendar, a season id forces it, 'off' = base look ---- */
+/* ---- Season: chosen by the calendar only (not a player setting).
+   For testing, add #halloween or #perus to the page address. ---- */
 function activeSeason(){
-  const m = save.theme==='hw' ? 'halloween' : save.theme==='base' ? 'off' : (save.theme||'auto');
-  if(m==='off') return null;
-  if(m!=='auto') return SEASONS.find(s=>s.id===m) || null;
+  const h = location.hash.slice(1).toLowerCase();
+  if(h==='perus') return null;
+  const forced = SEASONS.find(s=>s.id===h); if(forced) return forced;
   const now = new Date(); return SEASONS.find(s=>s.active(now)) || null;
 }
 function applySeasonClass(){
@@ -38,14 +39,15 @@ function bindSeg(id, get, set){
   paint();
 }
 function initSettings(){
-  // season buttons are generated from the registered season packs
-  const ts = $('themeSeg');
-  ts.insertAdjacentHTML('beforeend', '<button data-m="auto" role="radio">Kauden mukaan</button>' +
-    SEASONS.map(s=>`<button data-m="${s.id}" role="radio">${s.name}</button>`).join('') +
-    '<button data-m="off" role="radio">Perus</button>');
-  const themeVal = () => save.theme==='hw' ? 'halloween' : save.theme==='base' ? 'off' : (save.theme||'auto');
-  bindSeg('themeSeg', themeVal, v=>{ save.theme=v; applySeasonClass(); });
+  addEventListener('hashchange',applySeasonClass);
   bindSeg('diffSeg', () => save.diff||'normal', v=>{ save.diff=v; });
   bindSeg('caseSeg', caseMode, v=>{ save.caseMode=v; });
   applySeasonClass();
+  // hamburger menu with the less-used settings
+  const btn=$('menuBtn'), panel=$('menuPanel');
+  const setOpen=o=>{ panel.hidden=!o; btn.setAttribute('aria-expanded',o?'true':'false'); };
+  btn.onclick=()=>setOpen(panel.hidden);
+  $('menuClose').onclick=()=>setOpen(false);
+  addEventListener('keydown',e=>{ if(e.key==='Escape') setOpen(false); });
+  document.addEventListener('pointerdown',e=>{ if(!panel.hidden&&!panel.contains(e.target)&&!btn.contains(e.target)) setOpen(false); });
 }

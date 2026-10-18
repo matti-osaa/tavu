@@ -35,3 +35,11 @@ const CANDY = ['#FF4F8B','#FF9F1C','#FFC400','#7CCB3F','#3D9BE9','#9B6BFF','#16C
 
 /* Latin form of a word: the pack's own rule if it has one, otherwise letter by letter */
 function toLatin(w, word){ return w.toLatin ? w.toLatin(word) : [...word].map(c => w.map[c] || '').join(''); }
+
+/* A world's levels as one path: letter levels with word levels mixed in after every second
+   letter level (Latin-script worlds have only word levels). Star keys stay as before. */
+function stagesOf(w){
+  const out=[], words=(w.words||[]).map((_,li)=>({kind:'words',li,key:w.id+'-w'+li}));
+  (w.levels||[]).forEach((_,li)=>{ out.push({kind:'letters',li,key:w.id+'-'+li}); if(li%2===1&&words.length) out.push(words.shift()); });
+  return out.concat(words);
+}

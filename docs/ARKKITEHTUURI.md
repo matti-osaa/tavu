@@ -13,9 +13,9 @@ css/
   seasons/<id>.css      kausiteeman UI-värit (body.season-<id>)
 js/
   core/
-    registry.js         Tavu.addWorld / Tavu.addSeason, WORLDS, SEASONS, toLatin()
+    registry.js         Tavu.addWorld / Tavu.addSeason, WORLDS, SEASONS, toLatin(), stagesOf()
     storage.js          tallennus selaimen localStorageen (tähdet, nähdyt, asetukset)
-    settings.js         vaikeustaso, kirjainkoko, kausiteema, kartan valitsimet
+    settings.js         vaikeustaso, kirjainkoko, kausiteeman valinta päivämäärän mukaan
     audio.js            WebAudio-äänet (ei äänitiedostoja)
   worlds/               YKSI TIEDOSTO PER KIELI / KIRJOITUSJÄRJESTELMÄ
     cyrillic.js greek.js katakana.js swedish.js english.js
@@ -23,13 +23,13 @@ js/
     halloween.js
   game/
     view.js             canvas, pseudo-3D-projektio (z-syvyys, kaistat), mittasuhteet
-    game.js             säännöt: tason aloitus, ammus, tyyppien synty, osumat, update()
+    game.js             säännöt: tason aloitus, ammus, tyyppien synty, osumat, loppuvastustaja, update()
     input.js            kosketus, hiiri, näppäimistö
   render/
     draw-utils.js       värit, kuutiot, pehmeä kirjain, kyltit, merkit
     scene.js            taivas, mäet, palikkamaa, maali, tienvarsiesineet
-    actors.js           tyypät, ammukset, tykki
-    frame.js            yhden ruudun piirto + pääsilmukka
+    actors.js           tyypät, ammukset, tykki, loppuvastustaja
+    frame.js            yhden ruudun piirto, hälytys + pääsilmukka
   ui/
     map.js              maailmakartta
   main.js               käynnistys
@@ -55,7 +55,13 @@ docs/ARKKITEHTUURI.md   tämä tiedosto
    - `active(date)` päättää, milloin teema kytkeytyy päälle automaattisesti.
    - Kaikki piirtokoukut ovat valinnaisia. Jos koukku puuttuu, käytetään maailman omaa piirtoa.
 2. `css/seasons/<id>.css`: kartan ja käyttöliittymän värit `body.<cssClass>`-valitsimella.
-3. Lisää molemmat `index.html`:ään. Teema ilmestyy kartan *Teema*-valintaan automaattisesti.
+3. Lisää molemmat `index.html`:ään. Teema kytkeytyy päälle vain `active(date)`-ehdon mukaan; pelaaja ei valitse sitä. Testaukseen: lisää osoitteen perään `#<id>` (esim. `#halloween`) tai `#perus`.
+
+## Tason kulku
+
+- Maailman tasot muodostavat yhden polun (`stagesOf`): kirjaintasojen väliin tulee sanataso joka toisen kirjaintason jälkeen. Latinalaisilla kielillä on pelkkiä sanatasoja.
+- Tason vaiheet (`G.phase`): `wave` (tyyppiaalto) → `alarm` (hälytys noin 2,6 s) → `boss` (loppuvastustaja) → `done`.
+- Loppuvastustajalla on 5 kirjainta tai 3 sanaa levyinä. Jokainen levy on oma osumakohtansa (`segLane`, `bossSegAt`) ja tuhoutuu vain omalla vastineellaan. Jos hirviö pääsee rajalle, menetetään elämä ja se työntyy taaksepäin.
 
 ## Pelin tila
 

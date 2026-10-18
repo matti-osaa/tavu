@@ -29,3 +29,9 @@ const sPew=()=>tone(300,.09,'sine',.05,.75);
 const sBoing=()=>tone(160,.22,'sine',.14,.65);
 const sOuch=()=>{tone(196,.3,'sine',.16,.6);tone(131,.35,'sine',.12,.7,.12)};
 const sWin=()=>[0,4,7,12].forEach((n,i)=>tone(262*Math.pow(2,n/12),.4,'sine',.16,0,i*.12));
+
+// Boss warning: classic two-tone 8-bit alarm, repeated
+const sAlarm=()=>{ for(let i=0;i<6;i++){ tone(880,.14,'square',.06,0,i*.34); tone(660,.14,'square',.06,0,i*.34+.17); } };
+// Boss stomp / roar and defeat
+const sRoar=()=>{ tone(90,.6,'sawtooth',.12,.5); noise(.5,300,.6,.25); };
+const sBossDown=()=>{ noise(.9,500,.5,.5); [0,4,7,12,16,19].forEach((n,i)=>tone(196*Math.pow(2,n/12),.35,'square',.07,0,.3+i*.1)); };
