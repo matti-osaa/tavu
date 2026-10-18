@@ -90,7 +90,8 @@ cv.addEventListener('pointermove',e=>{
   if(Math.abs(dx)>8||Math.abs(dy)>8) drag.moved=true;
   if(drag.kind==='carry'&&G.carry){ G.carry.x=p.x; G.carry.y=p.y; }
   if(drag.kind==='pull'&&G.pull){
-    const l=Math.hypot(dx,dy), k=l>g.maxPull?g.maxPull/l:1;
+    const GAIN=1.7;                                   // the band stretches further than the finger moves: a short drag is enough
+    const l=Math.hypot(dx,dy)*GAIN, k=(l>g.maxPull?g.maxPull/l:1)*GAIN;
     G.pull.x=g.cx+dx*k; G.pull.y=g.cy+dy*k;
     const st=Math.floor(Math.min(l,g.maxPull)/(g.maxPull/5)); if(st!==drag.st){ drag.st=st; tone(140+st*30,.04,'triangle',.05); } // creak while stretching
   }

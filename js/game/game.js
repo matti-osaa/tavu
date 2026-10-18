@@ -278,6 +278,10 @@ function update(dt){
     }
     if(e.block>0){e.block-=dt; e.vz=0;} else e.vz+=(want-e.vz)*Math.min(1,dt*(e.runner?4:1.5));
     e.z-=e.vz*dt; if(e.z>ZF+.6)e.z=ZF+.6;
+    // no overtaking: a tyyppä stays behind one that overlaps it in the same lane, so the front one is always the one you hit
+    if(!e.air) for(const o of G.enemies){ if(o===e||o.air||o.z>=e.z+.001) continue;
+      const wid=((o.hw||RB*.6)/(o.hs||1)+(e.hw||RB*.6)/(e.hs||1))/HW*.85, gap=G.isWord||G.lootMode?.5:.38;
+      if(Math.abs((o.lx??o.lane)-(e.lx??e.lane))<wid&&e.z-o.z<gap){ e.z=o.z+gap; e.vz=Math.min(e.vz,o.vz); } }
     e.lx=e.lx??e.bl; e.lx+=(e.bl-e.lx)*Math.min(1,dt*(e.runner?6:2));
     e.lane=e.lx+Math.sin(G.t*1.3+e.ph)*.05;
     e.shake=Math.max(0,e.shake-dt); e.shield=Math.max(0,(e.shield||0)-dt); e.missT=Math.max(0,(e.missT||0)-dt);
@@ -313,7 +317,7 @@ function update(dt){
         g.missAns=s.lab; g.missT=.8; g.flash=.25; b.shake=.3; G.hitstop=.05; G.combo=0;
         G.parts.push({clang:true,x:s.sx,y:s.sy,life:.3,max:.3,r:RB*s0}); sClank(); flashBtn('miss'); continue; }
     }
-    for(const e of G.enemies){
+    for(const e of [...G.enemies].sort((a,b)=>a.z-b.z)){   // nearest first: the shot meets the front one
       if(e.z>z0-.15&&e.z<s.z+.15&&Math.abs(s.lane-e.lane)<hitW(e)){
         if(s.ans===e.ans){pop(e,s);}
         else{ // bounce off in screen space
