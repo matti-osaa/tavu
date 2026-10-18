@@ -4,14 +4,15 @@ function drawCandy(e){
   const s0=sc(e.z), R=RB*s0, x=px(e.lane,e.z), gy=py(e.z);
   const near=Math.max(0,Math.min(1,(2.4-e.z)/1.1));
   const step=G.t*(5+near*5)+e.ph, stepI=Math.floor(step/Math.PI)%2;
-  let fs=R*2.05*(e.disp.length>1?.8:1); ctx.font=`900 ${fs}px ${LTF}`; {const mw=ctx.measureText(e.disp).width, lim=R*3.6; if(mw>lim)fs*=lim/mw;}
+  let fs=R*2.45*(e.disp.length>1?.8:1); ctx.font=`900 ${fs}px ${LTF}`; {const mw=ctx.measureText(e.disp).width, lim=R*4; if(mw>lim)fs*=lim/mw;}
   ctx.font=`900 ${fs}px ${LTF}`; const TW=ctx.measureText(e.disp).width, TH=fs*.72, u=Math.max(1.5,R*2.1/11);
   const hop=(Math.sin(step)>0?1:0)*u*(1+near);
   const jx=e.shake>0?Math.round(Math.sin(e.shake*60)*2)*u:0, a=Math.min(1,(G.t-e.born)*3);
   ctx.save(); ctx.globalAlpha=a;
   ctx.fillStyle='rgba(30,20,40,.22)'; ctx.fillRect(x-TW*.45,gy-u*.4,TW*.9,u*.8);
   const by=gy-hop-u*1.2, cx=x+jx;
-  const dark=shade(e.col,-80);
+  const dark=shade(e.col,-80), PART=.45;   // feet, arms, eyes and hats stay see-through so the letter reads first
+  ctx.globalAlpha=a*PART;
   // feet (pixel blocks), alternate stepping
   const fw=Math.max(2,u*2), fh=Math.max(2,u*1.2), fx=TW*.25;
   ctx.fillStyle=dark; ctx.fillRect(cx-fx-fw/2,by+(stepI?-u:0),fw,fh); ctx.fillRect(cx+fx-fw/2,by+(stepI?0:-u),fw,fh);
@@ -19,9 +20,9 @@ function drawCandy(e){
   const blk=e.block>0?1-e.block/.75:-1, midY=by-TH*.55, half=TW/2;
   if(blk<0){const up=Math.round(near*2+(Math.sin(G.t*(6+near*8)+e.ph)>0?1:0));
     ctx.fillStyle=dark; [-1,1].forEach(sd=>{ctx.fillRect(sd<0?cx-half-u*2:cx+half,midY-up*u,u*2,u); ctx.fillRect(sd<0?cx-half-u*3:cx+half+u*2,midY-up*u-u*(up>0?1:0),u,u*(up>0?2:1));});}
-  const box=smoothText(e.disp,cx,by,fs,e.col,e.shield>.2);
-  // eyes sitting on the top edge
-  const eyY=box.oy-u*1.6, es=Math.max(3,u*2.2), blink=((G.t+e.ph)%4)<.12;
+  const box={ox:cx-TW/2,oy:by-TH,w:TW,h:TH};
+  // small eyes sitting just above the letter
+  const eyY=box.oy-u*2.6, es=Math.max(3,u*1.7), blink=((G.t+e.ph)%4)<.12;
   [-1,1].forEach(sd=>{const ex=cx+sd*u*2.2-es/2;
     ctx.fillStyle=dark; ctx.fillRect(ex-u*.5,eyY-u*.5,es+u,es+u);
     ctx.fillStyle='#FFFFFF'; ctx.fillRect(ex,eyY+(blink?es*.4:0),es,blink?es*.2:es);
@@ -34,6 +35,11 @@ function drawCandy(e){
     const inT=Math.min(1,blk/.3), outT=Math.max(0,(blk-.55)/.45), wv=TW+u*4;
     ctx.fillStyle=dark; ctx.fillRect(cx-wv/2*inT+outT*u*6,midY-u,wv*inT,u*2);
     ctx.fillStyle='#FFFFFF'; ctx.fillRect(cx-wv/2*inT+outT*u*6-u,midY-u*1.5,u*3,u*3); ctx.fillRect(cx+wv/2*inT+outT*u*6-u*2,midY-u*1.5,u*3,u*3);
+  }
+  ctx.globalAlpha=a;
+  smoothText(e.disp,cx,by,fs,e.col,e.shield>.2);
+  if(e.shoots){ // shooter tyypät carry a small red marker
+    ctx.fillStyle='#E8323C'; ctx.fillRect(cx-u*1.2,by+u*.4,u*2.4,u*1.1); ctx.fillStyle='#FFD21E'; ctx.fillRect(cx-u*.4,by+u*.6,u*.8,u*.7);
   }
   if(e.missT>0){const k=Math.min(1,e.missT/.2); badge(cx+half+u*2,box.oy+box.h*.3,R*.42*(.7+.3*k),e.missAns,'#9C93A8','#fff',true);}
   ctx.restore();
@@ -159,4 +165,13 @@ function drawBoss(b){
     }
   });
   ctx.restore();
+}
+
+/* Enemy fire: glowing blocks that roll down the road toward the cannon. Move sideways to dodge. */
+function drawBolt(b){
+  const s0=sc(b.z), x=px(b.lane,b.z), gy=py(b.z), r=Math.max(6,RB*.42*s0), y=gy-r*1.1, pulse=(Math.sin(G.t*20+b.ph)+1)/2;
+  ctx.fillStyle='rgba(40,0,0,.3)'; ctx.fillRect(x-r,gy-r*.2,r*2,r*.4);              // shadow on the road
+  ctx.fillStyle=`rgba(255,80,40,${.25+pulse*.25})`; ctx.fillRect(x-r*1.6,y-r*1.6,r*3.2,r*3.2);
+  cube(x-r,y-r,r*2,pulse>.5?'#FF4A2E':'#E02A1C',false);
+  ctx.fillStyle='#FFE15A'; ctx.fillRect(x-r*.4,y-r*.4,r*.8,r*.8);
 }

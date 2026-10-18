@@ -13,7 +13,7 @@ function draw(){
   // aim guide: dotted blocks down the lane
   ctx.fillStyle='rgba(43,35,51,.25)';
   for(let z=ZCAN+.35;z<ZF;z+=.28){const q=Math.max(2,6*sc(z)); ctx.fillRect(px(G.lane,z)-q/2,py(z)-q/2,q,q);}
-  const items=[...(G.boss?[{z:G.boss.z+.05,f:()=>drawBoss(G.boss)}]:[]),...G.enemies.map(e=>({z:e.z,f:()=>drawCandy(e)})),...G.shots.filter(s=>!s.bounced).map(s=>({z:s.z-.01,f:()=>drawShot(s)}))];
+  const items=[...(G.boss?[{z:G.boss.z+.05,f:()=>drawBoss(G.boss)}]:[]),...G.enemies.map(e=>({z:e.z,f:()=>drawCandy(e)})),...(G.bolts||[]).map(b=>({z:b.z,f:()=>drawBolt(b)})),...G.shots.filter(s=>!s.bounced).map(s=>({z:s.z-.01,f:()=>drawShot(s)}))];
   items.sort((a,b)=>b.z-a.z).forEach(i=>i.f());
   G.shots.filter(s=>s.bounced).forEach(drawShot);
   for(const p of G.parts){
@@ -31,6 +31,7 @@ function draw(){
     ctx.globalAlpha=Math.min(1,a*1.5); ctx.fillStyle=p.col; const q=Math.max(2,p.sz); ctx.fillRect(Math.round(p.x-q/2),Math.round(p.y-q/2),q,q); ctx.globalAlpha=1;
   }
   drawCannon();
+  if(G.hurt>0){ctx.fillStyle=`rgba(232,40,50,${G.hurt*1.2})`;ctx.fillRect(-20,-20,W+40,H+40);}
   if(G.flash>0){ctx.fillStyle=`rgba(255,253,235,${G.flash*2.5})`;ctx.fillRect(-20,-20,W+40,H+40);}
   G.muzzle.forEach(drawMuzzle);
   if(G.phase==='alarm') drawAlarm();

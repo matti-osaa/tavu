@@ -2,7 +2,7 @@
 function startLevel(wi,si){
   const w=WORLDS[wi], stage=stagesOf(w)[si], li=stage.li, isWord=stage.kind==='words';
   const fresh=isWord?w.words[li].map(p=>p[0]):[...w.levels[li]], older=isWord?[]:w.levels.slice(0,li).join('').split('');
-  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
+  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
      goal:14+li*3,maxOn:4+li,speed:.5+li*.08,fired:0,correct:0,combo:0,spawnT:.4,t:0,running:false,hitstop:0,shake:0,cool:0,reload:1,recoil:0,
      season:activeSeason(),isWord,fiOf:isWord?Object.fromEntries(w.words[li].map(p=>[p[0],p[1]])):{},
      fi:isWord?Object.fromEntries(w.words[li].map(p=>w.latin?[p[1],'']:[toLatin(w,p[0]),p[1]])):{},
@@ -67,10 +67,9 @@ function showIntro(){
     <div><div style="font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">${w.script} · taso ${G.si+1}${G.isWord?' · sanat':''}</div>
     <h3>${G.isWord?'Sanatyypät hyökkäävät!':unseen.length?'Uudet tyypät hyökkäävät!':'Tyypät hyökkäävät!'}</h3></div>
     <div class="tiles">${show.map((c,i)=>`<div class="tile" style="--c:${CANDY[i%CANDY.length]}"><b>${introCh(c)}</b><span>${dispAns(ansOf(c))}</span>${G.isWord?`<em>${G.fi[ansOf(c)]}</em>`:''}</div>`).join('')}</div>
-    <p>${G.isWord?(G.w.latin?'Tykissä on suomenkielinen sana. Etsi tieltä tyyppä, joka tarkoittaa samaa, ja ammu.':'Tykissä on sana latinalaisin kirjaimin ja sen suomennos. Etsi tieltä tyyppä, joka on sama sana, ja ammu.'):'Tykissä on yksi vastine kerrallaan. Etsi tieltä tyyppä, jonka kirjain vastaa sitä, siirry sen kohdalle ja ammu.'}
-    Ammus vaihtuu itsestään, kun sen tyypät on tuhottu. Voit vaihtaa sen myös itse.
-    <span class="touch-hint">Vedä sormella sivulle, niin tykki seuraa. Napauta kuutiota ampuaksesi, pyyhkäise sitä ylös tai alas vaihtaaksesi ammusta.</span>
-    <span class="keys-hint">Näppäimistöllä: ← → liikuttaa, ↑ ↓ vaihtaa ammuksen, välilyönti ampuu.</span></p>
+    <p>${G.isWord?(G.w.latin?'Ammu tyyppä sen suomennoksella.':'Ammu tyyppä samalla sanalla.'):'Ammu tyyppä sen vastineella.'} Väistä punaiset ammukset.
+    <span class="touch-hint">Vedä: liiku · Napauta kuutiota: ammu · Pyyhkäise kuutiota: vaihda</span>
+    <span class="keys-hint">← →: liiku · välilyönti: ammu · ↑ ↓: vaihda</span></p>
     <div class="row"><button class="btn" id="go">Aloita</button></div></div></div>`;
   $('go').onclick=()=>{audio(); ov.innerHTML=''; G.running=true;};
 }
@@ -104,7 +103,8 @@ function spawn(){
   const ch=pickLetter(); if(!ch)return;
   let lane=0; for(let k=0;k<10;k++){lane=G.isWord?-.55+Math.random()*1.1:-.72+Math.random()*1.44; if(G.enemies.every(e=>Math.abs(e.bl-lane)>(G.isWord?.75:.4)||e.z<ZF-1.4))break;}
   G.enemies.push({ch,disp:dispCh(ch),ans:ansOf(ch),wf:G.isWord?Math.min(2.2,1+(ch.length-1)*.3):1,bl:lane,lane,z:ZF,vz:G.speed*(.85+Math.random()*.3),ph:Math.random()*6,
-    col:(c=>c[Math.floor(Math.random()*c.length)])(G.season?G.season.colors:CANDY),shake:0,born:G.t,hint:!G.seen.has(ch)});
+    col:(c=>c[Math.floor(Math.random()*c.length)])(G.season?G.season.colors:CANDY),shake:0,born:G.t,hint:!G.seen.has(ch),
+    shoots:G.si>0&&Math.random()<Math.min(.35,.1+G.si*.05), fireT:1.5+Math.random()*2});
 }
 function fire(i){
   if(!G||!G.running)return; audio();
@@ -140,6 +140,20 @@ function pop(e,s){
   if(G.popped>=G.goal&&G.phase==='wave') startAlarm();
 }
 /* ---------- Loppuvastustaja (boss) ---------- */
+/* Enemy fire */
+function enemyFire(z,lane){ G.bolts.push({z:z-.1,lane,vz:G.speed*2.6+.5,ph:Math.random()*6}); tone(140,.18,'square',.05,.6); }
+function updateBolts(dt){
+  for(const b of G.bolts){ b.z-=b.vz*dt;
+    if(b.z<=ZCAN+.12){ b.dead=true;
+      if(Math.abs(b.lane-G.lane)<.2){ // hit the cannon
+        G.lives--; G.combo=0; drawHearts(); G.hurt=.35; G.shake=reduce?0:.35; sOuch();
+        burst(px(G.lane,ZCAN),BY-RB*.8,'#FF4A2E',22,300);
+        if(G.lives<=0&&G.endT<0){G.endT=1.1;G.lose=true;}
+      } else burst(px(b.lane,ZCAN+.12),py(ZCAN+.12)-10,'#FF8A1E',8,140);
+    }
+  }
+  G.bolts=G.bolts.filter(b=>!b.dead);
+}
 function startAlarm(){ G.phase='alarm'; G.alarmT=2.6; sAlarm(); }
 function spawnBoss(){
   // letters: 5 plates from this level's letters; words: 3 plates with words
@@ -218,12 +232,18 @@ function update(dt){
     e.z-=e.vz*dt; if(e.z>ZF+.6)e.z=ZF+.6;
     e.lane=e.bl+Math.sin(G.t*1.3+e.ph)*.05;
     e.shake=Math.max(0,e.shake-dt); e.shield=Math.max(0,(e.shield||0)-dt); e.missT=Math.max(0,(e.missT||0)-dt);
+    if(e.shoots&&e.z<ZF-.6&&e.z>2){ e.fireT-=dt; if(e.fireT<=0){ enemyFire(e.z,e.lane); e.fireT=3+Math.random()*2; } }
     if(e.z<=ZLOSE) hitLine(e);
   }
   if(G.boss){ const b=G.boss;
     b.vz+=(G.speed*.42-b.vz)*Math.min(1,dt*.8); b.z-=b.vz*dt; if(b.z>ZF+.6)b.z=ZF+.6;
     b.shake=Math.max(0,b.shake-dt); b.segs.forEach(g=>{g.missT=Math.max(0,g.missT-dt); g.flash=Math.max(0,g.flash-dt);});
+    b.fireT=(b.fireT??2)-dt;
+    if(b.fireT<=0&&b.z<ZF){ const alive=b.segs.map((g,i)=>g.alive?i:-1).filter(i=>i>=0);
+      enemyFire(b.z, Math.random()<.5?G.lane:segLane(alive[Math.floor(Math.random()*alive.length)]));
+      b.fireT=(2.6+Math.random()*1.2)/G.pace; }
     if(b.z<=ZLOSE+.15) bossReachedLine(); }
+  updateBolts(dt); G.hurt=Math.max(0,G.hurt-dt);
   const LT=RB*.9/HW;
   for(const s of G.shots){
     if(s.bounced){s.trail.push([s.sx,s.sy,s.r]); if(s.trail.length>7)s.trail.shift();
