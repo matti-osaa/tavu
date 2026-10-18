@@ -41,5 +41,7 @@
 .c-grid button.used{color:#B9B0C4}
 .c-grid button.on{background:#FFD23F}
 .c-grid button.clr{color:#8E8A96}
-.node button.ciphernode{border-radius:12px;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 6px,transparent 6px 12px)}
+.node button.ciphernode:not(.locked){border-radius:10px;background:#1B5C3A;box-shadow:inset 0 0 0 4px #2F8A57,0 0 0 3px #2B2333;font-size:0}
+.node button.ciphernode:not(.locked)::before{content:'А?';font-size:20px;color:#fff;font-family:"M PLUS Rounded 1c",sans-serif;font-weight:900;background:#2E86C1;padding:2px 5px;border-radius:4px;box-shadow:0 0 0 2px #2B2333}
+.node button.ciphernode.locked{border-radius:10px}
 .ct,.ct b,.ck b,.ck i,.c-pf,.c-grid button{font-family:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif!important;font-weight:900}

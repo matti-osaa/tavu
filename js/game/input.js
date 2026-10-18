@@ -2,7 +2,7 @@
    Along the bottom board there is a row of discs, each sitting in its own little rubber band.
    (There are a few more discs than tyypät on the road; at least the nearest ones always have a match.)
      - pull a disc back and let go       → it slings itself the opposite way from where it sits
-     - just tap a disc                   → it flies at the nearest tyyppä (quick, but you still pick the right disc)
+     - just tap a disc                   → it flies at the nearest tyyppä: pick the disc that fits it
      - a fired disc is replaced by a new one, probably a different letter
    The dotted line shows the path; discs bounce off the kerbs.
    Keyboard: 1–5 fire that disc at the nearest tyyppä, ↑ ↓ pick a disc, ← → aim, space fires the picked one. */
@@ -29,8 +29,8 @@ function needed(){ const near=targets().filter(t=>t.z<ZF+.5).sort((a,b)=>a.z-b.z
 function newDiscAns(prev){
   const pool=answerPool(), need=needed(), has=a=>G.stacks.some(s=>s.ans===a);
   const miss=need.filter(a=>!has(a));
-  if(miss.length&&Math.random()<.75) return miss[Math.floor(Math.random()*Math.min(2,miss.length))];
-  const alt=pool.filter(a=>!has(a)&&a!==prev);
+  if(miss.length&&Math.random()<.3) return miss[Math.floor(Math.random()*Math.min(2,miss.length))];
+  const alt=pool.filter(a=>!has(a)&&a!==prev&&!G.stacks.some(q=>q.next===a));
   return alt.length?alt[Math.floor(Math.random()*alt.length)]:(miss[0]||pool[0]||'');
 }
 function refreshStacks(){
@@ -38,7 +38,7 @@ function refreshStacks(){
   const g=slingGeo();
   if(!G.stacks||G.stacks.length!==g.n){ const old=G.stacks||[]; G.stacks=Array.from({length:g.n},(_,i)=>old[i]||{ans:'',t:1,wait:0}); G.stacks.forEach(s=>{ if(!s.ans) s.ans=newDiscAns(''); }); }
   const dt=G.dt||0;
-  G.stacks.forEach(s=>{ if(!s.ans){ s.wait-=dt; if(!s.next) s.next=newDiscAns(s.prev); if(s.wait<=0){ s.ans=s.next; s.next=''; s.t=1; tone(380,.04,'sine',.04); noise(.03,2600,3,.05); } } });
+  G.stacks.forEach(s=>{ if(!s.ans){ s.wait-=dt; if(!s.next) s.next=newDiscAns(s.prev); if(s.wait<=0){ if(G.stacks.some(q=>q!==s&&q.ans===s.next)) s.next=newDiscAns(s.prev); s.ans=s.next; s.next=''; s.t=1; tone(380,.04,'sine',.04); noise(.03,2600,3,.05); } } });
   // the two nearest different answers on the road must always be in the row (a thrown letter, a boss plate…)
   const need=needed(), rank=a=>{ const i=need.indexOf(a); return i<0?1e9:i; }, has=a=>G.stacks.some(s=>s.ans===a);
   need.slice(0,2).forEach(a=>{ if(has(a)) return;
@@ -49,13 +49,13 @@ function refreshStacks(){
 function nextAmmo(){ refreshStacks(); }
 function paintFire(){}
 
-// a tapped disc flies at the nearest tyyppä it matches; if none matches, at the nearest one (and bounces off)
+// a tapped disc flies at the nearest tyyppä (it bounces off if it is the wrong disc)
 function nearestTarget(ans){
   const t=[...G.enemies.filter(e=>!e.air).map(e=>{ const tm=(e.z-ZCAN)/(1.9+Math.max(0,e.vz||0)), zp=Math.max(ZLOSE+.05,e.z-Math.max(0,e.vz||0)*tm);  // lead the target a little
       return {ans:e.ans,x:px(e.lane,zp),y:py(zp)-RB*sc(zp)*.9,z:e.z}; }),
     ...(G.boss?G.boss.segs.map((s,i)=>s.alive?{ans:s.ans,x:px(segLane(i),G.boss.z),y:py(G.boss.z)-RB*sc(G.boss.z)*1.3,z:G.boss.z}:null).filter(Boolean):[])]
     .filter(q=>q.z<ZF).sort((a,b)=>a.z-b.z);
-  return t.find(q=>q.ans===ans)||t[0];
+  return t[0];   // always the nearest: you have to pick the disc that fits it
 }
 function fireSlot(i,dx,dy,len){
   const g=slingGeo(), s=G.stacks[i]; if(!s||!s.ans) return;
@@ -78,7 +78,7 @@ function quickFire(i){
 // The kerbs bounce discs back: the straight aim ray is folded at the road edges like a mirror.
 const EDGE=.97;
 function foldLane(l){ const P=4*EDGE; let t=((l+EDGE)%P+P)%P; return t<2*EDGE?t-EDGE:3*EDGE-t; }
-function rawLane(s,z){ const y=py(z)-shotE(s,z)*sc(z); return [(s.cx+s.slope*(y-s.cy)-W/2)/(HW*sc(z)), y]; }
+function rawLane(s,z){ const y=py(z)-shotE(s,z)*sc(z); return [(s.cx+s.slope*(y-s.cy)-W/2)/lw(z), y]; }
 function shotXY(s,z){ const [l,y]=rawLane(s,z); return [px(foldLane(l),z), y]; }
 const bounceNo=l=>Math.floor((l+EDGE)/(2*EDGE));
 // points along the path a disc would take with this aim (for the dotted line), and where it bounces

@@ -166,7 +166,7 @@ function tutStep(n){
   const L=G.fresh.length?G.fresh:Object.keys(G.w.map);
   const add=(ch,lane,z)=>{ const e=makeEnemy(ch,lane,z); e.frozen=true; e.shoots=false; e.runner=false; e.hint=true; e.pumpkin=false; e.col=CANDY[(G.enemies.length*3+1)%CANDY.length]; G.enemies.push(e); return e; };
   if(n===0){ T.target=add(L[0],0,2.6); }
-  else if(n===1){ add(L[2]||L[1],-.5,2.7); T.target=add(L[1],.5,2.7); }
+  else if(n===1){ add(L[2]||L[1],-.5,3.1); T.target=add(L[1],.5,2.6); }
   G.cur=null; refreshStacks();
 }
 function tutUpdate(dt){
@@ -262,7 +262,7 @@ function update(dt){
   G.aimA=Math.max(-1.1,Math.min(1.1,G.aimA||0));
   G.shake=Math.max(0,G.shake-dt); G.flash=Math.max(0,(G.flash||0)-dt);
   // road + roadside scenery drift toward the player
-  const drift=.35*dt; G.scroll+=drift;
+  const drift=0; G.scroll+=drift;   // you stand still and defend: the ground does not move
   for(const d of G.deco){d.z-=drift; if(d.z<ZN*.7){d.z+=ZF*1.6;d.k=Math.random();}}
   if(G.endT>=0){G.endT-=dt; if(G.endT<0){endCard(!G.lose);return;}}
   if(!G.running) return;
@@ -299,7 +299,7 @@ function update(dt){
     e.z-=e.vz*dt; if(e.z>ZF+.6)e.z=ZF+.6;
     // no overtaking: a tyyppä stays behind one that overlaps it in the same lane, so the front one is always the one you hit
     if(!e.air) for(const o of G.enemies){ if(o===e||o.air||o.z>=e.z+.001) continue;
-      const wid=((o.hw||RB*.6)/(o.hs||1)+(e.hw||RB*.6)/(e.hs||1))/HW*.85, gap=G.isWord||G.lootMode?.5:.38;
+      const wid=((o.hw||RB*.6*sc(o.z))/lw(o.z)+(e.hw||RB*.6*sc(e.z))/lw(e.z))*.85, gap=G.isWord||G.lootMode?.5:.38;
       if(Math.abs((o.lx??o.lane)-(e.lx??e.lane))<wid&&e.z-o.z<gap){ e.z=o.z+gap; e.vz=Math.min(e.vz,o.vz); } }
     e.lx=e.lx??e.bl; e.lx+=(e.bl-e.lx)*Math.min(1,dt*(e.runner?6:2));
     e.lane=e.lx+Math.sin(G.t*1.3+e.ph)*.05;
@@ -319,7 +319,7 @@ function update(dt){
   const LT=RB*.9/HW;
   // a hit counts as soon as the shot's edge touches the tyyppä's edge (sizes measured on screen)
   const hitW=e=>{ if(!e.hw) return LT*e.wf; const s0=sc(e.z), r=wordMode()?Math.max(22,RB*.62*s0*1.4)*1.1:Math.max(14,RB*.62*s0);
-    return (e.hw*(s0/(e.hs||s0))+r)/(HW*s0); };
+    return (e.hw*(s0/(e.hs||s0))+r)/lw(e.z); };
   for(const s of G.shots){
     if(s.bounced){s.trail.push([s.sx,s.sy,s.r]); if(s.trail.length>7)s.trail.shift();
       s.sx+=s.vx*dt;s.sy+=s.vy*dt;s.vy+=1100*dt;s.spin+=s.vx*.02*dt;s.r=Math.min(RB*.75,s.r*(1+dt*1.6));s.life-=dt;continue;}

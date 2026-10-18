@@ -167,7 +167,7 @@ function drawPair(){}
    Each plate sits exactly over its hitbox lane (segLane), so aiming at a plate is aiming at the hitbox. */
 function drawBoss(b){
   const s0=sc(b.z), cx=px(0,b.z), gy=py(b.z), U=RB*s0*1.6;
-  const bodyW=b.n*b.segW*HW*s0+U*1.4, bodyH=U*3.6, legH=U*.9, d=bodyW*.1;
+  const bodyW=b.n*b.segW*lw(b.z)+U*1.4, bodyH=U*3.6, legH=U*.9, d=bodyW*.1;
   const step=Math.sin(G.t*3.2), bob=Math.abs(step)*U*.14, jx=b.shake>0?Math.round(Math.sin(b.shake*70)*3):0;
   const X=cx-bodyW/2+jx, top=gy-legH-bodyH-bob, a=Math.min(1,(G.t-b.born)*1.5);
   const dark=shade(b.col,-70);
@@ -204,7 +204,7 @@ function drawBoss(b){
   // name banner above the horns, in the monster's own script
   if(b.name){ const bh=Math.max(20,U*.75); sign(cx+jx,top-U*1.9-bh*.2,bh,b.name,b.nameLat,'#1B1424'); }
   // plates = hitboxes
-  const py0=top+bodyH*.6, ps=Math.min(b.segW*HW*s0*.9, bodyH*.34);
+  const py0=top+bodyH*.6, ps=Math.min(b.segW*lw(b.z)*.9, bodyH*.34);
   b.segs.forEach((g,i)=>{
     const x=px(segLane(i),b.z)+jx, X0=x-ps/2*(G.isWord?1.35:1), w=ps*(G.isWord?1.35:1);
     ctx.fillStyle='#1B1424'; ctx.fillRect(X0-3,py0-3,w+6,ps+6);

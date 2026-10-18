@@ -6,7 +6,11 @@ const ZN=1, ZF=5.2, ZLOSE=1.06, ZCAN=1.0;
 let W=0,H=0,DPR=1,HY=0,BY=0,HW=0,RB=50;
 const sc=z=>ZN/z;
 const py=z=>HY+(BY-HY)*sc(z);
-const px=(lane,z)=>W/2+lane*HW*sc(z);
+// The field fans out with distance: far away it is much wider, so tyypät come at you from a broad front
+// and converge on your position. lw(z) = screen pixels per lane unit at depth z.
+const FAN=.5, fan=z=>1+FAN*Math.max(0,z-1);
+const lw=z=>HW*sc(z)*fan(z);
+const px=(lane,z)=>W/2+lane*lw(z);
 function resize(){
   const r=stage.getBoundingClientRect(); W=r.width;H=r.height;DPR=Math.min(2,window.devicePixelRatio||1);
   cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);

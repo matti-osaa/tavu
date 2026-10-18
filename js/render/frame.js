@@ -55,8 +55,20 @@ function draw(){
 }
 function loop(now){
   if(!G)return; const dt=Math.min(.05,(now-last)/1000); last=now;
-  G.dt=dt; update(dt); if(G){draw(); raf=requestAnimationFrame(loop);}
+  try{ G.dt=dt; update(dt); if(G) draw(); }
+  catch(err){ showBug(err); }                     // a bug must not freeze the game: report it and keep going
+  if(G) raf=requestAnimationFrame(loop);
 }
+/* Small bug note in the corner (so a screenshot tells what broke) */
+function showBug(err){
+  const m=(err&&(err.stack||err.message))||String(err); if(window._lastBug===m) return; window._lastBug=m;
+  let el=document.getElementById('bugnote'); if(!el){ el=document.createElement('div'); el.id='bugnote';
+    el.style.cssText='position:fixed;left:6px;bottom:6px;right:6px;z-index:99;background:#2B2333;color:#FFB4B4;font:11px/1.3 monospace;padding:6px 8px;border-radius:6px;white-space:pre-wrap;max-height:30vh;overflow:auto;opacity:.92';
+    el.onclick=()=>el.remove(); document.body.appendChild(el); }
+  el.textContent='Bugi: '+m.split('\n').slice(0,4).join('\n');
+}
+addEventListener('error',e=>showBug(e.error||e.message));
+addEventListener('unhandledrejection',e=>showBug(e.reason));
 
 /* Boss warning: red pulse, scrolling hazard stripes and blinking text */
 function drawAlarm(){
