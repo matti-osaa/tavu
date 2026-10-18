@@ -25,7 +25,7 @@ function dispCh(ch){ const lo=ch.toLowerCase(), m=caseMode();
   if(ch.length>1){ if(m==='lower')return lo; if(m==='pair')return ch[0]+lo.slice(1); if(m==='mixed')return Math.random()<.5?ch:lo; return ch; }
   if(m==='lower')return lo; if(m==='pair')return ch+lo; if(m==='mixed')return Math.random()<.5?ch:lo; return ch; }
 function dispAns(a){ const m=caseMode(), up=cap1(a);
-  if(G&&G.isWord){ if(m==='upper')return a.toUpperCase(); if(m==='pair')return up; return a; }
+  if(G&&(G.isWord||G.lootMode)){ if(m==='upper')return a.toUpperCase(); if(m==='pair')return up; return a; }
   if(m==='upper')return up; if(m==='pair')return up===a?a:(a.length===1?up+a:up+' '+a); return a; }
 function introCh(ch){ const lo=ch.toLowerCase(), m=caseMode(); if(lo===ch)return ch;
   if(ch.length>1)return m==='lower'?lo:m==='pair'?ch[0]+lo.slice(1):ch;

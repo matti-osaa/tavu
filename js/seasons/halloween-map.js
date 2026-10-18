@@ -1,5 +1,5 @@
-/* Halloween map critters: cobwebs you can wipe away with a finger, spiders that peek down on a thread
-   (tap to squish), and weaver spiders that come back to rebuild a wiped web (you can swat them too).
+/* Halloween map critters: cobwebs you can wipe away with a finger, a spider that peeks down on a thread
+   every 1–3 minutes (tap to squish), and weaver spiders that come back to rebuild a wiped web (you can swat them too).
    Runs only while the Halloween season is active and the map is on screen. */
 (() => {
   const WEB = (() => {   // cobweb drawn into a corner, 120×120
@@ -18,7 +18,7 @@
   const F2=['.#...##...#.','#...####...#','.#########..','..##o##o##..','#..######..#','.#.######.#.','#..#.##.#..#','...#....#...'];
   const SPIDER=`<svg viewBox="0 0 12 8" shape-rendering="crispEdges"><g class="f1">${px(F1,'#1B1128')}</g><g class="f2">${px(F2,'#1B1128')}</g></svg>`;
 
-  let layer=null, webs=[], spiders=[], peekT=5, last=0;
+  let layer=null, webs=[], spiders=[], peekT=30+Math.random()*30, last=0;   // first peek after 30–60 s
   const rnd=(a,b)=>a+Math.random()*(b-a);
   const active=()=>document.body.classList.contains('season-halloween')&&!$('map').hidden;
   const squishSound=()=>{ try{ audio(); noise(.12,700,.8,.25); tone(120,.15,'sine',.12,.5); }catch(e){} };
@@ -43,7 +43,7 @@
     const el=document.createElement('div'); el.className='hw-spider';
     el.innerHTML=`<div class="thread"></div><div class="body">${SPIDER}</div>`;
     el.style.left=x+'px'; layer.appendChild(el);
-    const s={el,x,len,kind,web,y:0,state:'down',t:0,hang:rnd(2,4)};
+    const s={el,x,len,kind,web,y:0,state:'down',t:0,hang:rnd(5,9)};
     el.querySelector('.body').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); squish(s); });
     spiders.push(s); return s;
   }
@@ -60,8 +60,8 @@
     if(!layer){ if(!document.body.classList.contains('season-halloween')) return; build(); }
     layer.style.display=active()?'':'none'; if(!active()) return;
     // peeking spiders
-    peekT-=dt; if(peekT<=0&&spiders.filter(s=>s.kind==='peek').length<2){
-      addSpider(rnd(.12,.88)*innerWidth, rnd(70,Math.min(300,innerHeight*.45)),'peek'); peekT=rnd(6,13); }
+    peekT-=dt; if(peekT<=0&&!spiders.some(s=>s.kind==='peek')){   // one spider at a time, every 1–3 minutes
+      addSpider(rnd(.12,.88)*innerWidth, rnd(70,Math.min(300,innerHeight*.45)),'peek'); peekT=rnd(60,180); }
     // webs regrow: a weaver comes down to the corner and spins it back
     webs.forEach(w=>{
       if(w.gone&&!w.weaver){ w.regrowT-=dt; if(w.regrowT<=0) w.weaver=addSpider(w.side==='left'?60:innerWidth-60,55,'weave',w); }

@@ -32,7 +32,6 @@ function draw(){
   if(G.flash>0){ctx.fillStyle=`rgba(255,253,235,${G.flash*2.5})`;ctx.fillRect(-20,-20,W+40,H+40);}
   G.muzzle.forEach(drawMuzzle);
   if(G.phase==='alarm') drawAlarm();
-  if(G.loot) drawLoot();
   // help hand: only if after 15 s the player still hasn't both moved and fired
   if(G.running&&G.playT>15&&!(G.didMove&&G.didFire)&&G.endT<0&&G.phase!=='alarm') drawHelpHand();
   for(const t of G.texts){
@@ -70,13 +69,13 @@ function drawAlarm(){
 /* Help animation when the player hasn't managed to move and fire within 15 s:
    a pointing finger drags the cannon left and right, then taps the ammo cube. Loops until the player acts. */
 function drawHelpHand(){
-  const t=(G.playT-15)%3.2, u=Math.max(30,RB*.75), cx=px(G.lane,ZCAN), cubeY=BY+6-u*2.6, roadY=BY-u*.2;
+  const t=(G.playT-15)%3.2, u=Math.max(30,RB*.75), cx=px(G.lane,ZCAN), cubeY=py(2.3), roadY=BY-u*.2;
   let hx, hy, press=0, label;
   if(t<1.6){ // drag along the road
     const k=t/1.6; hx=cx+Math.sin(k*Math.PI*2)*u*1.8; hy=roadY; press=.6; label=isTouch?'VEDÄ':'← →';
   } else if(t<2.2){ // move up to the cube
     const k=(t-1.6)/.6, e=k*k*(3-2*k); hx=cx; hy=roadY+(cubeY-roadY)*e; label=isTouch?'NAPAUTA':'VÄLILYÖNTI';
-  } else { // tap
+  } else { // tap the road ahead
     const k=(t-2.2)/1; hx=cx; hy=cubeY+(k<.25?k*4*6:Math.max(0,(.5-k)*4*6)); press=k<.5?1:0; label=isTouch?'NAPAUTA':'VÄLILYÖNTI';
     if(k>.2&&k<.8){ const r=u*(.4+(k-.2)*2); ctx.strokeStyle=`rgba(255,255,255,${.8-(k-.2)})`; ctx.lineWidth=4; ctx.strokeRect(hx-r,hy-r,r*2,r*2); }
   }

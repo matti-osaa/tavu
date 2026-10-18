@@ -2,7 +2,7 @@
 function startLevel(wi,si){
   const w=WORLDS[wi], stage=stagesOf(w)[si], li=stage.li, isWord=stage.kind==='words';
   const fresh=isWord?w.words[li].map(p=>p[0]):[...w.levels[li]], older=isWord?[]:w.levels.slice(0,li).join('').split('');
-  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,surge:1,playT:0,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
+  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,surge:1,playT:0,kills:{},lootMode:false,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
      goal:14+li*3,maxOn:4+li,speed:.5+li*.08,fired:0,correct:0,combo:0,spawnT:.4,t:0,running:false,hitstop:0,shake:0,cool:0,reload:1,recoil:0,
      season:activeSeason(),isWord,fiOf:isWord?Object.fromEntries(w.words[li].map(p=>[p[0],p[1]])):{},
      fi:isWord?Object.fromEntries(w.words[li].map(p=>w.latin?[p[1],'']:[toLatin(w,p[0]),p[1]])):{},
@@ -28,12 +28,15 @@ function buildAmmo(){
   $('bf').addEventListener('pointerdown',e=>{e.preventDefault();fire();});
   paintFire();
 }
+const wordMode=()=>G&&(G.isWord||G.lootMode);
 const ansOf=ch=>G.isWord?(G.w.latin?G.fiOf[ch]:toLatin(G.w,ch)):G.w.map[ch];
 /* The ammo always has the same colour, so colour never hints at the answer – the player has to read the letter */
 const AMMO_COL='#E9A800';
+// Cannon recharge time (s): long enough that every shot is a choice
+const COOL=1.2;
 function paintFire(){const b=$('bf'); if(!b)return; b.style.setProperty('--c',G.curCol); b.style.setProperty('--d',shade(G.curCol,-60));
   const t=b.querySelector('.t'); t.textContent=G.cur?dispAns(G.cur):'…';
-  if(G.isWord&&G.cur){const i=document.createElement('i'); i.textContent=G.fi[G.cur]; t.appendChild(i);} b.classList.remove('swap'); void b.offsetWidth; b.classList.add('swap');}
+  if(wordMode()&&G.cur&&G.fi[G.cur]){const i=document.createElement('i'); i.textContent=G.fi[G.cur]; t.appendChild(i);} b.classList.remove('swap'); void b.offsetWidth; b.classList.add('swap');}
 // The cannon holds one fixed answer. It changes only after a hit, or if no candy on the road matches it any more.
 // ↑/↓ or tapping the loaded cube cycles through the answers of the tyypät on the road, nearest first
 // Everything the cannon could aim at: tyypät and the boss's remaining plates
@@ -73,13 +76,15 @@ function endCard(win){
   G.running=false;
   const lost=G.maxLives-G.lives, acc=G.fired?G.correct/G.fired:0;
   let stars=0; if(win){stars=1; if(lost<=1&&acc>=.6)stars=2; if(lost===0&&acc>=.85)stars=3;}
-  const k=G.key; if(stars>(save.stars[k]||0)){save.stars[k]=stars;persist();}
+  const k=G.key; if(stars>(save.stars[k]||0)){save.stars[k]=stars;}
+  save.kills=save.kills||{}; const sk=save.kills[G.w.id]=save.kills[G.w.id]||{};
+  for(const [c,n] of Object.entries(G.kills)) sk[c]=(sk[c]||0)+n; persist();
   const hasNext=win&&G.si+1<stagesOf(G.w).length;
   if(win) sWin();
   ov.innerHTML=`<div class="overlay"><div class="card">
     <h3>${win?'Loppuvastustaja kaatui!':'Tyypät pääsivät läpi'}</h3>
     ${win?`<div class="big-stars">${[0,1,2].map(i=>`<i class="${i<stars?'on':''}"></i>`).join('')}</div>`:''}
-    ${win&&G.loot&&G.loot.length?`<div class="loot">${G.loot.map(l=>`<div><b>${l.word}</b>${l.lat?` <span>${l.lat}</span>`:''} = ${l.fi}</div>`).join('')}</div>`:''}
+    ${killsHTML()}
     <p>${G.correct} osumaa, tarkkuus ${Math.round(acc*100)} %</p>
     <div class="row">${hasNext?'<button class="btn" id="nx">Seuraava taso</button>':''}
     <button class="btn ${hasNext?'alt':''}" id="rt">${win?'Pelaa uudelleen':'Yritä uudelleen'}</button>
@@ -87,6 +92,16 @@ function endCard(win){
   if(hasNext) $('nx').onclick=()=>startLevel(G.wi,G.si+1);
   $('rt').onclick=()=>startLevel(G.wi,G.si);
   $('mp').onclick=toMap;
+}
+/* End-of-level summary: the world's alphabet with how many of each letter were destroyed,
+   plus the words (level words and the boss's words) that were destroyed */
+function killsHTML(){
+  const w=G.w, letters=Object.keys(w.map), words=Object.entries(G.kills).filter(([c])=>c.length>1);
+  const lat=c=>w.latin?'':toLatin(w,c), fiOf=c=>{ const p=(w.words||[]).flat().find(q=>q[0]===c)||(G.loot||[]).map(l=>[l.word,l.fi]).find(q=>q[0]===c); return p?p[1]:''; };
+  let h='';
+  if(letters.length) h+=alphabetHTML(w,G.kills,true);
+  if(words.length) h+=`<div class="killwords">${words.map(([c,n])=>`<div><b>${dispCh(c)}</b>${lat(c)?` <span>${lat(c)}</span>`:''}${fiOf(c)?` = ${fiOf(c)}`:''}${n>1?` <i>×${n}</i>`:''}</div>`).join('')}</div>`;
+  return h;
 }
 function toMap(){ cancelAnimationFrame(raf); G=null; ov.innerHTML=''; $('game').hidden=true; $('map').hidden=false; renderMap(); }
 $('back').onclick=toMap;
@@ -111,11 +126,12 @@ function spawn(){
 }
 function fire(i){
   if(!G||!G.running)return; audio();
-  if(G.cool>0||!G.cur)return;
+  if(!G.cur)return;
+  if(G.cool>0){ tone(110,.05,'square',.03); return; }   // still recharging: a dry click
   const b=$('bf'); b.classList.add('press'); setTimeout(()=>b.classList.remove('press'),90);
   const z0=ZCAN+.05, u=Math.max(30,RB*.75), cubeY=BY+6-u*1.8-u*1.5*.5-4;
   G.shots.push({E0:(py(z0)-cubeY)/sc(z0),z0,lane:G.lane,z:z0,vz:1.15,ans:G.cur,lab:dispAns(G.cur),col:G.curCol,bounced:false,vx:0,sx:0,sy:0,vy:0,life:1});
-  G.didFire=true; G.fired++; G.cool=.3; G.recoil=1; G.reload=0; sPew();
+  G.didFire=true; G.fired++; G.cool=COOL; G.recoil=1; G.reload=0; sPew();
   G.muzzle.push({ans:dispAns(G.cur),col:G.curCol,life:.45,max:.45});
 }
 function burst(x,y,col,n=20,spd=260){
@@ -127,12 +143,12 @@ function floatText(x,y,txt,col,big){ G.texts.push({x,y,txt,col,life:1.3,big}); }
 function pop(e,s){
   const s0=sc(e.z), ex=px(e.lane,e.z), ey=py(e.z)-RB*s0;
   G.enemies.splice(G.enemies.indexOf(e),1); s.dead=true;
-  G.correct++; G.combo++; G.popped++; prog();
+  G.correct++; G.combo++; G.popped++; prog(); G.kills[e.ch]=(G.kills[e.ch]||0)+1;
   const k=Math.max(.6,s0);
   burst(ex,ey,e.col,34,420*k);
   for(let i=0;i<9;i++){const a=i/9*Math.PI*2+Math.random()*.4, sp=(220+Math.random()*220)*k;
     G.parts.push({chunk:true,x:ex,y:ey,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-160,life:.9,max:.9,col:e.col,sz:RB*s0*(.22+Math.random()*.18),rot:Math.random()*6});}
-  G.parts.push({glyph:true,ch:e.disp,ans:dispAns(e.ans),fi:G.isWord?G.fi[e.ans]:'',col2:s.col,x:ex,y:ey,vx:0,vy:-300,life:.85,max:.85,col:e.col,sz:RB*s0,rot:0});
+  G.parts.push({glyph:true,ch:e.disp,ans:dispAns(e.ans),fi:wordMode()?(G.fi[e.ans]||''):'',col2:s.col,x:ex,y:ey,vx:0,vy:-300,life:.85,max:.85,col:e.col,sz:RB*s0,rot:0});
   G.parts.push({ring:true,x:ex,y:ey,r:RB*s0,life:.45,max:.45,col:e.col},{ring:true,x:ex,y:ey,r:RB*s0*.6,life:.6,max:.6,col:'#FFD23F'},{flashball:true,x:ex,y:ey,r:RB*s0*1.6,life:.18,max:.18});
   G.flash=.1; G.shake=Math.max(G.shake,reduce?0:.12);
   if(G.combo>=3) floatText(ex,ey-RB*s0-70,`putki ×${G.combo}`,'#FFB800',false);
@@ -174,7 +190,7 @@ function bossSegAt(lane){ const b=G.boss, i=Math.floor((lane+b.n*b.segW/2)/b.seg
 function hitBossSeg(i,s){
   const b=G.boss, g=b.segs[i], s0=sc(b.z), x=px(segLane(i),b.z), y=py(b.z)-RB*s0*1.3;
   s.dead=true; g.alive=false; g.flash=.4; b.shake=.35; b.vz=-.8;
-  G.correct++; G.combo++;
+  G.correct++; G.combo++; G.kills[g.ch]=(G.kills[g.ch]||0)+1;
   burst(x,y,g.col,30,380*Math.max(.6,s0));
   G.parts.push({glyph:true,ch:g.disp,ans:dispAns(g.ans),fi:G.isWord?G.fi[g.ans]:'',x,y,vx:0,vy:-260,life:.9,max:.9,col:g.col,sz:RB*s0,rot:0});
   G.parts.push({ring:true,x,y,r:RB*s0,life:.45,max:.45,col:g.col},{flashball:true,x,y,r:RB*s0*1.4,life:.18,max:.18});
@@ -188,12 +204,18 @@ function bossDown(){
     burst(x,y,b.col,40,520*Math.max(.6,s0));
     for(let k=0;k<6;k++) G.parts.push({chunk:true,x,y,vx:(Math.random()-.5)*700,vy:-300-Math.random()*400,life:1.2,max:1.2,col:k%2?b.col:'#2B2333',sz:RB*s0*(.3+Math.random()*.3),rot:0}); }
   G.parts.push({flashball:true,x:px(0,b.z),y:py(b.z)-RB*s0*2,r:RB*s0*4,life:.35,max:.35});
-  G.boss=null; G.flash=.3; G.shake=reduce?0:.6; sBossDown(); G.phase='done'; G.cur=null; paintFire();
-  // the boss releases themed words: they fly out and hover, and are listed on the end card
+  G.boss=null; G.flash=.3; G.shake=reduce?0:.6; sBossDown(); G.cur=null; paintFire();
+  // the boss releases themed words: they burst out and attack as a last wave that must be destroyed too
   const list=(G.season&&G.season.rewards&&G.season.rewards[G.w.id])||G.w.rewards||[];
-  G.loot=[...list].sort(()=>Math.random()-.5).slice(0,3).map(([word,fi,lat],i)=>({word:dispCh(word),fi,lat:G.w.latin?'':(lat||toLatin(G.w,word)),
-    x:px(0,b.z),y:py(b.z)-RB*s0*2,tx:W*(.25+i*.25),ty:H*(.22+(i%2)*.12),t:0}));
-  if(G.endT<0) G.endT=3.4;
+  G.loot=[...list].sort(()=>Math.random()-.5).slice(0,3).map(([word,fi,lat])=>({word,disp:dispCh(word),fi,lat:G.w.latin?'':(lat||toLatin(G.w,word))}));
+  if(!G.loot.length){ G.phase='done'; if(G.endT<0) G.endT=1.8; return; }
+  G.phase='loot'; G.lootMode=true;
+  G.loot.forEach((l,i)=>{
+    const ans=G.w.latin?l.fi:l.lat; G.fi[ans]=G.w.latin?'':l.fi;
+    G.enemies.push({ch:l.word,disp:l.disp,ans,loot:true,wf:Math.min(2.2,1+(l.word.length-1)*.3),bl:(i-1)*.7,lane:(i-1)*.7,z:b.z+.3+i*.6,
+      vz:-1.5,ph:Math.random()*6,col:(c=>c[i%c.length])(G.season?G.season.colors:CANDY),shake:0,born:G.t,hint:true,fireT:9,seed:i});
+  });
+  nextAmmo();
 }
 function bossReachedLine(){
   const b=G.boss; G.lives--; G.combo=0; drawHearts(); G.shake=reduce?0:.5; sRoar();
@@ -217,6 +239,7 @@ function update(dt){
   if(G.keys.ArrowLeft) G.tlane-=2.2*dt; if(G.keys.ArrowRight) G.tlane+=2.2*dt;
   G.tlane=Math.max(-.85,Math.min(.85,G.tlane));
   G.lane+=(G.tlane-G.lane)*Math.min(1,dt*14);
+  if(G.pendingFire&&Math.abs(G.lane-G.tlane)<.04){ G.pendingFire=false; fire(); }
   G.shake=Math.max(0,G.shake-dt); G.flash=Math.max(0,(G.flash||0)-dt);
   // road + roadside scenery drift toward the player
   const drift=.35*dt; G.scroll+=drift;
@@ -228,10 +251,11 @@ function update(dt){
   G.tempoT=(G.tempoT||0)+dt; const cyc=G.tempoT%10; G.surge=(G.phase==='wave'&&cyc>7)?1.6:1;
   if(G.keys.ArrowLeft||G.keys.ArrowRight) G.didMove=true;
   if(G.hitstop>0){G.hitstop-=dt;return}
-  G.cool=Math.max(0,G.cool-dt);
+  if(G.cool>0){ G.cool-=dt; if(G.cool<=0){ G.cool=0; G.reload=.4; tone(523,.06,'sine',.05); } }
   const n=G.enemies.length;
   G.spawnT-=dt;
   if(G.phase==='alarm'){ G.alarmT-=dt; if(G.alarmT<=0) spawnBoss(); }
+  if(G.phase==='loot'&&!G.enemies.some(e=>e.loot)&&G.endT<0){ G.phase='done'; G.endT=1.2; }
   if(G.phase==='wave' && G.spawnT<=0 && n<G.maxOn && G.popped+n<G.goal+2 && G.endT<0){
     spawn(); const fill=n/G.maxOn; G.spawnT=(fill<.25?.6:fill<.5?1.5:2.7)/(1+G.li*.1)/G.pace/G.surge;
   }

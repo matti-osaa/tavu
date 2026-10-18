@@ -60,7 +60,7 @@ function drawShot(s){
     s.trail.forEach((t,i)=>{const q=t[2]*(.5+.5*(i+1)/s.trail.length); ctx.fillRect(t[0]-q/2,t[1]-q/2,q,q);});
     ctx.globalAlpha=a; ctx.translate(s.sx,s.sy); ctx.rotate(Math.round(s.spin/(Math.PI/4))*(Math.PI/4));
     const L=s.lab||s.ans;
-    if(G.isWord) sign(0,0,Math.max(18,r*1.2),L,'','#9C93A8'); else {ctx.fillStyle='#2B2333'; ctx.fillRect(-r-2,-r-2,2*r+4,2*r+4); ctx.fillStyle='#9C93A8'; ctx.fillRect(-r,-r,2*r,2*r);
+    if(wordMode()) sign(0,0,Math.max(18,r*1.2),L,'','#9C93A8'); else {ctx.fillStyle='#2B2333'; ctx.fillRect(-r-2,-r-2,2*r+4,2*r+4); ctx.fillStyle='#9C93A8'; ctx.fillRect(-r,-r,2*r,2*r);
       ctx.font=`800 ${Math.round(r*(L.length>2?.8:L.length>1?1:1.3))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff'; ctx.fillText(L,0,1);}
     ctx.restore(); return;}
   const s0=sc(s.z), x=px(s.lane,s.z), r=Math.max(14,RB*.62*s0), y=py(s.z)-shotE(s,s.z)*s0;
@@ -68,7 +68,7 @@ function drawShot(s){
   ctx.fillStyle=s.col; for(let i=1;i<=4;i++){const zt=Math.max(ZCAN,s.z-i*.12), q=r*.5*(1-i/5); ctx.globalAlpha=.5*(1-i/5); ctx.fillRect(px(s.lane,zt)-q/2,py(zt)-shotE(s,zt)*sc(zt)-q/2,q,q);}
   ctx.globalAlpha=1;
   const L=s.lab||s.ans;
-  if(G.isWord){sign(x,y,Math.max(22,r*1.4),L,G.fi[s.ans],s.col);return;}
+  if(wordMode()){sign(x,y,Math.max(22,r*1.4),L,G.fi[s.ans],s.col);return;}
   cube(x-r,y-r,r*2,s.col,false);
   ctx.font=`800 ${Math.round(r*(L.length>2?.85:L.length>1?1.05:1.4))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillText(L,x+2,y+3); ctx.fillStyle='#FFFFFF'; ctx.fillText(L,x,y+1);
@@ -85,46 +85,18 @@ function drawCannon(){
     ctx.fillStyle='#E63E78'; ctx.fillRect(x-u*.45,y-u*1.35+rec,u*.9,u*.18);
   }
   if(!G.cur)return;
-  const col=G.curCol, ans=dispAns(G.cur), rl=1-Math.pow(1-G.reload,3);
-  if(G.isWord){const sh=u*.95*(.6+.4*rl); sign(x,y-u*2.35+rec,sh,ans,G.fi[G.cur],col); drawCubeHint(x,y-u*2.35+rec-sh/2,sh*1.6,u); return;}
+  const ready=G.cool<=0, charge=1-Math.max(0,G.cool)/COOL;
+  const col=ready?G.curCol:'#8E8A96', ans=dispAns(G.cur), rl=1-Math.pow(1-G.reload,3);
+  if(wordMode()){const sh=u*.95*(.6+.4*rl); sign(x,y-u*2.35+rec,sh,ans,G.fi[G.cur],col);
+    if(!ready){ const bw=u*1.6; ctx.fillStyle='#2B2333'; ctx.fillRect(x-bw/2-2,y-u*2.35+rec-sh/2-12,bw+4,8); ctx.fillStyle=AMMO_COL; ctx.fillRect(x-bw/2,y-u*2.35+rec-sh/2-10,bw*charge,4); } drawCubeHint(x,y-u*2.35+rec-sh/2,sh*1.6,u); return;}
   const bs=u*1.5*(.55+.45*rl), bx=x-bs/2, byy=y-u*1.8+rec-bs-4;
   cube(bx,byy,bs,col,false);
+  if(!ready){ const fh=bs*charge; ctx.fillStyle=AMMO_COL; ctx.fillRect(bx,byy+bs-fh,bs,fh); }   // gold fills up while recharging
   ctx.font=`800 ${Math.round(bs*(ans.length>2?.42:ans.length>1?.55:.75))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillText(ans,x+2,byy+bs/2+3); ctx.fillStyle='#FFFFFF'; ctx.fillText(ans,x,byy+bs/2+1);
   drawCubeHint(x,byy,bs,u);
 }
-/* Touch hint around the ammo: a pulsing frame + “AMMU” until the player has fired a few times,
-   and small ▲▼ markers that show the cube can be flicked to switch ammo. */
-function drawCubeHint(x,top,bs,u){
-  if(!isTouch||!G.running) return;
-  const learning=G.fired<3, t=G.t;
-  ctx.save();
-  if(learning){
-    const pulse=(Math.sin(t*6)+1)/2, m=6+pulse*6;
-    ctx.strokeStyle=`rgba(255,255,255,${.5+pulse*.5})`; ctx.lineWidth=3; ctx.strokeRect(x-bs/2-m,top-m,bs+m*2,bs+m*2);
-  }
-  // ▲ ▼ switch buttons beside the cube (real tap targets, see switchZone)
-  const z=switchZone(); if(z){
-    [[z.y0,z.ym,-1],[z.ym,z.y1,1]].forEach(([ya,yb,d],i)=>{
-      ctx.fillStyle='#2B2333'; ctx.fillRect(z.x0,ya+2,z.x1-z.x0,yb-ya-4);
-      ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillRect(z.x0+3,ya+5,z.x1-z.x0-6,yb-ya-10);
-      const cx2=(z.x0+z.x1)/2, cy2=(ya+yb)/2, a=(z.x1-z.x0)*.22;
-      ctx.fillStyle='#2B2333'; ctx.beginPath();
-      if(i===0){ctx.moveTo(cx2,cy2-a); ctx.lineTo(cx2-a*1.2,cy2+a*.7); ctx.lineTo(cx2+a*1.2,cy2+a*.7);}
-      else {ctx.moveTo(cx2,cy2+a); ctx.lineTo(cx2-a*1.2,cy2-a*.7); ctx.lineTo(cx2+a*1.2,cy2-a*.7);}
-      ctx.fill();
-    });
-  }
-  ctx.restore();
-}
-/* Tap area of the ▲▼ ammo-switch buttons: a column next to the cube, on whichever side has room */
-function switchZone(){
-  if(!G||!isTouch) return null;
-  const u=Math.max(30,RB*.75), x=px(G.lane,ZCAN), bs=u*1.5, w=Math.max(40,u*1.1);
-  const top=BY+6-u*1.8-bs-4, side=(x+bs/2+w+8<W)?1:-1;
-  const x0=side>0?x+bs/2+8:x-bs/2-8-w;
-  return {x0,x1:x0+w,y0:top-u*.2,ym:top+bs/2,y1:top+bs+u*.2};
-}
+function drawCubeHint(){}   // the cube needs no decoration: tap it to switch, drag it to scroll
 function flashBtn(cls){const b=$('bf'); if(!b)return; b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(()=>b.classList.remove(cls),500);}
 function pill(x,y,h,col,txt,sub){sign(x,y,h,txt,sub,col);}
 function drawPair(){}

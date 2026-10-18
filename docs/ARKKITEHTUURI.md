@@ -33,6 +33,7 @@ js/
     frame.js            yhden ruudun piirto, hälytys + pääsilmukka
   ui/
     map.js              maailmakartta
+    alphabet.js         aakkostaulu (kartalta avattava ja tason lopussa) tuhottujen määrineen
   main.js               käynnistys
 docs/ARKKITEHTUURI.md   tämä tiedosto
 ```
@@ -63,7 +64,7 @@ docs/ARKKITEHTUURI.md   tämä tiedosto
 ## Tason kulku
 
 - Maailman tasot muodostavat yhden polun (`stagesOf`): kirjaintasojen väliin tulee sanataso joka toisen kirjaintason jälkeen. Latinalaisilla kielillä on pelkkiä sanatasoja.
-- Tason vaiheet (`G.phase`): `wave` (tyyppiaalto) → `alarm` (hälytys noin 2,6 s) → `boss` (loppuvastustaja) → `done`.
+- Tason vaiheet (`G.phase`): `wave` (tyyppiaalto) → `alarm` (hälytys noin 2,6 s) → `boss` (loppuvastustaja) → `loot` (hirviön vapauttamat teemasanat hyökkäävät) → `done`.
 - Loppuvastustajalla on 5 kirjainta tai 3 sanaa levyinä. Jokainen levy on oma osumakohtansa (`segLane`, `bossSegAt`) ja tuhoutuu vain omalla vastineellaan. Jos hirviö pääsee rajalle, menetetään elämä ja se työntyy taaksepäin.
 
 ## Pelin tila
