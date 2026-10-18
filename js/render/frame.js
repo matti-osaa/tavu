@@ -10,9 +10,6 @@ function draw(){
   ctx.save(); ctx.imageSmoothingEnabled=false;
   if(G.shake>0){ctx.translate(Math.round((Math.random()-.5)*14*G.shake/.35),Math.round((Math.random()-.5)*10*G.shake/.35));}
   drawBg();
-  // aim guide: dotted blocks down the lane
-  ctx.fillStyle='rgba(43,35,51,.25)';
-  for(let z=ZCAN+.35;z<ZF;z+=.28){const q=Math.max(2,6*sc(z)); ctx.fillRect(px(G.lane,z)-q/2,py(z)-q/2,q,q);}
   const items=[...(G.boss?[{z:G.boss.z+.05,f:()=>drawBoss(G.boss)}]:[]),...G.enemies.map(e=>({z:e.z,f:()=>drawCandy(e)})),...(G.bolts||[]).map(b=>({z:b.z,f:()=>drawBolt(b)})),...G.shots.filter(s=>!s.bounced).map(s=>({z:s.z-.01,f:()=>drawShot(s)}))];
   items.sort((a,b)=>b.z-a.z).forEach(i=>i.f());
   G.shots.filter(s=>s.bounced).forEach(drawShot);

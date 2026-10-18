@@ -5,7 +5,15 @@ const SPK='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9h4l5-4v14l-
 const drawSnd=()=>sndBtn.innerHTML=SPK+(soundOn?'<path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>':'<path d="M16 9l6 6M22 9l-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>')+'</svg>';
 drawSnd();
 sndBtn.onclick=()=>{soundOn=!soundOn;drawSnd()};
-function audio(){ if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}} if(ac&&ac.state==='suspended')ac.resume(); return ac;}
+function audio(){
+  if(ac&&ac.state==='closed') ac=null;
+  if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+  if(ac&&ac.state!=='running'){ try{ ac.resume().catch(()=>{}); }catch(e){} }
+  return ac;
+}
+// After the phone sleeps or the tab is hidden, wake the sound on return and on the very next touch
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&ac) audio(); });
+['pointerdown','keydown','touchend'].forEach(t=>addEventListener(t,()=>{ if(ac&&ac.state!=='running') audio(); },{passive:true}));
 function tone(f,dur,type='sine',vol=.18,slide=0,delay=0){
   if(!soundOn||!ac)return; const t=ac.currentTime+delay, o=ac.createOscillator(), g=ac.createGain();
   o.type=type;o.frequency.setValueAtTime(f,t); if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f*slide),t+dur);

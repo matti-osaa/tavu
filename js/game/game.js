@@ -2,7 +2,7 @@
 function startLevel(wi,si){
   const w=WORLDS[wi], stage=stagesOf(w)[si], li=stage.li, isWord=stage.kind==='words';
   const fresh=isWord?w.words[li].map(p=>p[0]):[...w.levels[li]], older=isWord?[]:w.levels.slice(0,li).join('').split('');
-  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,playT:0,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
+  G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,surge:1,playT:0,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,lives:diff().lives,maxLives:diff().lives,pace:diff().pace,popped:0,
      goal:14+li*3,maxOn:4+li,speed:.5+li*.08,fired:0,correct:0,combo:0,spawnT:.4,t:0,running:false,hitstop:0,shake:0,cool:0,reload:1,recoil:0,
      season:activeSeason(),isWord,fiOf:isWord?Object.fromEntries(w.words[li].map(p=>[p[0],p[1]])):{},
      fi:isWord?Object.fromEntries(w.words[li].map(p=>w.latin?[p[1],'']:[toLatin(w,p[0]),p[1]])):{},
@@ -11,7 +11,7 @@ function startLevel(wi,si){
   if(isWord){G.goal=10+li*2;G.maxOn=3+li;G.speed=.4+li*.05;}
   G.speed*=G.pace;
   $('map').hidden=true; $('game').hidden=false; resize();
-  G.cur=null; G.curCol=CANDY[0];
+  G.cur=null; G.curCol=AMMO_COL;
   buildAmmo(); drawHearts(); prog();
   showIntro();
   cancelAnimationFrame(raf); last=performance.now(); raf=requestAnimationFrame(loop);
@@ -29,6 +29,8 @@ function buildAmmo(){
   paintFire();
 }
 const ansOf=ch=>G.isWord?(G.w.latin?G.fiOf[ch]:toLatin(G.w,ch)):G.w.map[ch];
+/* The ammo always has the same colour, so colour never hints at the answer – the player has to read the letter */
+const AMMO_COL='#E9A800';
 function paintFire(){const b=$('bf'); if(!b)return; b.style.setProperty('--c',G.curCol); b.style.setProperty('--d',shade(G.curCol,-60));
   const t=b.querySelector('.t'); t.textContent=G.cur?dispAns(G.cur):'…';
   if(G.isWord&&G.cur){const i=document.createElement('i'); i.textContent=G.fi[G.cur]; t.appendChild(i);} b.classList.remove('swap'); void b.offsetWidth; b.classList.add('swap');}
@@ -45,14 +47,14 @@ function switchAmmo(dir=1){
   const list=[]; targets().filter(e=>e.z<ZF+.5).sort((a,b)=>a.z-b.z).forEach(e=>{if(!list.includes(e.ans))list.push(e.ans);});
   if(!list.length||(list.length===1&&list[0]===G.cur)){tone(150,.1,'sine',.08);return;}
   const i=list.indexOf(G.cur), next=i<0?list[0]:list[(i+dir+list.length)%list.length];
-  G.cur=next; let col; do{col=CANDY[Math.floor(Math.random()*CANDY.length)]}while(col===G.curCol); G.curCol=col; G.reload=0; paintFire();
+  G.cur=next; G.reload=0; paintFire();
   tone(dir>0?262:330,.08,'sine',.1,1.3); tone(dir>0?392:247,.1,'sine',.08,1,.06);
 }
 function nextAmmo(){
   const all=targets(), vis=all.filter(e=>e.z<ZF-.25), from=vis.length?vis:all;
   if(!from.length){G.cur=null;paintFire();return;}
   const others=from.filter(e=>e.ans!==G.cur), pick=(others.length?others:from)[Math.floor(Math.random()*(others.length?others:from).length)];
-  G.cur=pick.ans; let c; do{c=CANDY[Math.floor(Math.random()*CANDY.length)]}while(c===G.curCol); G.curCol=c; G.reload=0; paintFire();
+  G.cur=pick.ans; G.reload=0; paintFire();
 }
 const HEART='<svg viewBox="0 0 9 8" shape-rendering="crispEdges"><path fill="#2B2333" d="M1 0h3v1h1V0h3v1h1v3H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0V1h1z"/><path fill="#F23C5A" d="M1 1h2v1h1v1h1V2h1V1h2v3H7v1H6v1H5v1H4V6H3V5H2V4H1z"/><path fill="#FF9AAA" d="M1 1h1v1H1z"/></svg>';
 function drawHearts(){ $('hearts').innerHTML=Array.from({length:G.maxLives},(_,i)=>HEART.replace('<svg',`<svg class="${i<G.lives?'':'lost'}"`)).join(''); }
@@ -61,15 +63,9 @@ function prog(){ const b=$('progbar');
   else { b.style.width=Math.min(100,G.popped/G.goal*100)+'%'; b.classList.remove('boss'); } }
 
 function showIntro(){
-  const w=G.w, unseen=G.fresh.filter(c=>!G.seen.has(c));
-  const show=(unseen.length?unseen:G.fresh);
+  const w=G.w;
   ov.innerHTML=`<div class="overlay"><div class="card">
-    <div><div style="font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">${w.script} · taso ${G.si+1}${G.isWord?' · sanat':''}</div>
-    <h3>${G.isWord?'Sanatyypät hyökkäävät!':unseen.length?'Uudet tyypät hyökkäävät!':'Tyypät hyökkäävät!'}</h3></div>
-    <div class="tiles">${show.map((c,i)=>`<div class="tile" style="--c:${CANDY[i%CANDY.length]}"><b>${introCh(c)}</b><span>${dispAns(ansOf(c))}</span>${G.isWord?`<em>${G.fi[ansOf(c)]}</em>`:''}</div>`).join('')}</div>
-    <p>${G.w.latin?'Ammu suomenkielisiä sanoja. Ne tehoavat, kun ne tarkoittavat samaa kuin vieras tyyppä.':G.isWord?'Ammu tuttuja sanoja. Ne tehoavat, kun ne vastaavat vierasta tyyppää.':'Ammu tuttuja kirjaimia. Ne tehoavat, kun ne vastaavat vierasta tyyppää.'} Väistä punaiset ammukset.
-    <span class="touch-hint">Vedä: liiku · Napauta kuutiota: ammu · Pyyhkäise kuutiota: vaihda</span>
-    <span class="keys-hint">← →: liiku · välilyönti: ammu · ↑ ↓: vaihda</span></p>
+    <div style="font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">${w.script} ${G.si+1}</div>
     <div class="row"><button class="btn" id="go">Aloita</button></div></div></div>`;
   $('go').onclick=()=>{audio(); ov.innerHTML=''; G.running=true;};
 }
@@ -84,7 +80,7 @@ function endCard(win){
     <h3>${win?'Loppuvastustaja kaatui!':'Tyypät pääsivät läpi'}</h3>
     ${win?`<div class="big-stars">${[0,1,2].map(i=>`<i class="${i<stars?'on':''}"></i>`).join('')}</div>`:''}
     ${win&&G.loot&&G.loot.length?`<div class="loot">${G.loot.map(l=>`<div><b>${l.word}</b>${l.lat?` <span>${l.lat}</span>`:''} = ${l.fi}</div>`).join('')}</div>`:''}
-    <p>${G.correct} osumaa · tarkkuus ${Math.round(acc*100)} %</p>
+    <p>${G.correct} osumaa, tarkkuus ${Math.round(acc*100)} %</p>
     <div class="row">${hasNext?'<button class="btn" id="nx">Seuraava taso</button>':''}
     <button class="btn ${hasNext?'alt':''}" id="rt">${win?'Pelaa uudelleen':'Yritä uudelleen'}</button>
     <button class="btn alt" id="mp">Kartta</button></div></div></div>`;
@@ -108,7 +104,9 @@ function spawn(){
   G.enemies.push({ch,disp:dispCh(ch),ans:ansOf(ch),wf:G.isWord?Math.min(2.2,1+(ch.length-1)*.3):1,bl:lane,lane,z:ZF,vz:G.speed*(.85+Math.random()*.3),ph:Math.random()*6,
     col:(c=>c[Math.floor(Math.random()*c.length)])(G.season?G.season.colors:CANDY),shake:0,born:G.t,hint:!G.seen.has(ch),
     shoots:G.si>0&&Math.random()<Math.min(.35,.1+G.si*.05), fireT:1.5+Math.random()*2,
-    pumpkin:!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99)});
+    pumpkin:!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99),
+    runner:Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0});
+  { const r=G.enemies[G.enemies.length-1]; if(r.runner){ r.shoots=true; r.fireT=1+Math.random(); } }
   const e=G.enemies[G.enemies.length-1]; if(e.pumpkin&&G.season.bodyLetterColor) e.col=G.season.bodyLetterColor;
 }
 function fire(i){
@@ -226,6 +224,8 @@ function update(dt){
   if(G.endT>=0){G.endT-=dt; if(G.endT<0){endCard(!G.lose);return;}}
   if(!G.running) return;
   G.playT+=dt;
+  // tempo: ~7 s calm, ~3 s surge where tyypät come faster and closer together
+  G.tempoT=(G.tempoT||0)+dt; const cyc=G.tempoT%10; G.surge=(G.phase==='wave'&&cyc>7)?1.6:1;
   if(G.keys.ArrowLeft||G.keys.ArrowRight) G.didMove=true;
   if(G.hitstop>0){G.hitstop-=dt;return}
   G.cool=Math.max(0,G.cool-dt);
@@ -233,15 +233,21 @@ function update(dt){
   G.spawnT-=dt;
   if(G.phase==='alarm'){ G.alarmT-=dt; if(G.alarmT<=0) spawnBoss(); }
   if(G.phase==='wave' && G.spawnT<=0 && n<G.maxOn && G.popped+n<G.goal+2 && G.endT<0){
-    spawn(); const fill=n/G.maxOn; G.spawnT=(fill<.25?.6:fill<.5?1.5:2.7)/(1+G.li*.1)/G.pace;
+    spawn(); const fill=n/G.maxOn; G.spawnT=(fill<.25?.6:fill<.5?1.5:2.7)/(1+G.li*.1)/G.pace/G.surge;
   }
   if(!G.cur&&targets().some(e=>e.z<ZF+.5)) nextAmmo();
   else if(G.cur&&!targets().some(e=>e.ans===G.cur)&&!G.shots.some(s=>!s.bounced&&s.ans===G.cur&&!s.dead)) nextAmmo();
   const boost=n<=1?1.5:1;
   for(const e of [...G.enemies]){
-    if(e.block>0){e.block-=dt; e.vz=0;} else e.vz+=(G.speed*boost-e.vz)*Math.min(1,dt*1.5);
+    let want=G.speed*boost*G.surge;
+    if(e.runner){ // sprint in bursts and hop to another lane before it
+      e.dashT-=dt; if(e.dashT<=0){ e.dash=.55; e.dashT=1.6+Math.random()*1.8; e.bl=Math.max(-.75,Math.min(.75,e.bl+(Math.random()<.5?-1:1)*(.3+Math.random()*.3))); }
+      if(e.dash>0){ e.dash-=dt; want=G.speed*4.5; }
+    }
+    if(e.block>0){e.block-=dt; e.vz=0;} else e.vz+=(want-e.vz)*Math.min(1,dt*(e.runner?4:1.5));
     e.z-=e.vz*dt; if(e.z>ZF+.6)e.z=ZF+.6;
-    e.lane=e.bl+Math.sin(G.t*1.3+e.ph)*.05;
+    e.lx=e.lx??e.bl; e.lx+=(e.bl-e.lx)*Math.min(1,dt*(e.runner?6:2));
+    e.lane=e.lx+Math.sin(G.t*1.3+e.ph)*.05;
     e.shake=Math.max(0,e.shake-dt); e.shield=Math.max(0,(e.shield||0)-dt); e.missT=Math.max(0,(e.missT||0)-dt);
     if(e.shoots&&e.z<ZF-.6&&e.z>2){ e.fireT-=dt; if(e.fireT<=0){ enemyFire(e.z,e.lane); e.fireT=3+Math.random()*2; } }
     if(e.z<=ZLOSE) hitLine(e);

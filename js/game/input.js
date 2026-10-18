@@ -15,7 +15,9 @@ function onCube(p){ if(!G) return false; const u=Math.max(30,RB*.75), cx=px(G.la
 
 cv.addEventListener('pointerdown',e=>{
   if(!G) return; audio();
-  const p=canvasPoint(e), cube=onCube(p);
+  const p=canvasPoint(e), z=switchZone();
+  if(z&&p.x>=z.x0-6&&p.x<=z.x1+6&&p.y>=z.y0&&p.y<=z.y1){ switchAmmo(p.y<z.ym?1:-1); return; }   // ▲ / ▼ buttons
+  const cube=onCube(p);
   drag={id:e.pointerId, x0:p.x, y0:p.y, onCube:cube, moved:false};
   if(!cube) aimAt(p.x);              // tapping the road slides the cannon there
   try{cv.setPointerCapture(e.pointerId);}catch(_){}
@@ -30,7 +32,7 @@ const endDrag=e=>{
   if(!drag||e.pointerId!==drag.id) return;
   const p=canvasPoint(e), dx=p.x-drag.x0, dy=p.y-drag.y0;
   if(drag.onCube && !drag.moved){
-    if(Math.abs(dy)>28 && Math.abs(dy)>Math.abs(dx)) switchAmmo(dy<0?1:-1);   // flick up = next, down = previous
+    if(Math.abs(dy)>18 && Math.abs(dy)>Math.abs(dx)) switchAmmo(dy<0?1:-1);   // flick up = next, down = previous
     else if(Math.abs(dx)<14 && Math.abs(dy)<14) fire();
   }
   drag=null;

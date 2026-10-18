@@ -21,6 +21,7 @@ js/
     cyrillic.js greek.js katakana.js swedish.js english.js
   seasons/              YKSI TIEDOSTO PER KAUSI
     halloween.js
+    halloween-map.js    kartan interaktiiviset hämähäkit ja pyyhittävät seitit
   game/
     view.js             canvas, pseudo-3D-projektio (z-syvyys, kaistat), mittasuhteet
     game.js             säännöt: tason aloitus, ammus, tyyppien synty, osumat, loppuvastustaja, update()

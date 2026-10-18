@@ -36,6 +36,10 @@ function drawCandy(e){
     ctx.fillStyle=dark; ctx.fillRect(cx-wv/2*inT+outT*u*6,midY-u,wv*inT,u*2);
     ctx.fillStyle='#FFFFFF'; ctx.fillRect(cx-wv/2*inT+outT*u*6-u,midY-u*1.5,u*3,u*3); ctx.fillRect(cx+wv/2*inT+outT*u*6-u*2,midY-u*1.5,u*3,u*3);
   }
+  if(e.runner){ // speed streaks while dashing, a small lightning tag otherwise
+    ctx.globalAlpha=a*(e.dash>0?.8:.35); ctx.fillStyle=e.col;
+    for(let k=0;k<3;k++) ctx.fillRect(cx-TW*.6-u*(3+k*2),by-TH*(.25+k*.25),u*(2+k),Math.max(2,u*.5));
+  }
   ctx.globalAlpha=a;
   if(e.pumpkin&&G.season&&G.season.body) G.season.body(cx,by,TW,TH,u,e.seed||1);
   smoothText(e.disp,cx,by,fs,e.col,e.shield>.2);
@@ -98,15 +102,28 @@ function drawCubeHint(x,top,bs,u){
   if(learning){
     const pulse=(Math.sin(t*6)+1)/2, m=6+pulse*6;
     ctx.strokeStyle=`rgba(255,255,255,${.5+pulse*.5})`; ctx.lineWidth=3; ctx.strokeRect(x-bs/2-m,top-m,bs+m*2,bs+m*2);
-    ctx.font=`700 ${Math.round(Math.max(13,u*.42))}px ${PXF}`; ctx.textAlign='center'; ctx.textBaseline='bottom';
-    const ly=top-m-6; ctx.fillStyle='#2B2333'; ctx.fillText('NAPAUTA',x+2,ly+2); ctx.fillStyle='#FFE15A'; ctx.fillText('NAPAUTA',x,ly);
   }
-  // ▲ ▼ switch markers beside the cube
-  const a=Math.max(5,u*.22), sx=x+bs/2+a*2.2, cy=top+bs/2;
-  ctx.fillStyle='rgba(255,255,255,.85)';
-  ctx.beginPath(); ctx.moveTo(sx,cy-a*2.2); ctx.lineTo(sx-a,cy-a*.8); ctx.lineTo(sx+a,cy-a*.8); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(sx,cy+a*2.2); ctx.lineTo(sx-a,cy+a*.8); ctx.lineTo(sx+a,cy+a*.8); ctx.fill();
+  // ▲ ▼ switch buttons beside the cube (real tap targets, see switchZone)
+  const z=switchZone(); if(z){
+    [[z.y0,z.ym,-1],[z.ym,z.y1,1]].forEach(([ya,yb,d],i)=>{
+      ctx.fillStyle='#2B2333'; ctx.fillRect(z.x0,ya+2,z.x1-z.x0,yb-ya-4);
+      ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillRect(z.x0+3,ya+5,z.x1-z.x0-6,yb-ya-10);
+      const cx2=(z.x0+z.x1)/2, cy2=(ya+yb)/2, a=(z.x1-z.x0)*.22;
+      ctx.fillStyle='#2B2333'; ctx.beginPath();
+      if(i===0){ctx.moveTo(cx2,cy2-a); ctx.lineTo(cx2-a*1.2,cy2+a*.7); ctx.lineTo(cx2+a*1.2,cy2+a*.7);}
+      else {ctx.moveTo(cx2,cy2+a); ctx.lineTo(cx2-a*1.2,cy2-a*.7); ctx.lineTo(cx2+a*1.2,cy2-a*.7);}
+      ctx.fill();
+    });
+  }
   ctx.restore();
+}
+/* Tap area of the ▲▼ ammo-switch buttons: a column next to the cube, on whichever side has room */
+function switchZone(){
+  if(!G||!isTouch) return null;
+  const u=Math.max(30,RB*.75), x=px(G.lane,ZCAN), bs=u*1.5, w=Math.max(40,u*1.1);
+  const top=BY+6-u*1.8-bs-4, side=(x+bs/2+w+8<W)?1:-1;
+  const x0=side>0?x+bs/2+8:x-bs/2-8-w;
+  return {x0,x1:x0+w,y0:top-u*.2,ym:top+bs/2,y1:top+bs+u*.2};
 }
 function flashBtn(cls){const b=$('bf'); if(!b)return; b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(()=>b.classList.remove(cls),500);}
 function pill(x,y,h,col,txt,sub){sign(x,y,h,txt,sub,col);}
