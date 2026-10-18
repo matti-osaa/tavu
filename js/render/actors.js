@@ -6,7 +6,7 @@ function drawCandy(e){
   const step=G.t*(5+near*5)+e.ph, stepI=Math.floor(step/Math.PI)%2;
   let fs=R*2.45*(e.disp.length>1?.8:1); ctx.font=`900 ${fs}px ${LTF}`; {const mw=ctx.measureText(e.disp).width, lim=R*4; if(mw>lim)fs*=lim/mw;}
   ctx.font=`900 ${fs}px ${LTF}`; const TW=ctx.measureText(e.disp).width, TH=fs*.72, u=Math.max(1.5,R*2.1/11);
-  const hop=(Math.sin(step)>0?1:0)*u*(1+near);
+  const hop=(Math.sin(step)>0?1:0)*u*(1+near)+(e.lift||0)*RB*s0*2.2;
   const jx=e.shake>0?Math.round(Math.sin(e.shake*60)*2)*u:0, a=Math.min(1,(G.t-e.born)*3);
   ctx.save(); ctx.globalAlpha=a;
   ctx.fillStyle='rgba(30,20,40,.22)'; ctx.fillRect(x-TW*.45,gy-u*.4,TW*.9,u*.8);
@@ -41,6 +41,11 @@ function drawCandy(e){
     for(let k=0;k<3;k++) ctx.fillRect(cx-TW*.6-u*(3+k*2),by-TH*(.25+k*.25),u*(2+k),Math.max(2,u*.5));
   }
   ctx.globalAlpha=a;
+  if(G.assist&&G.cur&&e.ans===G.cur){ // beginner help: the tyyppä your ammo works on glows gold
+    const pulse=(Math.sin(G.t*6)+1)/2, m=u*(1.5+pulse);
+    ctx.fillStyle=`rgba(255,210,40,${.25+pulse*.25})`; ctx.fillRect(cx-TW/2-m,by-TH-m,TW+m*2,TH+m*1.6);
+    ctx.strokeStyle='#FFD21E'; ctx.lineWidth=Math.max(2,u*.5); ctx.strokeRect(cx-TW/2-m,by-TH-m,TW+m*2,TH+m*1.6);
+  }
   if(e.pumpkin&&G.season&&G.season.body) G.season.body(cx,by,TW,TH,u,e.seed||1);
   smoothText(e.disp,cx,by,fs,e.col,e.shield>.2);
   if(e.shoots){ // shooter tyypät carry a small red marker
@@ -48,7 +53,8 @@ function drawCandy(e){
   }
   if(e.missT>0){const k=Math.min(1,e.missT/.2); badge(cx+half+u*2,box.oy+box.h*.3,R*.42*(.7+.3*k),e.missAns,'#9C93A8','#fff',true);}
   ctx.restore();
-  if(e.hint&&s0>.42){
+  const learnt=((save.kills||{})[G.w.id]||{})[e.ch]||0;
+  if((e.hint||(G.assist&&learnt+(G.kills[e.ch]||0)<3))&&s0>.32){
     const hs=Math.round(Math.max(12,R*.5)), hl=dispAns(e.ans);
     badge(x,eyY-hs*1.6-headroom,hs*.7,hl,'#FFF6DE','#3A2A1E',false);
   }
@@ -139,6 +145,8 @@ function drawBoss(b){
   const my=top+bodyH*.42, mw=bodyW*.6;
   ctx.fillStyle='#1B1424'; ctx.fillRect(cx+jx-mw/2,my,mw,U*.45);
   ctx.fillStyle='#FFFFFF'; const tw=mw/8; for(let k=0;k<8;k++){ctx.fillRect(cx+jx-mw/2+k*tw+tw*.15,my,tw*.7,U*.16); if(k%2)ctx.fillRect(cx+jx-mw/2+k*tw+tw*.15,my+U*.29,tw*.7,U*.16);}
+  // name banner above the horns, in the monster's own script
+  if(b.name){ const bh=Math.max(20,U*.75); sign(cx+jx,top-U*1.9-bh*.2,bh,b.name,b.nameLat,'#1B1424'); }
   // plates = hitboxes
   const py0=top+bodyH*.6, ps=Math.min(b.segW*HW*s0*.9, bodyH*.34);
   b.segs.forEach((g,i)=>{

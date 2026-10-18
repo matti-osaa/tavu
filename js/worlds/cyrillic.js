@@ -24,6 +24,7 @@
       }
       return out;
     },
+    bosses:['ТОМАТ','КОТОМАТ','АТОМ','ТАРАКАН','БАБА ЯГА','КОЩЕЙ','ЛЕШИЙ','ЗМЕЙ','ВОДЯНОЙ','КИКИМОРА'],
     rewards:[['БЕРЁЗА','koivu'],['ГРИБ','sieni'],['ЁЖ','siili'],['СОЛНЦЕ','aurinko'],['ЛИСА','kettu']],
     card:{color:'#5CBF6E', bg:'linear-gradient(160deg,#E8FFB8,#B6EFA0)'},
     palette:{sky:['#8ED6FF','#E9F8FF'], path:'#D8B57A', edge:'#B98F52', grass:'#6CC04A', grass2:'#5AAE3C', hill:'#4E9A34', far:'#7BC4F2'},

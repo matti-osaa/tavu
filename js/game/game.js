@@ -10,6 +10,9 @@ function startLevel(wi,si){
      deco:Array.from({length:10},(_,i)=>({z:ZN*.75+i*(ZF*1.6/10),side:i%2?1:-1,k:Math.random()}))};
   if(isWord){G.goal=10+li*2;G.maxOn=3+li;G.speed=.4+li*.05;}
   G.speed*=G.pace;
+  if(si===0){ G.speed*=.75; G.goal=Math.min(G.goal,10); }   // first level: slower and shorter
+  G.assist=si<2||save.diff==='easy';                          // beginner help: matching tyypät glow, vastine labels
+  if(!save.tutDone&&!isWord&&w.levels.length){ G.tut={step:0,t:0}; }
   $('map').hidden=true; $('game').hidden=false; resize();
   G.cur=null; G.curCol=AMMO_COL;
   buildAmmo(); drawHearts(); prog();
@@ -70,7 +73,7 @@ function showIntro(){
   ov.innerHTML=`<div class="overlay"><div class="card">
     <div style="font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">${w.script} ${G.si+1}</div>
     <div class="row"><button class="btn" id="go">Aloita</button></div></div></div>`;
-  $('go').onclick=()=>{audio(); ov.innerHTML=''; G.running=true;};
+  $('go').onclick=()=>{audio(); ov.innerHTML=''; G.running=true; if(G.tut) tutStep(0);};
 }
 function endCard(win){
   G.running=false;
@@ -82,7 +85,7 @@ function endCard(win){
   const hasNext=win&&G.si+1<stagesOf(G.w).length;
   if(win) sWin();
   ov.innerHTML=`<div class="overlay"><div class="card">
-    <h3>${win?'Loppuvastustaja kaatui!':'Tyypät pääsivät läpi'}</h3>
+    <h3>${win?`${G.bossName||'Loppuvastustaja'} kaatui!`:'Tyypät pääsivät läpi'}</h3>
     ${win?`<div class="big-stars">${[0,1,2].map(i=>`<i class="${i<stars?'on':''}"></i>`).join('')}</div>`:''}
     ${killsHTML()}
     <p>${G.correct} osumaa, tarkkuus ${Math.round(acc*100)} %</p>
@@ -109,20 +112,23 @@ $('back').onclick=toMap;
 /* spawn: random letters from this level's pool, new letters weighted up */
 function pickLetter(){
   // now and then a random letter from the whole alphabet, even ones not taught yet
-  if(!G.isWord&&Math.random()<.14){ const all=Object.keys(G.w.map); return all[Math.floor(Math.random()*all.length)]; }
+  if(!G.isWord&&G.si>0&&Math.random()<.14){ const all=Object.keys(G.w.map); return all[Math.floor(Math.random()*all.length)]; }
   const pool=[]; G.fresh.forEach(c=>pool.push(c,c,c)); G.older.forEach(c=>pool.push(c));
   return pool[Math.floor(Math.random()*pool.length)];
 }
 function spawn(){
   const ch=pickLetter(); if(!ch)return;
   let lane=0; for(let k=0;k<10;k++){lane=G.isWord?-.55+Math.random()*1.1:-.72+Math.random()*1.44; if(G.enemies.every(e=>Math.abs(e.bl-lane)>(G.isWord?.75:.4)||e.z<ZF-1.4))break;}
-  G.enemies.push({ch,disp:dispCh(ch),ans:ansOf(ch),wf:G.isWord?Math.min(2.2,1+(ch.length-1)*.3):1,bl:lane,lane,z:ZF,vz:G.speed*(.85+Math.random()*.3),ph:Math.random()*6,
+  G.enemies.push(makeEnemy(ch,lane,ZF));
+  { const r=G.enemies[G.enemies.length-1]; if(r.runner){ r.shoots=true; r.fireT=1+Math.random(); } }
+  const e=G.enemies[G.enemies.length-1]; if(e.pumpkin&&G.season.bodyLetterColor) e.col=G.season.bodyLetterColor;
+}
+function makeEnemy(ch,lane,z){
+  return {ch,disp:dispCh(ch),ans:ansOf(ch),wf:G.isWord?Math.min(2.2,1+(ch.length-1)*.3):1,bl:lane,lane,z,vz:G.speed*(.85+Math.random()*.3),ph:Math.random()*6,
     col:(c=>c[Math.floor(Math.random()*c.length)])(G.season?G.season.colors:CANDY),shake:0,born:G.t,hint:!G.seen.has(ch),
     shoots:G.si>0&&Math.random()<Math.min(.35,.1+G.si*.05), fireT:1.5+Math.random()*2,
     pumpkin:!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99),
-    runner:Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0});
-  { const r=G.enemies[G.enemies.length-1]; if(r.runner){ r.shoots=true; r.fireT=1+Math.random(); } }
-  const e=G.enemies[G.enemies.length-1]; if(e.pumpkin&&G.season.bodyLetterColor) e.col=G.season.bodyLetterColor;
+    runner:G.si>0&&Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0};
 }
 function fire(i){
   if(!G||!G.running)return; audio();
@@ -153,7 +159,8 @@ function pop(e,s){
   G.flash=.1; G.shake=Math.max(G.shake,reduce?0:.12);
   if(G.combo>=3) floatText(ex,ey-RB*s0-70,`putki ×${G.combo}`,'#FFB800',false);
   for(const o of G.enemies){const d=Math.abs(o.z-e.z)+Math.abs(o.lane-e.lane)*.8; if(d<1.6){o.vz=-1.6*(1-d/1.6)-.2;}}
-  G.hitstop=.06; sHit(); flashBtn('hit'); nextAmmo();
+  G.hitstop=.06; sHit(); flashBtn('hit'); if(!G.tut) nextAmmo();
+  if(G.assist&&!G.tut&&G.combo>=2&&Math.random()<.6) floatText(ex,ey-RB*s0-40,['JEE!','HIENOA!','SUPER!','JES!','MAHTAVAA!'][Math.floor(Math.random()*5)],'#FFB800',true);
 
   if(!G.seen.has(e.ch)){G.seen.add(e.ch); save.seen[G.w.id]=[...G.seen]; persist();}
   if(G.popped>=G.goal&&G.phase==='wave') startAlarm();
@@ -173,14 +180,54 @@ function updateBolts(dt){
   }
   G.bolts=G.bolts.filter(b=>!b.dead);
 }
-function startAlarm(){ G.phase='alarm'; G.alarmT=2.6; sAlarm(); }
+/* ---------- Guided first game ----------
+   Step 0: one tyyppä straight ahead, the cannon already holds its counterpart → tap/space to hit it.
+   Step 1: two tyypät, only one matches the cannon → move to it and hit it.
+   Then the real wave starts. Shown once per player (save.tutDone); can be replayed from the menu. */
+function tutStep(n){
+  const T=G.tut; T.step=n; T.t=0; T.done=false; G.enemies=[]; G.phase='tut';
+  const L=G.fresh.length?G.fresh:Object.keys(G.w.map);
+  const add=(ch,lane,z)=>{ const e=makeEnemy(ch,lane,z); e.frozen=true; e.shoots=false; e.runner=false; e.hint=true; e.pumpkin=false; e.col=CANDY[(G.enemies.length*3+1)%CANDY.length]; G.enemies.push(e); return e; };
+  if(n===0){ const e=add(L[0],0,2.6); G.cur=e.ans; G.tlane=0; }
+  else if(n===1){ add(L[2]||L[1],-.5,2.7); const e=add(L[1],.5,2.7); G.cur=e.ans; G.tlane=-.3; G.lane=-.3; T.target=e; }
+  G.reload=0; paintFire();
+}
+function tutUpdate(dt){
+  const T=G.tut; T.t+=dt;
+  if(T.step<=1){
+    if(!T.done&&!G.enemies.some(e=>e.ans===G.cur)){ T.done=true; T.t=0; floatText(W/2,H*.3,'JEE!','#FFB800',true); sWin(); G.flash=.12; }
+    if(T.done&&T.t>1.4){ if(T.step===0) tutStep(1); else { T.step=2; T.t=0; floatText(W/2,H*.3,'NYT SINÄ!','#FFFFFF',true); } }
+  } else if(T.step===2&&T.t>1.2){ G.tut=null; G.enemies=[]; G.phase='wave'; G.spawnT=.3; G.cur=null; save.tutDone=true; persist(); }
+}
+function startAlarm(){ G.phase='alarm'; G.alarmT=2.6; G.plan=planBoss(); G.bossNext=G.plan.name; sAlarm(); }
+/* The boss hurls one of its letters (or a level word): it flies in an arc, lands on the road and attacks */
+function throwLetter(b){
+  const alive=b.segs.filter(g=>g.alive), src=G.isWord?G.fresh:alive.map(g=>g.ch), ch=src[Math.floor(Math.random()*src.length)]; if(!ch) return;
+  const fromLane=segLane(b.segs.indexOf(alive[0])||0), toLane=-.7+Math.random()*1.4, e=makeEnemy(ch,toLane,Math.max(ZLOSE+1.2,b.z-1.1));
+  e.air=.9; e.airMax=.9; e.fromZ=b.z; e.fromLane=fromLane; e.toZ=e.z; e.lx=fromLane; e.hint=!G.seen.has(ch);
+  G.enemies.push(e); noise(.25,900,.6,.18); tone(300,.25,'triangle',.06,.5);
+}
+/* Decide the boss before the alarm so the warning can show its name */
+function planBoss(){
+  const w=G.w, names=w.bosses||[], known=new Set(G.fresh.concat(G.older));
+  let name='', nameFi='', chosen=[];
+  if(G.isWord){
+    // word levels: plates are 3 words, the name is just the monster's title
+    const pick=names[Math.floor(Math.random()*names.length)]||''; name=Array.isArray(pick)?pick[0]:pick; nameFi=Array.isArray(pick)?pick[1]:'';
+    const pool=[...new Set(G.fresh)].sort(()=>Math.random()-.5), seen=new Set();
+    for(const ch of pool){ const a=ansOf(ch); if(seen.has(a))continue; seen.add(a); chosen.push(ch); if(chosen.length===3)break; }
+  } else {
+    // letter levels: the plates spell the monster's name, built only from letters already in play
+    const fits=names.filter(n=>typeof n==='string'&&[...n.replace(/ /g,'')].every(c=>known.has(c)));
+    if(fits.length){ name=fits[Math.floor(Math.random()*fits.length)]; chosen=[...name.replace(/ /g,'')]; }
+    else { const pool=[...known].sort(()=>Math.random()-.5); chosen=pool.slice(0,5); name=chosen.join(''); }
+  }
+  return {name,nameFi,chosen,nameLat:w.latin?nameFi:toLatin(w,name)};
+}
 function spawnBoss(){
-  // letters: 5 plates from this level's letters; words: 3 plates with words
-  const pool=[...new Set(G.isWord?G.fresh:G.fresh.concat(G.older))].sort(()=>Math.random()-.5);
-  const seen=new Set(), chosen=[];
-  for(const ch of pool){ const a=ansOf(ch); if(seen.has(a))continue; seen.add(a); chosen.push(ch); if(chosen.length===(G.isWord?3:5))break; }
+  const {name,chosen,nameLat}=G.plan||planBoss(), w=G.w;
   const n=chosen.length, segW=Math.min(G.isWord?.7:.44, 1.95/n);
-  G.boss={z:ZF+.4, vz:G.speed*.42, segW, n, shake:0, born:G.t, flash:0,
+  G.boss={name, nameLat, z:ZF+.4, vz:G.speed*.42, segW, n, shake:0, born:G.t, flash:0,
     col:G.season?'#4A2E6B':'#6B3FA0', segs:chosen.map((ch,i)=>({ch,disp:dispCh(ch),ans:ansOf(ch),alive:true,missT:0,missAns:'',flash:0,
       col:(c=>c[i%c.length])(G.season?G.season.colors:CANDY)}))};
   G.phase='boss'; sRoar(); prog(); nextAmmo();
@@ -204,7 +251,7 @@ function bossDown(){
     burst(x,y,b.col,40,520*Math.max(.6,s0));
     for(let k=0;k<6;k++) G.parts.push({chunk:true,x,y,vx:(Math.random()-.5)*700,vy:-300-Math.random()*400,life:1.2,max:1.2,col:k%2?b.col:'#2B2333',sz:RB*s0*(.3+Math.random()*.3),rot:0}); }
   G.parts.push({flashball:true,x:px(0,b.z),y:py(b.z)-RB*s0*2,r:RB*s0*4,life:.35,max:.35});
-  G.boss=null; G.flash=.3; G.shake=reduce?0:.6; sBossDown(); G.cur=null; paintFire();
+  G.bossName=b.name; G.boss=null; G.flash=.3; G.shake=reduce?0:.6; sBossDown(); G.cur=null; paintFire();
   // the boss releases themed words: they burst out and attack as a last wave that must be destroyed too
   const list=(G.season&&G.season.rewards&&G.season.rewards[G.w.id])||G.w.rewards||[];
   G.loot=[...list].sort(()=>Math.random()-.5).slice(0,3).map(([word,fi,lat])=>({word,disp:dispCh(word),fi,lat:G.w.latin?'':(lat||toLatin(G.w,word))}));
@@ -254,15 +301,19 @@ function update(dt){
   if(G.cool>0){ G.cool-=dt; if(G.cool<=0){ G.cool=0; G.reload=.4; tone(523,.06,'sine',.05); } }
   const n=G.enemies.length;
   G.spawnT-=dt;
+  if(G.tut) tutUpdate(dt);
   if(G.phase==='alarm'){ G.alarmT-=dt; if(G.alarmT<=0) spawnBoss(); }
   if(G.phase==='loot'&&!G.enemies.some(e=>e.loot)&&G.endT<0){ G.phase='done'; G.endT=1.2; }
   if(G.phase==='wave' && G.spawnT<=0 && n<G.maxOn && G.popped+n<G.goal+2 && G.endT<0){
     spawn(); const fill=n/G.maxOn; G.spawnT=(fill<.25?.6:fill<.5?1.5:2.7)/(1+G.li*.1)/G.pace/G.surge;
   }
-  if(!G.cur&&targets().some(e=>e.z<ZF+.5)) nextAmmo();
+  if(G.tut){} else if(!G.cur&&targets().some(e=>e.z<ZF+.5)) nextAmmo();
   else if(G.cur&&!targets().some(e=>e.ans===G.cur)&&!G.shots.some(s=>!s.bounced&&s.ans===G.cur&&!s.dead)) nextAmmo();
   const boost=n<=1?1.5:1;
   for(const e of [...G.enemies]){
+    if(e.frozen){ e.lane=e.bl; e.shake=Math.max(0,e.shake-dt); e.shield=Math.max(0,(e.shield||0)-dt); e.missT=Math.max(0,(e.missT||0)-dt); if(e.block>0)e.block-=dt; continue; }
+    if(e.air>0){ e.air-=dt; const k=1-Math.max(0,e.air)/e.airMax; e.z=e.fromZ+(e.toZ-e.fromZ)*k; e.lane=e.lx=e.fromLane+(e.bl-e.fromLane)*k; e.lift=Math.sin(k*Math.PI); continue; }
+    e.lift=0;
     let want=G.speed*boost*G.surge;
     if(e.runner){ // sprint in bursts and hop to another lane before it
       e.dashT-=dt; if(e.dashT<=0){ e.dash=.55; e.dashT=1.6+Math.random()*1.8; e.bl=Math.max(-.75,Math.min(.75,e.bl+(Math.random()<.5?-1:1)*(.3+Math.random()*.3))); }
@@ -281,8 +332,8 @@ function update(dt){
     b.shake=Math.max(0,b.shake-dt); b.segs.forEach(g=>{g.missT=Math.max(0,g.missT-dt); g.flash=Math.max(0,g.flash-dt);});
     b.fireT=(b.fireT??2)-dt;
     if(b.fireT<=0&&b.z<ZF){ const alive=b.segs.map((g,i)=>g.alive?i:-1).filter(i=>i>=0);
-      enemyFire(b.z, Math.random()<.5?G.lane:segLane(alive[Math.floor(Math.random()*alive.length)]));
-      b.fireT=(2.6+Math.random()*1.2)/G.pace; }
+      if(Math.random()<.6) throwLetter(b); else enemyFire(b.z, Math.random()<.5?G.lane:segLane(alive[Math.floor(Math.random()*alive.length)]));
+      b.fireT=(2.4+Math.random()*1.2)/G.pace; }
     if(b.z<=ZLOSE+.15) bossReachedLine(); }
   updateBolts(dt); G.hurt=Math.max(0,G.hurt-dt);
   const LT=RB*.9/HW;

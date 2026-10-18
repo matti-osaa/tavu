@@ -10,6 +10,7 @@
       [['アイス','jäätelö'],['カカオ','kaakao'],['テニス','tennis'],['タコス','tacot'],['イカ','kalmari']],
       [['ネクタイ','solmio'],['テキスト','teksti'],['トナカイ','poro'],['ナス','munakoiso'],['ココア','kaakaojuoma']]
     ],
+    bosses:['アオイ','オニ','ヌエ','ツチノコ'],
     rewards:[['サクラ','kirsikankukka','sakura'],['キツネ','kettu'],['タヌキ','supikoira'],['サカナ','kala']],
     card:{color:'#FF6FA5', bg:'linear-gradient(160deg,#FFE6F1,#FFC3DA)'},
     palette:{sky:['#FFC4DC','#FFF4E6'], path:'#E6C3C9', edge:'#C99AA4', grass:'#7CC85A', grass2:'#68B648', hill:'#5DA843', far:'#F7C9DA'},

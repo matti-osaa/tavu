@@ -5,6 +5,7 @@ Tavu.addWorld({
     [['HUND','koira'],['KATT','kissa'],['HUS','talo'],['BIL','auto'],['BOK','kirja'],['SOL','aurinko'],['MÅNE','kuu'],['VATTEN','vesi'],['BRÖD','leipä'],['MJÖLK','maito'],['ÄPPLE','omena'],['FISK','kala'],['BÅT','vene'],['SKOLA','koulu'],['VÄN','ystävä']],
     [['SKOG','metsä'],['SJÖ','järvi'],['STAD','kaupunki'],['GATA','katu'],['HAND','käsi'],['FOT','jalka'],['ÖGA','silmä'],['ÖRA','korva'],['NÄSA','nenä'],['HJÄRTA','sydän'],['TÅRTA','kakku'],['KAFFE','kahvi'],['GLASS','jäätelö'],['REGN','sade'],['SNÖ','lumi'],['FÅGEL','lintu']]
   ],
+  bosses:[['TROLLET','peikko'],['NÄCKEN','näkki'],['MARAN','painajainen']],
   rewards:[['MIDSOMMAR','juhannus'],['STUGA','mökki'],['KANELBULLE','korvapuusti'],['EKORRE','orava']],
   card:{color:'#E2483D', bg:'linear-gradient(160deg,#E4F3FF,#B9DCF7)'},
   palette:{sky:['#79C3F5','#E6F5FF'], path:'#D9CBB0', edge:'#B8A684', grass:'#7CC85A', grass2:'#68B648', hill:'#3E8FC9', far:'#BFE3F8'},

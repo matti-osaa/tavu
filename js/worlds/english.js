@@ -5,6 +5,7 @@ Tavu.addWorld({
     [['DOG','koira'],['CAT','kissa'],['HOUSE','talo'],['CAR','auto'],['BOOK','kirja'],['SUN','aurinko'],['MOON','kuu'],['WATER','vesi'],['BREAD','leipä'],['MILK','maito'],['APPLE','omena'],['FISH','kala'],['BOAT','vene'],['SCHOOL','koulu'],['FRIEND','ystävä']],
     [['FOREST','metsä'],['LAKE','järvi'],['CITY','kaupunki'],['STREET','katu'],['HAND','käsi'],['FOOT','jalka'],['EYE','silmä'],['EAR','korva'],['NOSE','nenä'],['HEART','sydän'],['CAKE','kakku'],['COFFEE','kahvi'],['RAIN','sade'],['SNOW','lumi'],['BIRD','lintu'],['TREE','puu']]
   ],
+  bosses:[['GOBLIN','peikko'],['DRAGON','lohikäärme'],['OGRE','jättiläinen']],
   rewards:[['PARK','puisto'],['SQUIRREL','orava'],['BENCH','penkki'],['LEAF','lehti']],
   card:{color:'#3B6FD8', bg:'linear-gradient(160deg,#F1F7E8,#CFE6B8)'},
   palette:{sky:['#9CCBEA','#F0F7FB'], path:'#BDB7AD', edge:'#9A948A', grass:'#6DB54C', grass2:'#5CA23E', hill:'#4F9637', far:'#D4E8F2'},

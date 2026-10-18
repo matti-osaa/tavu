@@ -62,7 +62,7 @@ function drawAlarm(){
     const fs=Math.round(Math.min(W*.14,64)); ctx.font=`700 ${fs}px ${PXF}`;
     ctx.fillStyle='#1B1424'; ctx.fillText('VAROITUS!',W/2+4,H*.38+4); ctx.fillStyle='#FFD21E'; ctx.fillText('VAROITUS!',W/2,H*.38);
     ctx.font=`700 ${Math.round(fs*.36)}px ${PXF}`;
-    ctx.fillStyle='#1B1424'; ctx.fillText('LOPPUVASTUSTAJA LÄHESTYY',W/2+2,H*.38+fs*.85+2); ctx.fillStyle='#FFFFFF'; ctx.fillText('LOPPUVASTUSTAJA LÄHESTYY',W/2,H*.38+fs*.85);
+    const nm=(G.bossNext||'LOPPUVASTUSTAJA')+' LÄHESTYY'; ctx.fillStyle='#1B1424'; ctx.fillText(nm,W/2+2,H*.38+fs*.85+2); ctx.fillStyle='#FFFFFF'; ctx.fillText(nm,W/2,H*.38+fs*.85);
   }
 }
 
