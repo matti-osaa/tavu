@@ -14,7 +14,7 @@ function startLevel(wi,si){
   G.plain=si<2;                                                // first levels: tyypät are just letters, nothing else
   G.assist=si<2||save.diff==='easy';                          // beginner help: matching tyypät glow, vastine labels
   if(!save.tutDone&&!isWord&&w.levels.length){ G.tut={step:0,t:0}; }
-  $('map').hidden=true; $('game').hidden=false; resize();
+  $('map').hidden=true; $('game').hidden=false; resize(); loadCries(w.id);
   G.cur=null; G.curCol=AMMO_COL;
   buildAmmo(); drawHearts(); prog();
   showIntro();

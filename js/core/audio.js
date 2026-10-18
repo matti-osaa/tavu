@@ -30,6 +30,24 @@ function noise(dur,freq,q,vol,delay=0){
 }
 // Hit: a soft thump + crunchy candy burst + one warm note
 const sHit=()=>{const f=LOW[Math.floor(Math.random()*LOW.length)]; tone(150,.22,'sine',.38,.4); noise(.22,1100,.7,.45); tone(f,.4,'sine',.14,1,.05); tone(f*1.5,.3,'sine',.05,1,.08);};
+/* Recorded cries: one audio sprite per world (audio/cries/<world>.mp3, made with espeak-ng and a
+   "dying" slow-down), offsets in audio/cries/index.json. They play the same on every device, so they
+   are used first; device speech is only the fallback (e.g. when the page runs from file://). */
+const ASSET_V='20261018c';
+const CRY={idx:null, buf:{}, loading:{}};
+function loadCries(wid){
+  const c=audio(); if(!c||CRY.buf[wid]||CRY.loading[wid]) return; CRY.loading[wid]=true;
+  const idxP=CRY.idx?Promise.resolve(CRY.idx):fetch('audio/cries/index.json?v='+ASSET_V).then(r=>r.json()).then(j=>CRY.idx=j);
+  idxP.then(()=>fetch(`audio/cries/${wid}.mp3?v=${ASSET_V}`)).then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); })
+    .then(a=>new Promise((ok,no)=>c.decodeAudioData(a,ok,no))).then(b=>{ CRY.buf[wid]=b; })
+    .catch(()=>{ CRY.loading[wid]=false; });
+}
+function playCry(wid,ch){
+  const b=CRY.buf[wid], e=CRY.idx&&CRY.idx[wid]&&CRY.idx[wid][ch]; if(!b||!e||!ac) return false;
+  const src=ac.createBufferSource(), g=ac.createGain(); src.buffer=b; src.playbackRate.value=.94+Math.random()*.14;
+  g.gain.value=.55; src.connect(g).connect(ac.destination); src.start(ac.currentTime+.03,e[0],e[1]+.05); return true;
+}
+
 // Death wail: a synthesised voice crying "aaaa…". A sawtooth "voice" goes through three vowel
 // formant filters (a → o as it dies away), pitch cracks up, then sags and sobs with growing vibrato.
 let wails=0;
@@ -105,6 +123,7 @@ function speakCry(say,v){
 }
 function sDie(text,lang){
   if(!soundOn) return;
+  if(G&&playCry(G.w.id,text)) return;
   if(!window.speechSynthesis||!lang||performance.now()<ttsOffUntil){ sScream(); return; }
   if(!voices.length) loadVoices();
   const v=pickVoice(lang), say=v&&wailText(text,lang);
