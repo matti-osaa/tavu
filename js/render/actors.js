@@ -174,9 +174,9 @@ function drawBoss(b){
   ctx.save(); ctx.globalAlpha=a;
   ctx.fillStyle='rgba(20,10,30,.3)'; ctx.fillRect(cx-bodyW*.55,gy-U*.25,bodyW*1.1,U*.5);
   // legs, stomping
-  const lw=bodyW*.22; ctx.fillStyle=dark;
-  ctx.fillRect(cx-bodyW*.3-lw/2+jx,gy-legH-(step>0?U*.25:0),lw,legH); ctx.fillRect(cx+bodyW*.3-lw/2+jx,gy-legH-(step<0?U*.25:0),lw,legH);
-  ctx.fillStyle='#1B1424'; ctx.fillRect(cx-bodyW*.3-lw/2-U*.1+jx,gy-U*.2-(step>0?U*.25:0),lw+U*.2,U*.2); ctx.fillRect(cx+bodyW*.3-lw/2-U*.1+jx,gy-U*.2-(step<0?U*.25:0),lw+U*.2,U*.2);
+  const legW=bodyW*.22; ctx.fillStyle=dark;
+  ctx.fillRect(cx-bodyW*.3-legW/2+jx,gy-legH-(step>0?U*.25:0),legW,legH); ctx.fillRect(cx+bodyW*.3-legW/2+jx,gy-legH-(step<0?U*.25:0),legW,legH);
+  ctx.fillStyle='#1B1424'; ctx.fillRect(cx-bodyW*.3-legW/2-U*.1+jx,gy-U*.2-(step>0?U*.25:0),legW+U*.2,U*.2); ctx.fillRect(cx+bodyW*.3-legW/2-U*.1+jx,gy-U*.2-(step<0?U*.25:0),legW+U*.2,U*.2);
   // arms swinging at the sides
   const sw=Math.sin(G.t*4)*U*.4;
   ctx.fillStyle=shade(b.col,-25); ctx.fillRect(X-U*.9,top+bodyH*.25+sw,U*.9,bodyH*.5); ctx.fillRect(X+bodyW,top+bodyH*.25-sw,U*.9,bodyH*.5);
