@@ -80,7 +80,9 @@ function wailText(text,lang){
   if(l==='ja') return text+'ー';
   const V=VOWELS[l]||'aeiou';
   let i=-1; for(let k=low.length-1;k>=0;k--) if(V.includes(low[k])){i=k;break;}
-  if(i<0) return OPEN[l]? low+OPEN[l].repeat(2)+'!' : null;              // a lone consonant: "б" → "бaaaa!"
+  if(i<0){                                                                  // a lone consonant hums its own sound: м → "мммм!", п → "ппппп!"
+    if(/^[ьъ]$/.test(low)) return null;                                     // signs with no sound of their own: the synth wail
+    return [...low].length===1? low.repeat(5)+'!' : low+(OPEN[l]||'').repeat(2)+'!'; }
   return low.slice(0,i+1)+low[i].repeat(2)+low.slice(i+1)+'!';
 }
 // Browser speech is fragile (Chrome jams if you cancel and speak right away, iOS needs a touch first),

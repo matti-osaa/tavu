@@ -50,10 +50,10 @@ function loadDisc(i){
 }
 function launchDisc(dx,dy,len){
   const g=slingGeo(), z0=ZCAN+.05;
-  G.shots.push({cx:g.cx,cy:g.cy,slope:dx/dy,E0:(py(z0)-g.cy)/sc(z0),z0,z:z0,lane:0,vz:.95+.8*Math.min(1,len/g.maxPull),
+  G.shots.push({cx:g.cx,cy:g.cy,slope:dx/dy,E0:(py(z0)-g.cy)/sc(z0),z0,z:z0,lane:0,vz:.3+2.3*Math.pow(Math.min(1,len/g.maxPull),1.3),   // a short pull lobs it slowly, a full pull snaps it
     ans:G.cur,lab:dispAns(G.cur),col:AMMO_COL,bounced:false,vx:0,sx:0,sy:0,vy:0,life:1});
   G.aimA=Math.atan2(dx,-dy); G.cur=null; G.didFire=true; G.fired++; G.cool=COOL; G.recoil=1;
-  tone(180,.2,'triangle',.14,2.2); noise(.08,700,1,.2); sPew();
+  const k=Math.min(1,len/g.maxPull); tone(140+k*120,.2,'triangle',.06+k*.12,2.2); noise(.08,500+k*700,1,.08+k*.2); sPew();
 }
 // where a flying disc is on screen at depth z: it follows the aim line, rising to letter height
 function shotXY(s,z){ const y=py(z)-shotE(s,z)*sc(z); return [s.cx+s.slope*(y-s.cy), y]; }

@@ -91,13 +91,13 @@ function spawn(){
   const ch=pickLetter(); if(!ch)return;
   let lane=0; for(let k=0;k<10;k++){lane=G.isWord?-.55+Math.random()*1.1:-.72+Math.random()*1.44; if(G.enemies.every(e=>Math.abs(e.bl-lane)>(G.isWord?.75:.4)||e.z<ZF-1.4))break;}
   G.enemies.push(makeEnemy(ch,lane,ZF));
-  { const r=G.enemies[G.enemies.length-1]; if(r.runner){ r.shoots=true; r.fireT=1+Math.random(); } }
-  const e=G.enemies[G.enemies.length-1]; if(e.pumpkin&&G.season.bodyLetterColor) e.col=G.season.bodyLetterColor;
+    const e=G.enemies[G.enemies.length-1]; if(e.pumpkin&&G.season.bodyLetterColor) e.col=G.season.bodyLetterColor;
 }
 function makeEnemy(ch,lane,z){
   return {ch,disp:dispCh(ch),ans:ansOf(ch),wf:G.isWord?Math.min(2.2,1+(ch.length-1)*.3):1,bl:lane,lane,z,vz:G.speed*(.85+Math.random()*.3),ph:Math.random()*6,
     col:(c=>c[Math.floor(Math.random()*c.length)])(G.season?G.season.colors:CANDY),shake:0,born:G.t,hint:!G.seen.has(ch),
-    shoots:!G.plain&&G.si>0&&Math.random()<Math.min(.35,.1+G.si*.05), fireT:1.5+Math.random()*2,
+    shoots:false,   // tyypät no longer fire: the sling can't dodge
+    fireT:1.5+Math.random()*2,
     pumpkin:!G.plain&&!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99),
     runner:!G.plain&&G.si>0&&Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0};
 }
@@ -289,7 +289,7 @@ function update(dt){
     b.shake=Math.max(0,b.shake-dt); b.segs.forEach(g=>{g.missT=Math.max(0,g.missT-dt); g.flash=Math.max(0,g.flash-dt);});
     b.fireT=(b.fireT??2)-dt;
     if(b.fireT<=0&&b.z<ZF){ const alive=b.segs.map((g,i)=>g.alive?i:-1).filter(i=>i>=0);
-      if(Math.random()<.6) throwLetter(b); else enemyFire(b.z, Math.random()<.5?0:segLane(alive[Math.floor(Math.random()*alive.length)]));
+      throwLetter(b);   // the boss only hurls its letters at you
       b.fireT=(2.4+Math.random()*1.2)/G.pace; }
     if(b.z<=ZLOSE+.15) bossReachedLine(); }
   updateBolts(dt); G.hurt=Math.max(0,G.hurt-dt);
