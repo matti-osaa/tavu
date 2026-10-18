@@ -88,24 +88,31 @@ function wailText(text,lang){
 // Browser speech is fragile (Chrome jams if you cancel and speak right away, iOS needs a touch first),
 // so: never interrupt a cry in progress, keep the utterance referenced, and if speech does not start
 // within half a second, play the synth wail instead. After two failures speech is skipped for the session.
-let curCry=null, ttsFails=0;
+let curCry=null, ttsFails=0, ttsOffUntil=0;
 function pickVoice(lang){
   const l=lang.slice(0,2).toLowerCase(), m=voices.filter(x=>x.lang.replace('_','-').toLowerCase().startsWith(l));
   return m.find(x=>x.localService&&x.lang.replace('_','-').toLowerCase()===lang.toLowerCase())||m.find(x=>x.localService)||m[0];
 }
+function speakCry(say,v){
+  const u=new SpeechSynthesisUtterance(say); u.voice=v; u.lang=v.lang;
+  u.pitch=1.2+Math.random()*.3; u.rate=.95+Math.random()*.15; u.volume=.35;   // a small, quiet cry under the POKS
+  let started=false; u.onstart=()=>{started=true; ttsFails=0;};
+  u.onend=u.onerror=()=>{ if(curCry===u) curCry=null; };
+  curCry=u; speechSynthesis.speak(u);
+  // speech that never starts: give it a moment (first use of a voice can be slow), then fall back
+  setTimeout(()=>{ if(!started&&curCry===u){ curCry=null; try{speechSynthesis.cancel()}catch(e){}
+    if(++ttsFails>=3){ ttsFails=0; ttsOffUntil=performance.now()+15000; } } },1500);
+}
 function sDie(text,lang){
   if(!soundOn) return;
-  if(!window.speechSynthesis||!lang||ttsFails>=2){ sScream(); return; }
+  if(!window.speechSynthesis||!lang||performance.now()<ttsOffUntil){ sScream(); return; }
   if(!voices.length) loadVoices();
   const v=pickVoice(lang), say=v&&wailText(text,lang);
-  if(!say||speechSynthesis.speaking||speechSynthesis.pending){ sScream(); return; }
+  if(!say){ sScream(); return; }
   try{
-    const u=new SpeechSynthesisUtterance(say); u.voice=v; u.lang=v.lang;
-    u.pitch=1.2+Math.random()*.3; u.rate=.95+Math.random()*.15; u.volume=.35;   // a small, quiet cry under the POKS
-    let started=false; u.onstart=()=>{started=true; ttsFails=0;};
-    u.onend=u.onerror=()=>{ if(curCry===u) curCry=null; };
-    curCry=u; speechSynthesis.speak(u);
-    setTimeout(()=>{ if(!started&&curCry===u){ ttsFails++; curCry=null; try{speechSynthesis.cancel()}catch(e){} sScream(); } },500);
+    // a new cry cuts the previous one; Chrome drops a speak() right after cancel(), so wait a beat
+    if(speechSynthesis.speaking||speechSynthesis.pending){ curCry=null; speechSynthesis.cancel(); setTimeout(()=>{ try{speakCry(say,v);}catch(e){} },120); }
+    else speakCry(say,v);
   }catch(e){ sScream(); }
 }
 // Ricochet: a sharp woody "tok" + springy boing, clearly different from a hit
