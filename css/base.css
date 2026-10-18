@@ -99,6 +99,9 @@ canvas{display:block;width:100%;height:100%}
 .ammo button .k{position:absolute;left:8px;top:7px;min-width:20px;height:20px;line-height:20px;border-radius:6px;font-size:13px;background:rgba(255,255,255,.3);box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);text-shadow:none}
 .keys-hint{display:block;font-size:14px}
 @media (pointer:coarse){.keys-hint{display:none}}
+.touch-hint{display:none;font-size:14px}
+/* Touch: the road itself is the controller, so the button bar goes away */
+@media (pointer:coarse){.touch-hint{display:block}#ammo{display:none}}
 .ammo button.swap{animation:swap .35s ease}
 .ammo .fire .t{font-size:clamp(22px,7vw,38px);line-height:1;min-width:0}
 .ammo .fire{min-width:0;overflow:hidden}

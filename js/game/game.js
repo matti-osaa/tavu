@@ -60,7 +60,8 @@ function showIntro(){
     <h3>${G.isWord?'Sanatyypät hyökkäävät!':unseen.length?'Uudet tyypät hyökkäävät!':'Tyypät hyökkäävät!'}</h3></div>
     <div class="tiles">${show.map((c,i)=>`<div class="tile" style="--c:${CANDY[i%CANDY.length]}"><b>${introCh(c)}</b><span>${dispAns(ansOf(c))}</span>${G.isWord?`<em>${G.fi[ansOf(c)]}</em>`:''}</div>`).join('')}</div>
     <p>${G.isWord?(G.w.latin?'Tykissä on suomenkielinen sana. Etsi tieltä tyyppä, joka tarkoittaa samaa, ja ammu.':'Tykissä on sana latinalaisin kirjaimin ja sen suomennos. Etsi tieltä tyyppä, joka on sama sana, ja ammu.'):'Tykissä on yksi vastine kerrallaan. Etsi tieltä tyyppä, jonka kirjain vastaa sitä, siirry sen kohdalle ja ammu.'}
-    Ammus vaihtuu itsestään, kun sen tyypät on tuhottu. Voit vaihtaa sen myös itse napauttamalla tykin kuutiota.
+    Ammus vaihtuu itsestään, kun sen tyypät on tuhottu. Voit vaihtaa sen myös itse.
+    <span class="touch-hint">Vedä sormella sivulle, niin tykki seuraa. Napauta kuutiota ampuaksesi, pyyhkäise sitä ylös tai alas vaihtaaksesi ammusta.</span>
     <span class="keys-hint">Näppäimistöllä: ← → liikuttaa, ↑ ↓ vaihtaa ammuksen, välilyönti ampuu.</span></p>
     <div class="row"><button class="btn" id="go">Aloita</button></div></div></div>`;
   $('go').onclick=()=>{audio(); ov.innerHTML=''; G.running=true;};

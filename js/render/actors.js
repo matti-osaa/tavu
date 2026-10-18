@@ -73,11 +73,31 @@ function drawCannon(){
   ctx.fillStyle='#E63E78'; ctx.fillRect(x-u*.45,y-u*1.35+rec,u*.9,u*.18);
   if(!G.cur)return;
   const col=G.curCol, ans=dispAns(G.cur), rl=1-Math.pow(1-G.reload,3);
-  if(G.isWord){sign(x,y-u*2.35+rec,u*.95*(.6+.4*rl),ans,G.fi[G.cur],col);return;}
+  if(G.isWord){const sh=u*.95*(.6+.4*rl); sign(x,y-u*2.35+rec,sh,ans,G.fi[G.cur],col); drawCubeHint(x,y-u*2.35+rec-sh/2,sh*1.6,u); return;}
   const bs=u*1.5*(.55+.45*rl), bx=x-bs/2, byy=y-u*1.8+rec-bs-4;
   cube(bx,byy,bs,col,false);
   ctx.font=`800 ${Math.round(bs*(ans.length>2?.42:ans.length>1?.55:.75))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillText(ans,x+2,byy+bs/2+3); ctx.fillStyle='#FFFFFF'; ctx.fillText(ans,x,byy+bs/2+1);
+  drawCubeHint(x,byy,bs,u);
+}
+/* Touch hint around the ammo: a pulsing frame + “AMMU” until the player has fired a few times,
+   and small ▲▼ markers that show the cube can be flicked to switch ammo. */
+function drawCubeHint(x,top,bs,u){
+  if(!isTouch||!G.running) return;
+  const learning=G.fired<3, t=G.t;
+  ctx.save();
+  if(learning){
+    const pulse=(Math.sin(t*6)+1)/2, m=6+pulse*6;
+    ctx.strokeStyle=`rgba(255,255,255,${.5+pulse*.5})`; ctx.lineWidth=3; ctx.strokeRect(x-bs/2-m,top-m,bs+m*2,bs+m*2);
+    ctx.font=`700 ${Math.round(Math.max(13,u*.42))}px ${PXF}`; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    const ly=top-m-6; ctx.fillStyle='#2B2333'; ctx.fillText('NAPAUTA',x+2,ly+2); ctx.fillStyle='#FFE15A'; ctx.fillText('NAPAUTA',x,ly);
+  }
+  // ▲ ▼ switch markers beside the cube
+  const a=Math.max(5,u*.22), sx=x+bs/2+a*2.2, cy=top+bs/2;
+  ctx.fillStyle='rgba(255,255,255,.85)';
+  ctx.beginPath(); ctx.moveTo(sx,cy-a*2.2); ctx.lineTo(sx-a,cy-a*.8); ctx.lineTo(sx+a,cy-a*.8); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(sx,cy+a*2.2); ctx.lineTo(sx-a,cy+a*.8); ctx.lineTo(sx+a,cy+a*.8); ctx.fill();
+  ctx.restore();
 }
 function flashBtn(cls){const b=$('bf'); if(!b)return; b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(()=>b.classList.remove(cls),500);}
 function pill(x,y,h,col,txt,sub){sign(x,y,h,txt,sub,col);}

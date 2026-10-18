@@ -6,7 +6,7 @@ Selainpeli, jossa opitaan kyrillisiä, kreikkalaisia ja katakanakirjaimia sekä 
 
 ## Pelaaminen
 - ← → liikuttaa tykkiä, välilyönti/Enter ampuu, ↑ ↓ vaihtaa ammusta.
-- Kosketusnäytöllä: ◀ Ammu ▶ -napit, tien napautus siirtää tykkiä, tykin kuution napautus vaihtaa ammusta.
+- Kosketusnäytöllä: vedä sormella sivulle, niin tykki seuraa; napauta kuutiota ampuaksesi; pyyhkäise kuutiota ylös/alas vaihtaaksesi ammusta.
 - Kartalta valitaan teema (kauden mukaan / Halloween / perus), vaikeustaso ja kirjainkoko.
 
 ## Kehitys
@@ -20,3 +20,4 @@ Kyrillisen latinaistus: SFS 4900 (Kotimaisten kielten keskuksen suositus). Kreik
 
 ## Versiot
 - 0.1 (18.10.2026): ensimmäinen julkinen versio – kyrillinen, kreikka, katakana, ruotsi, englanti; Halloween-teema.
+- 0.2 (18.10.2026): mobiiliohjaus ilman nappipalkkia – tykin kuutio on ampumanappi.
