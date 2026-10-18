@@ -100,47 +100,44 @@ function drawShot(s){
   drawDisc(x,y,r,L,s.col,{maxW:r*6});
   if(wordMode()&&G.fi[s.ans]){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(10,r*.6))}px ${LTF}`; ctx.textAlign='center'; ctx.fillStyle='#2B2333'; ctx.fillText(G.fi[s.ans],x+1,y+r*1.9+1); ctx.fillStyle='#FFF'; ctx.fillText(G.fi[s.ans],x,y+r*1.9); ctx.restore(); }
 }
-/* The board at the bottom: wooden plank, two posts and the rubber band, three stacks of discs */
+/* The board at the bottom: a row of discs, each in its own little rubber band; emergency button top-left */
 function drawSling(){
-  const g=slingGeo(), r=g.r, ready=G.cool<=0, charge=1-Math.max(0,G.cool)/COOL;
-  // wooden board
+  const g=slingGeo(), r=g.r;
   const top=BY+g.TB*.02;
   ctx.fillStyle='#7A4E2C'; ctx.fillRect(0,top,W,H-top);
   for(let k=0;k<5;k++){ const y=top+6+k*(H-top)/5; ctx.fillStyle='rgba(0,0,0,.12)'; ctx.fillRect(0,Math.round(y),W,2); ctx.fillStyle='rgba(255,255,255,.06)'; ctx.fillRect(0,Math.round(y)+2,W,2); }
   ctx.fillStyle='#4E3019'; ctx.fillRect(0,top,W,5); ctx.fillStyle='#A06A3E'; ctx.fillRect(0,top+5,W,3);
-  // aim line (only with a disc in the band)
-  if(G.cur&&(G.pull||G.kbAim||!isTouch||G.tut)){
-    const [ux,uy]=aimDir(), strong=!!G.pull||G.kbAim;
-    if(uy<-.15){ const pts=aimPath(ux,uy), N=Math.max(1,pts.length);
+  // aim line while pulling (or keyboard aiming)
+  if(G.pull||G.kbAim){
+    const [ux,uy,,ox,oy]=aimDir(), strong=!!G.pull;
+    if(uy<-.15){ const pts=aimPath(ux,uy,ox,oy), N=Math.max(1,pts.length);
       ctx.save();
-      pts.forEach(([x,y,bounce],i)=>{ if(i<2) return; const k=1-i/N, a=(strong?.9:.35)*(.25+.75*k), q=Math.max(3,7*(.4+.6*k));
+      pts.forEach(([x,y,bounce],i)=>{ if(i<2) return; const k=1-i/N, a=(strong?.9:.45)*(.25+.75*k), q=Math.max(3,7*(.4+.6*k));
         ctx.globalAlpha=a; ctx.fillStyle='#2B2333'; ctx.fillRect(x-q/2-1,y-q/2-1,q+2,q+2); ctx.fillStyle=bounce?'#FFE15A':'#FFFFFF'; ctx.fillRect(x-q/2,y-q/2,q,q);
         if(bounce){ ctx.fillStyle='#FFE15A'; ctx.fillRect(x-q*1.2,y-1,q*2.4,2); ctx.fillRect(x-1,y-q*1.2,2,q*2.4); } });
       ctx.restore(); }
   }
-  // posts
-  const pw=r*.7, ph=r*1.3;
-  [-1,1].forEach(sd=>{ const x=g.cx+sd*g.post; cube(x-pw/2,g.cy-ph*.55,pw,'#6B4A2E',true,3+sd); ctx.fillStyle='#4E3019'; ctx.fillRect(x-pw/2,g.cy-ph*.55+pw,pw,ph-pw); });
-  // band: from post to the pull point (or straight), drawn as a thick rubber strap
-  const P=G.pull||{x:g.cx,y:g.cy}, bw=Math.max(4,r*.24);
+  const bw=Math.max(3,r*.18), pw=Math.max(5,r*.32);
   const strap=(x1,y1,x2,y2)=>{ ctx.strokeStyle='#2B2333'; ctx.lineWidth=bw+3; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     ctx.strokeStyle='#D23A3A'; ctx.lineWidth=bw; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); };
-  ctx.save(); ctx.lineCap='round';
-  strap(g.cx-g.post,g.cy-ph*.35,P.x,P.y+(G.cur?r*.3:0)); strap(g.cx+g.post,g.cy-ph*.35,P.x,P.y+(G.cur?r*.3:0));
-  ctx.restore();
-  // stacks
-  if(G.stacks) G.stacks.forEach((s,i)=>{ if(!s.ans) return;
-    s.t=Math.min(1,(s.t||0)+(G.dt||0)*4); const x=g.sx[i], y=g.sy, pop=s.t<1?1+Math.sin(s.t*Math.PI)*.25:1, col=ready?AMMO_COL:'#8E8A96';
-    const lab=dispAns(s.ans), mw=W*.29;
-    for(let k=3;k>=1;k--) drawDisc(x,y+k*Math.max(4,r*.2),r,'',shade(col,-12*k),{shadow:k===3,maxW:mw});
-    if(G.tut&&G.tut.target&&s.ans===G.tut.target.ans&&!G.cur&&!G.carry){ const pl=(Math.sin(G.t*6)+1)/2; ctx.save(); ctx.strokeStyle=`rgba(255,225,90,${.5+pl*.5})`; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(x,y+4,r*(1.35+pl*.2),0,Math.PI*2); ctx.stroke(); ctx.restore(); }
-    drawDisc(x,y,r*pop,lab,col,{charge:ready?null:charge,shadow:false,maxW:mw});
-    if(wordMode()&&G.fi[s.ans]){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(11,r*.42))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#FFE9C8'; ctx.fillText(G.fi[s.ans],x,y+r*1.55); ctx.restore(); }
+  const mw=g.slotW*.92;
+  if(G.stacks) G.stacks.forEach((s,i)=>{
+    const x=g.sx[i], y=g.sy, pulled=G.pull&&G.pull.i===i, P=pulled?G.pull:{x,y};
+    const half=Math.min(g.slotW*.46,r*1.5), py0=y-r*.15;
+    // two little posts
+    [-1,1].forEach(sd=>{ ctx.fillStyle='#4E3019'; ctx.fillRect(x+sd*half-pw/2,py0-pw,pw,pw*2.2); ctx.fillStyle='#8A5A34'; ctx.fillRect(x+sd*half-pw/2,py0-pw,pw,pw*.6); });
+    ctx.save(); ctx.lineCap='round';
+    if(!s.ans){ strap(x-half,py0,x+half,py0); ctx.restore();
+      ctx.save(); ctx.globalAlpha=.35; drawDisc(x,y+(s.wait/REFILL)*r*1.2,r*.8,'',AMMO_COL,{shadow:false}); ctx.restore(); return; }
+    strap(x-half,py0,P.x,P.y+r*.3); strap(x+half,py0,P.x,P.y+r*.3); ctx.restore();
+    s.t=Math.min(1,(s.t||0)+(G.dt||0)*4);
+    const pop=s.t<1?1+Math.sin(s.t*Math.PI)*.25:1, rise=s.t<1?(1-s.t)*r*.8:0;
+    if(G.tut&&G.tut.target&&s.ans===G.tut.target.ans&&!G.pull){ const pl=(Math.sin(G.t*6)+1)/2; ctx.save(); ctx.strokeStyle=`rgba(255,225,90,${.5+pl*.5})`; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(x,y,r*(1.35+pl*.2),0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+    if(!isTouch&&G.kbAim&&(G.sel||0)===i){ ctx.save(); ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=3; ctx.setLineDash([6,5]); ctx.beginPath(); ctx.arc(x,y,r*1.4,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+    const sq=pulled?1+Math.min(.15,Math.hypot(P.x-x,P.y-y)/g.maxPull*.15):1;
+    drawDisc(P.x,P.y+rise,r*pop*sq,dispAns(s.ans),AMMO_COL,{maxW:mw});
+    if(wordMode()&&G.fi[s.ans]&&!pulled){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(10,r*.42))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#FFE9C8'; ctx.fillText(G.fi[s.ans],x,y+r*1.3); ctx.restore(); }
   });
-  // the band and the loaded disc go on top of the stacks, so a deep pull stays visible
-  ctx.save(); ctx.lineCap='round'; if(G.pull){ strap(g.cx-g.post,g.cy-ph*.35,P.x,P.y+r*.3); strap(g.cx+g.post,g.cy-ph*.35,P.x,P.y+r*.3); } ctx.restore();
-  if(G.cur){ const sq=G.pull?1+Math.min(.15,Math.hypot(P.x-g.cx,P.y-g.cy)/g.maxPull*.15):1;
-    drawDisc(P.x,P.y,r*sq,dispAns(G.cur),AMMO_COL,{maxW:Math.min(W*.5,r*7)}); }
   // emergency button: blows everything back up the road, then recharges for a minute
   if(!G.tut){ const m=emGeo(), ready=(G.emT||0)<=0, k=1-(G.emT||0)/EM_COOL;
     ctx.save();
@@ -149,12 +146,10 @@ function drawSling(){
     const pulse=ready?(Math.sin(G.t*4)+1)/2:0;
     ctx.fillStyle=ready?`rgb(${235+pulse*20},${60+pulse*40},${60+pulse*30})`:'#7A7480'; ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.fill();
     if(!ready){ ctx.fillStyle='rgba(95,211,255,.8)'; ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.arc(m.x,m.y,m.r*.9,-Math.PI/2,-Math.PI/2+Math.PI*2*k); ctx.closePath(); ctx.fill(); }
-    // wind swirl icon
     ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=Math.max(2,m.r*.14); ctx.lineCap='round';
     [[-.45,-.3,.5],[-.55,.05,.75],[-.35,.4,.45]].forEach(([ox,oy,w])=>{ ctx.beginPath(); ctx.moveTo(m.x+ox*m.r,m.y+oy*m.r); ctx.lineTo(m.x+(ox+w)*m.r,m.y+oy*m.r); ctx.stroke(); });
     ctx.beginPath(); ctx.arc(m.x+.22*m.r,m.y-.45*m.r,m.r*.17,Math.PI*.9,Math.PI*2.4); ctx.stroke();
     ctx.restore(); }
-  if(G.carry) drawDisc(G.carry.x,G.carry.y-r*.4,r*1.1,dispAns(G.carry.ans),AMMO_COL,{maxW:Math.min(W*.5,r*7)});
 }
 function drawCannon(){ drawSling(); }
 function flashBtn(cls){const b=$('bf'); if(!b)return; b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(()=>b.classList.remove(cls),500);}

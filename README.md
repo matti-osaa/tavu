@@ -6,8 +6,8 @@ Selainpeli, jossa opitaan kyrillisiä, kreikkalaisia ja katakanakirjaimia sekä 
 
 ## Pelaaminen
 
-- Alareunassa on kuminauha ja kolme kiekkopinoa. Napauta pinoa tai vedä kiekko nauhaan, vedä nauhaa taaksepäin ja päästä irti: kiekko lentää pisteviivan suuntaan.
-- Näppäimistö: 1 2 3 tai ↑ ↓ valitsee pinon, ← → kääntää tähtäystä, välilyönti/Enter ampuu.
+- Alareunassa on rivi kiekkoja, jokainen omassa kuminauhassaan. Napauta kiekkoa: se lentää lähimpään tyyppään, jonka vastine se on (tai lähimpään, jos ei kenenkään). Tai vedä kiekkoa taaksepäin ja päästä irti: se linkoaa itsensä pisteviivan suuntaan. Ammutun tilalle tulee uusi, yleensä eri kirjain.
+- Näppäimistö: 1–5 ampuu kiekon, ↑ ↓ valitsee kiekon, ← → kääntää tähtäystä, välilyönti/Enter ampuu valitun.
 - Kiekot kimpoavat tien reunoista; pisteviiva näyttää kimpoamiset.
 - Punainen tuulinappi puhaltaa kaikki tyypät kauas (lataus 1 min, näppäin X). Viiden osuman putki hidastaa kaikkea hetken. Helpolla tasolla tien poikki on sähköaita, joka hidastaa tyyppejä.
 - Kartalta valitaan teema (kauden mukaan / Halloween / perus), vaikeustaso ja kirjainkoko.

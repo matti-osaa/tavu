@@ -87,29 +87,18 @@ function drawHand(hx,hy,press,label){
     const ly=oy+HAND.length*p+6; ctx.fillStyle='#2B2333'; ctx.fillText(label,hx+p*2+2,ly+2); ctx.fillStyle='#FFE15A'; ctx.fillText(label,hx+p*2,ly); }
   ctx.restore();
 }
-/* The sling move, acted out by the hand: take the right disc from its stack, drop it in the band,
-   pull back away from the target and let go. t runs 0..3.4 s in a loop. */
+/* The sling move, acted out by the hand: press the right disc, pull it back away from the target, let go.
+   t runs 0..3.4 s in a loop. */
 function drawSlingDemo(t,target){
-  const g=slingGeo(), i=G.stacks?G.stacks.findIndex(s=>s.ans===target.ans):-1;
-  const tx=px(target.lane,target.z), ty=py(target.z)-RB*sc(target.z)*.9;
-  const dx=tx-g.cx, dy=ty-g.cy, l=Math.hypot(dx,dy)||1, pull=g.maxPull*.8, Px=g.cx-dx/l*pull, Py=g.cy-dy/l*pull;
-  const ease=k=>k*k*(3-2*k);
-  let hx,hy,press=0,ghost=null;
-  const loaded=G.cur===target.ans;
-  if(!loaded&&i>=0&&t<1.3){ // carry from the stack to the band
-    const sx=g.sx[i], sy=g.sy;
-    if(t<.3){ hx=sx; hy=sy; press=1; }
-    else { const k=ease(Math.min(1,(t-.3)/.8)); hx=sx+(g.cx-sx)*k; hy=sy+(g.cy-sy)*k; press=1; ghost=[hx,hy-g.r*.4]; }
-  } else { const t2=loaded?t%2.1:(t-1.3);
-    if(t2<.25){ hx=g.cx; hy=g.cy; press=1; }
-    else if(t2<1.2){ const k=ease((t2-.25)/.95); hx=g.cx+(Px-g.cx)*k; hy=g.cy+(Py-g.cy)*k; press=1;
-      // show the stretch and the aim line it makes
-      ctx.save(); ctx.globalAlpha=.6; ctx.strokeStyle='#D23A3A'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(g.cx-g.post,g.cy); ctx.lineTo(hx,hy); ctx.lineTo(g.cx+g.post,g.cy); ctx.stroke();
-      for(let d=g.r*2;d<l;d+=18){ ctx.fillStyle='#FFFFFF'; ctx.globalAlpha=.6*k*(1-d/l); ctx.fillRect(g.cx+dx/l*d-3,g.cy+dy/l*d-3,6,6); } ctx.restore(); }
-    else { const k=Math.min(1,(t2-1.2)/.5); hx=Px; hy=Py+k*8; press=0;
-      if(k<1){ ctx.save(); ctx.globalAlpha=1-k; ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=4; const q=g.r*(1+k*2); ctx.strokeRect(g.cx-q,g.cy-q,q*2,q*2); ctx.restore(); } }
-  }
-  if(ghost){ ctx.save(); ctx.globalAlpha=.75; drawDisc(ghost[0],ghost[1],g.r,dispAns(target.ans),AMMO_COL,{maxW:W*.3}); ctx.restore(); }
+  const g=slingGeo(), i=G.stacks?G.stacks.findIndex(s=>s.ans===target.ans):-1; if(i<0) return;
+  const ox=g.sx[i], oy=g.sy, tx=px(target.lane,target.z), ty=py(target.z)-RB*sc(target.z)*.9;
+  const dx=tx-ox, dy=ty-oy, l=Math.hypot(dx,dy)||1, pull=g.maxPull*.75, Px=ox-dx/l*pull, Py=oy-dy/l*pull;
+  const ease=k=>k*k*(3-2*k), t2=t%2.4; let hx,hy,press=0;
+  if(t2<.3){ hx=ox; hy=oy; press=1; }
+  else if(t2<1.3){ const k=ease((t2-.3)/1); hx=ox+(Px-ox)*k; hy=oy+(Py-oy)*k; press=1;
+    ctx.save(); for(let d=g.r*2;d<l;d+=18){ ctx.fillStyle='#FFFFFF'; ctx.globalAlpha=.6*k*(1-d/l); ctx.fillRect(ox+dx/l*d-3,oy+dy/l*d-3,6,6); } ctx.restore(); }
+  else { const k=Math.min(1,(t2-1.3)/.5); hx=Px; hy=Py+k*8;
+    if(k<1){ ctx.save(); ctx.globalAlpha=1-k; ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=4; const q=g.r*(1+k*2); ctx.strokeRect(ox-q,oy-q,q*2,q*2); ctx.restore(); } }
   drawHand(hx,hy,press,'');
 }
 /* Help when the player hasn't loaded and fired within 15 s: the hand shows the move on the nearest tyyppä */

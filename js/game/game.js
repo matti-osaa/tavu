@@ -21,7 +21,7 @@ function startLevel(wi,si){
   showIntro();
   cancelAnimationFrame(raf); last=performance.now(); raf=requestAnimationFrame(loop);
 }
-function buildAmmo(){ ammoEl.innerHTML=''; ammoEl.style.display='none'; G.stacks=null; G.carry=null; G.pull=null; G.aimA=0; G.sel=0; refreshStacks(); }
+function buildAmmo(){ ammoEl.innerHTML=''; ammoEl.style.display='none'; G.stacks=null; G.pull=null; G.aimA=0; G.sel=0; refreshStacks(); }
 const wordMode=()=>G&&(G.isWord||G.lootMode);
 const ansOf=ch=>G.isWord?(G.w.latin?G.fiOf[ch]:toLatin(G.w,ch)):G.w.map[ch];
 /* The ammo always has the same colour, so colour never hints at the answer – the player has to read the letter */
