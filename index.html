@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tavu – Tyypät hyökkäävät!</title>
+<meta name="description" content="Tavu – Tyypät hyökkäävät! Opi kyrillisiä, kreikkalaisia ja katakanakirjaimia sekä ruotsin ja englannin sanoja ampumalla.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Pixelify+Sans:wght@500;600;700&family=M+PLUS+Rounded+1c:wght@800;900&display=swap">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/seasons/halloween.css">
+</head>
+<body>
+<section id="map" class="screen">
+  <div class="map-inner">
+    <header class="brand">
+      <div class="logo" aria-label="Tavu" title="Т kyrillinen, Α kreikkalainen, V ja U latinalaiset"><span>Т</span><span>Α</span><span>V</span><span>U</span></div>
+      <div class="slogan">Tyypät hyökkäävät!</div>
+      <div class="tag">Tyypät ovat kirjaimia ja sanoja tutuista ja vieraista kirjoitusjärjestelmistä. Ammu, erehdy ja opi, kunnes jokainen tyyppä on tuhottu!</div>
+    </header>
+    <div class="seg" id="themeSeg" role="radiogroup" aria-label="Teema">
+      <span class="seg-l">Teema</span>
+    </div>
+    <div class="seg" id="diffSeg" role="radiogroup" aria-label="Vaikeustaso">
+      <span class="seg-l">Taso</span>
+      <button data-m="easy" role="radio">Helppo</button><button data-m="normal" role="radio">Normaali</button><button data-m="hard" role="radio">Vaikea</button>
+    </div>
+    <div class="seg" id="caseSeg" role="radiogroup" aria-label="Kirjainkoko">
+      <span class="seg-l">Kirjaimet</span>
+      <button data-m="upper" role="radio">Isot</button><button data-m="lower" role="radio">Pienet</button><button data-m="mixed" role="radio">Sekaisin</button><button data-m="pair" role="radio">Rinnakkain</button>
+    </div>
+    <div id="worlds"></div>
+    <p class="note">Luonnos. Kyrillinen latinaistus SFS 4900 -taulun mukaan. Kreikan ja katakanan (Hepburn) vastineet ovat alustavia ja odottavat tarkistusta. Ruotsin ja englannin tasoilla ammutaan suomenkielisellä sanalla.</p>
+  </div>
+</section>
+
+<section id="game" class="screen" hidden>
+  <div class="hud">
+    <button class="chip" id="back" aria-label="Takaisin kartalle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="chip hearts" id="hearts"></div>
+    <div class="prog" aria-label="Edistyminen"><b id="progbar"></b></div>
+    <button class="chip" id="snd" aria-label="Ääni päälle tai pois"></button>
+  </div>
+  <div class="stage" id="stage"><canvas id="cv"></canvas><div id="ov"></div></div>
+  <div class="ammo" id="ammo"></div>
+</section>
+
+<!-- Core: registry first, then content packs register themselves -->
+<script src="js/core/registry.js"></script>
+<script src="js/render/draw-utils.js"></script>
+
+<!-- Worlds (map order = script order). Add a language: new file in js/worlds/ + one line here. -->
+<script src="js/worlds/cyrillic.js"></script>
+<script src="js/worlds/greek.js"></script>
+<script src="js/worlds/katakana.js"></script>
+<script src="js/worlds/swedish.js"></script>
+<script src="js/worlds/english.js"></script>
+
+<!-- Seasons: switch on automatically by date. Add one: js/seasons/<id>.js + css/seasons/<id>.css -->
+<script src="js/seasons/halloween.js"></script>
+
+<script src="js/core/storage.js"></script>
+<script src="js/core/settings.js"></script>
+<script src="js/core/audio.js"></script>
+<script src="js/game/view.js"></script>
+<script src="js/ui/map.js"></script>
+<script src="js/game/game.js"></script>
+<script src="js/render/scene.js"></script>
+<script src="js/render/actors.js"></script>
+<script src="js/render/frame.js"></script>
+<script src="js/game/input.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

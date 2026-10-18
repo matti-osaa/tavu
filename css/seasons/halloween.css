@@ -1,0 +1,10 @@
+/* Halloween UI colours – active when <body> has class season-halloween */
+body.season-halloween{background:linear-gradient(180deg,#2A1846 0 20%,#3E2258 20% 40%,#6A2E5E 40% 60%,#A8455A 60% 80%,#E0743A 80%)}
+body.season-halloween .logo{text-shadow:4px 4px 0 #FF8A1E,8px 8px 0 #1B1128}
+body.season-halloween .slogan{color:#FF8A1E}
+body.season-halloween .tag{color:#FFE7C2}
+body.season-halloween .seg{background:#3B2A55}
+body.season-halloween .seg-l,body.season-halloween .seg button{color:#FFE7C2}
+body.season-halloween .seg button[aria-checked="true"]{background:#FF8A1E;color:#1B1128}
+body.season-halloween .note{color:#FFE7C2}
+body.season-halloween .stage{box-shadow:0 0 0 4px #1B1128,6px 6px 0 4px rgba(0,0,0,.4)}
