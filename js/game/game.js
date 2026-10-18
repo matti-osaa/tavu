@@ -338,6 +338,9 @@ function update(dt){
     if(b.z<=ZLOSE+.15) bossReachedLine(); }
   updateBolts(dt); G.hurt=Math.max(0,G.hurt-dt);
   const LT=RB*.9/HW;
+  // a hit counts as soon as the shot's edge touches the tyyppä's edge (sizes measured on screen)
+  const hitW=e=>{ if(!e.hw) return LT*e.wf; const s0=sc(e.z), r=wordMode()?Math.max(22,RB*.62*s0*1.4)*1.1:Math.max(14,RB*.62*s0);
+    return (e.hw*(s0/(e.hs||s0))+r)/(HW*s0); };
   for(const s of G.shots){
     if(s.bounced){s.trail.push([s.sx,s.sy,s.r]); if(s.trail.length>7)s.trail.shift();
       s.sx+=s.vx*dt;s.sy+=s.vy*dt;s.vy+=1100*dt;s.spin+=s.vx*.02*dt;s.r=Math.min(RB*.75,s.r*(1+dt*1.6));s.life-=dt;continue;}
@@ -351,7 +354,7 @@ function update(dt){
         G.parts.push({clang:true,x:s.sx,y:s.sy,life:.3,max:.3,r:RB*s0}); sClank(); flashBtn('miss'); continue; }
     }
     for(const e of G.enemies){
-      if(e.z>z0-.15&&e.z<s.z+.15&&Math.abs(s.lane-e.lane)<LT*e.wf){
+      if(e.z>z0-.15&&e.z<s.z+.15&&Math.abs(s.lane-e.lane)<hitW(e)){
         if(s.ans===e.ans){pop(e,s);}
         else{ // bounce off in screen space
           const s0=sc(e.z); s.bounced=true; s.sx=px(e.lane,e.z); s.sy=py(e.z)-RB*s0*1.2; s.r=RB*.45*s0; s.trail=[]; s.spin=0; s.life=1.1;

@@ -43,3 +43,38 @@ function stagesOf(w){
   (w.levels||[]).forEach((_,li)=>{ out.push({kind:'letters',li,key:w.id+'-'+li}); if(li%2===1&&words.length) out.push(words.shift()); });
   return out.concat(words);
 }
+
+/* Long words are stacked syllable by syllable into 2–3 rows so the tyyppä stays narrow.
+   Rough rules, good enough for reading: a single consonant between vowels starts the next syllable
+   (TY-KVA → ТЫК-ВА by VC.CV), adjacent vowels stay together, Ь/Ъ stay with the syllable before.
+   Katakana splits by kana, small kana and ー stay with the one before. */
+const SYL_V={ru:'АЕЁИОУЫЭЮЯ',el:'ΑΕΗΙΟΥΩΆΈΉΊΌΎΏ',sv:'AEIOUYÅÄÖ',en:'AEIOUY'};
+function syllables(word,lang){
+  const l=(lang||'').slice(0,2);
+  if(l==='ja'){ const out=[]; for(const c of word){ if(out.length&&'ャュョァィゥェォッー'.includes(c)) out[out.length-1]+=c; else out.push(c); } return out; }
+  const up=word.toUpperCase(), V=SYL_V[l]||SYL_V.en, isV=i=>V.includes(up[i]);
+  const nuc=[]; for(let i=0;i<up.length;i++) if(isV(i)&&!(i>0&&isV(i-1))) nuc.push(i);
+  if(l==='en'&&nuc.length>1&&/[^AEIOUY]E$/.test(up)) nuc.pop();          // silent final E: HOUSE, CAKE
+  if(nuc.length<2) return [word];
+  const cuts=[];
+  for(let k=1;k<nuc.length;k++){ let a=nuc[k-1]; while(isV(a+1)) a++;      // end of previous vowel group
+    const n=nuc[k]-a-1; let c=n<=1?a+1:nuc[k]-1;                           // V.CV  or  VC.CV
+    if('ЬЪ'.includes(up[c])) c++;
+    cuts.push(c); }
+  const out=[]; let p=0; cuts.forEach(c=>{out.push(word.slice(p,c)); p=c;}); out.push(word.slice(p)); return out.filter(Boolean);
+}
+// Rows to draw: words of up to 4 characters stay on one row; longer ones get 2 (up to 8) or 3 rows,
+// cut at syllable borders so that the widest row is as narrow as possible.
+function wordRows(ch,disp,lang){
+  if(/\s/.test(disp)) return disp.split(/\s+/).filter(Boolean);
+  if(disp.length<=4) return [disp];
+  const syl=syllables(ch,lang), want=disp.length<=8?2:3, b=[]; let p=0;
+  syl.forEach(x=>{p+=x.length; b.push(p);}); b.pop();                   // possible cut positions
+  if(!b.length) return [disp];
+  const n=Math.min(want-1,b.length); let best=null, bw=1e9;
+  const pick=(start,left,cuts)=>{ if(!left){ const edges=[0,...cuts,disp.length]; let w=0; for(let i=1;i<edges.length;i++) w=Math.max(w,edges[i]-edges[i-1]);
+      if(w<bw){bw=w; best=cuts;} return; }
+    for(let i=start;i<b.length;i++) pick(i+1,left-1,[...cuts,b[i]]); };
+  pick(0,n,[]);
+  const edges=[0,...best,disp.length]; return edges.slice(1).map((e,i)=>disp.slice(edges[i],e));
+}

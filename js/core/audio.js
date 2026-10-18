@@ -71,6 +71,10 @@ const VOWELS={'ru':'аеёиоуыэюя','el':'αεηιουωάέήίόύώ','s
 const OPEN={'ru':'а','el':'α'};
 let voices=[]; const loadVoices=()=>{try{voices=speechSynthesis.getVoices()}catch(e){}};
 if(window.speechSynthesis){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+// iOS only lets speech play after one utterance started inside a touch: unlock it on the first tap
+let speechReady=false;
+['pointerdown','keydown'].forEach(t=>addEventListener(t,()=>{ if(speechReady||!window.speechSynthesis)return; speechReady=true;
+  try{ loadVoices(); const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }catch(e){} },{passive:true}));
 function wailText(text,lang){
   const l=lang.slice(0,2), low=text.toLocaleLowerCase(lang);
   if(l==='ja') return text+'ーーー！';

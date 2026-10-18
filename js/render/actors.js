@@ -4,8 +4,11 @@ function drawCandy(e){
   const s0=sc(e.z), R=RB*s0, x=px(e.lane,e.z), gy=py(e.z);
   const near=Math.max(0,Math.min(1,(2.4-e.z)/1.1));
   const step=G.t*(5+near*5)+e.ph, stepI=Math.floor(step/Math.PI)%2;
-  let fs=R*2.45*(e.disp.length>1?.8:1); ctx.font=`900 ${fs}px ${LTF}`; {const mw=ctx.measureText(e.disp).width, lim=R*4; if(mw>lim)fs*=lim/mw;}
-  ctx.font=`900 ${fs}px ${LTF}`; const TW=ctx.measureText(e.disp).width, TH=fs*.72, u=Math.max(1.5,R*2.1/11);
+  if(!e.rows) e.rows=wordRows(e.ch,e.disp,G.w.lang);                   // long words stack syllable rows
+  const rows=e.rows, longest=rows.reduce((a,r)=>r.length>a.length?r:a,'');
+  let fs=R*2.45*(longest.length>1?.8:1); ctx.font=`900 ${fs}px ${LTF}`; {const mw=ctx.measureText(longest).width, lim=R*3.2; if(mw>lim)fs*=lim/mw;}
+  ctx.font=`900 ${fs}px ${LTF}`; const LH=fs*.86, TW=Math.max(...rows.map(r=>ctx.measureText(r).width)), TH=fs*.72+(rows.length-1)*LH, u=Math.max(1.5,R*2.1/11);
+  e.hw=TW/2; e.hs=s0;                                                       // half width on screen, used for hits
   const hop=(Math.sin(step)>0?1:0)*u*(1+near)+(e.lift||0)*RB*s0*2.2;
   const jx=e.shake>0?Math.round(Math.sin(e.shake*60)*2)*u:0, a=Math.min(1,(G.t-e.born)*3);
   ctx.save(); ctx.globalAlpha=a;
@@ -49,7 +52,7 @@ function drawCandy(e){
     ctx.strokeStyle='#FFD21E'; ctx.lineWidth=Math.max(2,u*.5); ctx.strokeRect(cx-TW/2-m,by-TH-m,TW+m*2,TH+m*1.6);
   }
   if(e.pumpkin&&G.season&&G.season.body) G.season.body(cx,by,TW,TH,u,e.seed||1);
-  smoothText(e.disp,cx,by,fs,e.col,e.shield>.2);
+  rows.forEach((r,i)=>smoothText(r,cx,by-(rows.length-1-i)*LH,fs,e.col,e.shield>.2));
   if(e.shoots){ // shooter tyypät carry a small red marker
     ctx.fillStyle='#E8323C'; ctx.fillRect(cx-u*1.2,by+u*.4,u*2.4,u*1.1); ctx.fillStyle='#FFD21E'; ctx.fillRect(cx-u*.4,by+u*.6,u*.8,u*.7);
   }
