@@ -20,48 +20,18 @@ function startLevel(wi,si){
   showIntro();
   cancelAnimationFrame(raf); last=performance.now(); raf=requestAnimationFrame(loop);
 }
-function buildAmmo(){
-  const ARW=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
-  ammoEl.innerHTML=`<button class="arrow" id="bl" style="--c:#7E6A96;--d:#584670" aria-label="Siirrä vasemmalle">${ARW('M15 5l-7 7 7 7')}</button>
-    <button class="fire" id="bf" aria-label="Ammu"><small>Ammu</small><span class="t">…</span></button>
-    <button class="arrow" id="br" style="--c:#7E6A96;--d:#584670" aria-label="Siirrä oikealle">${ARW('M9 5l7 7-7 7')}</button>`;
-  const hold=(id,key)=>{const b=$(id);
-    b.addEventListener('pointerdown',e=>{e.preventDefault();if(G)G.keys[key]=true;});
-    ['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,()=>{if(G)G.keys[key]=false;}));};
-  hold('bl','ArrowLeft'); hold('br','ArrowRight');
-  $('bf').addEventListener('pointerdown',e=>{e.preventDefault();fire();});
-  paintFire();
-}
+function buildAmmo(){ ammoEl.innerHTML=''; ammoEl.style.display='none'; G.stacks=null; G.carry=null; G.pull=null; G.aimA=0; G.sel=0; refreshStacks(); }
 const wordMode=()=>G&&(G.isWord||G.lootMode);
 const ansOf=ch=>G.isWord?(G.w.latin?G.fiOf[ch]:toLatin(G.w,ch)):G.w.map[ch];
 /* The ammo always has the same colour, so colour never hints at the answer – the player has to read the letter */
 const AMMO_COL='#E9A800';
-// Cannon recharge time (s): long enough that every shot is a choice
-const COOL=1.2;
-function paintFire(){const b=$('bf'); if(!b)return; b.style.setProperty('--c',G.curCol); b.style.setProperty('--d',shade(G.curCol,-60));
-  const t=b.querySelector('.t'); t.textContent=G.cur?dispAns(G.cur):'…';
-  if(wordMode()&&G.cur&&G.fi[G.cur]){const i=document.createElement('i'); i.textContent=G.fi[G.cur]; t.appendChild(i);} b.classList.remove('swap'); void b.offsetWidth; b.classList.add('swap');}
-// The cannon holds one fixed answer. It changes only after a hit, or if no candy on the road matches it any more.
-// ↑/↓ or tapping the loaded cube cycles through the answers of the tyypät on the road, nearest first
-// Everything the cannon could aim at: tyypät and the boss's remaining plates
+// Reload time (s) after a shot before the next disc can be taken
+const COOL=.5;
+// Everything a disc could be aimed at: tyypät and the boss's remaining plates
 function targets(){
   const t=G.enemies.map(e=>({ans:e.ans,z:e.z}));
   if(G.boss) G.boss.segs.forEach(g=>{ if(g.alive) t.push({ans:g.ans,z:G.boss.z}); });
   return t;
-}
-function switchAmmo(dir=1){
-  if(!G||!G.running)return; audio();
-  const list=[]; targets().filter(e=>e.z<ZF+.5).sort((a,b)=>a.z-b.z).forEach(e=>{if(!list.includes(e.ans))list.push(e.ans);});
-  if(!list.length||(list.length===1&&list[0]===G.cur)){tone(150,.1,'sine',.08);return;}
-  const i=list.indexOf(G.cur), next=i<0?list[0]:list[(i+dir+list.length)%list.length];
-  G.cur=next; G.reload=0; paintFire();
-  tone(dir>0?262:330,.08,'sine',.1,1.3); tone(dir>0?392:247,.1,'sine',.08,1,.06);
-}
-function nextAmmo(){
-  const all=targets(), vis=all.filter(e=>e.z<ZF-.25), from=vis.length?vis:all;
-  if(!from.length){G.cur=null;paintFire();return;}
-  const others=from.filter(e=>e.ans!==G.cur), pick=(others.length?others:from)[Math.floor(Math.random()*(others.length?others:from).length)];
-  G.cur=pick.ans; G.reload=0; paintFire();
 }
 const HEART='<svg viewBox="0 0 9 8" shape-rendering="crispEdges"><path fill="#2B2333" d="M1 0h3v1h1V0h3v1h1v3H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0V1h1z"/><path fill="#F23C5A" d="M1 1h2v1h1v1h1V2h1V1h2v3H7v1H6v1H5v1H4V6H3V5H2V4H1z"/><path fill="#FF9AAA" d="M1 1h1v1H1z"/></svg>';
 function drawHearts(){ $('hearts').innerHTML=Array.from({length:G.maxLives},(_,i)=>HEART.replace('<svg',`<svg class="${i<G.lives?'':'lost'}"`)).join(''); }
@@ -131,16 +101,6 @@ function makeEnemy(ch,lane,z){
     pumpkin:!G.plain&&!!(G.season&&G.season.body&&Math.random()<(G.season.bodyChance||0)), seed:Math.floor(Math.random()*99),
     runner:!G.plain&&G.si>0&&Math.random()<Math.min(.3,.08+G.si*.04), dashT:1+Math.random()*2, dash:0};
 }
-function fire(i){
-  if(!G||!G.running)return; audio();
-  if(!G.cur)return;
-  if(G.cool>0){ tone(110,.05,'square',.03); return; }   // still recharging: a dry click
-  const b=$('bf'); b.classList.add('press'); setTimeout(()=>b.classList.remove('press'),90);
-  const z0=ZCAN+.05, cubeY=ammoBox().y;
-  G.shots.push({E0:(py(z0)-cubeY)/sc(z0),z0,lane:G.lane,z:z0,vz:1.15,ans:G.cur,lab:dispAns(G.cur),col:G.curCol,bounced:false,vx:0,sx:0,sy:0,vy:0,life:1});
-  G.didFire=true; G.fired++; G.cool=COOL; G.recoil=1; G.reload=0; sPew();
-  G.muzzle.push({ans:dispAns(G.cur),col:G.curCol,life:.45,max:.45});
-}
 function burst(x,y,col,n=20,spd=260){
   for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=spd*(.3+Math.random());
     G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-80,life:.7+Math.random()*.5,max:1.2,col:Math.random()<.3?'#fff':col,sz:3+Math.random()*5,rot:Math.random()*6,kind:Math.random()<.5?'c':'s'});}
@@ -160,7 +120,7 @@ function pop(e,s){
   G.flash=.1; G.shake=Math.max(G.shake,reduce?0:.12);
   if(G.combo>=3) floatText(ex,ey-RB*s0-70,`putki ×${G.combo}`,'#FFB800',false);
   for(const o of G.enemies){const d=Math.abs(o.z-e.z)+Math.abs(o.lane-e.lane)*.8; if(d<1.6){o.vz=-1.6*(1-d/1.6)-.2;}}
-  G.hitstop=.06; sHit(); sDie(e.ch,G.w.lang); flashBtn('hit'); if(!G.tut) nextAmmo();
+  G.hitstop=.06; sHit(); sDie(e.ch,G.w.lang); flashBtn('hit'); refreshStacks();
   if(G.assist&&!G.tut&&G.combo>=2&&Math.random()<.6) floatText(ex,ey-RB*s0-40,['JEE!','HIENOA!','SUPER!','JES!','MAHTAVAA!'][Math.floor(Math.random()*5)],'#FFB800',true);
 
   if(!G.seen.has(e.ch)){G.seen.add(e.ch); save.seen[G.w.id]=[...G.seen]; persist();}
@@ -170,11 +130,11 @@ function pop(e,s){
 /* Enemy fire */
 function enemyFire(z,lane){ G.bolts.push({z:z-.1,lane,vz:G.speed*2.6+.5,ph:Math.random()*6}); tone(140,.18,'square',.05,.6); }
 function updateBolts(dt){
-  for(const b of G.bolts){ b.z-=b.vz*dt;
+  for(const b of G.bolts){ if(b.dead) continue; b.z-=b.vz*dt;
     if(b.z<=ZCAN+.12){ b.dead=true;
-      if(Math.abs(b.lane-G.lane)<.2){ // hit the cannon
+      if(Math.abs(b.lane)<.28){ // hit the sling
         G.lives--; G.combo=0; drawHearts(); G.hurt=.35; G.shake=reduce?0:.35; sOuch();
-        burst(px(G.lane,ZCAN),BY-RB*.8,'#FF4A2E',22,300);
+        burst(W/2,BY+10,'#FF4A2E',22,300);
         if(G.lives<=0&&G.endT<0){G.endT=1.1;G.lose=true;}
       } else burst(px(b.lane,ZCAN+.12),py(ZCAN+.12)-10,'#FF8A1E',8,140);
     }
@@ -189,16 +149,16 @@ function tutStep(n){
   const T=G.tut; T.step=n; T.t=0; T.done=false; G.enemies=[]; G.phase='tut';
   const L=G.fresh.length?G.fresh:Object.keys(G.w.map);
   const add=(ch,lane,z)=>{ const e=makeEnemy(ch,lane,z); e.frozen=true; e.shoots=false; e.runner=false; e.hint=true; e.pumpkin=false; e.col=CANDY[(G.enemies.length*3+1)%CANDY.length]; G.enemies.push(e); return e; };
-  if(n===0){ const e=add(L[0],0,2.6); G.cur=e.ans; G.tlane=0; }
-  else if(n===1){ add(L[2]||L[1],-.5,2.7); const e=add(L[1],.5,2.7); G.cur=e.ans; G.tlane=-.3; G.lane=-.3; T.target=e; }
-  G.reload=0; paintFire();
+  if(n===0){ T.target=add(L[0],0,2.6); }
+  else if(n===1){ add(L[2]||L[1],-.5,2.7); T.target=add(L[1],.5,2.7); }
+  G.cur=null; refreshStacks();
 }
 function tutUpdate(dt){
   const T=G.tut; T.t+=dt;
   if(T.step<=1){
-    if(!T.done&&!G.enemies.some(e=>e.ans===G.cur)){ T.done=true; T.t=0; floatText(W/2,H*.3,'JEE!','#FFB800',true); sWin(); G.flash=.12; }
+    if(!T.done&&!G.enemies.includes(T.target)){ T.done=true; T.t=0; floatText(W/2,H*.3,'JEE!','#FFB800',true); sWin(); G.flash=.12; }
     if(T.done&&T.t>1.4){ if(T.step===0) tutStep(1); else { T.step=2; T.t=0; floatText(W/2,H*.3,'NYT SINÄ!','#FFFFFF',true); } }
-  } else if(T.step===2&&T.t>1.2){ G.tut=null; G.enemies=[]; G.phase='wave'; G.spawnT=.3; G.cur=null; save.tutDone=true; persist(); }
+  } else if(T.step===2&&T.t>1.2){ G.tut=null; G.enemies=[]; G.phase='wave'; G.spawnT=.3; save.tutDone=true; persist(); }
 }
 function startAlarm(){ G.phase='alarm'; G.alarmT=2.6; G.plan=planBoss(); G.bossNext=G.plan.name; sAlarm(); }
 /* The boss hurls one of its letters (or a level word): it flies in an arc, lands on the road and attacks */
@@ -252,7 +212,7 @@ function bossDown(){
     burst(x,y,b.col,40,520*Math.max(.6,s0));
     for(let k=0;k<6;k++) G.parts.push({chunk:true,x,y,vx:(Math.random()-.5)*700,vy:-300-Math.random()*400,life:1.2,max:1.2,col:k%2?b.col:'#2B2333',sz:RB*s0*(.3+Math.random()*.3),rot:0}); }
   G.parts.push({flashball:true,x:px(0,b.z),y:py(b.z)-RB*s0*2,r:RB*s0*4,life:.35,max:.35});
-  G.bossName=b.name; G.boss=null; G.flash=.3; G.shake=reduce?0:.6; sBossDown(); G.cur=null; paintFire();
+  G.bossName=b.name; G.boss=null; G.flash=.3; G.shake=reduce?0:.6; sBossDown();
   // the boss releases themed words: they burst out and attack as a last wave that must be destroyed too
   const list=(G.season&&G.season.rewards&&G.season.rewards[G.w.id])||G.w.rewards||[];
   G.loot=[...list].sort(()=>Math.random()-.5).slice(0,3).map(([word,fi,lat])=>({word,disp:dispCh(word),fi,lat:G.w.latin?'':(lat||toLatin(G.w,word))}));
@@ -284,10 +244,8 @@ function update(dt){
   G.t+=dt;
   clouds.forEach(c=>{c.x+=c.v*dt; if(c.x>1.2)c.x=-.25});
   G.recoil=Math.max(0,G.recoil-dt*6); G.reload=Math.min(1,G.reload+dt*7);
-  if(G.keys.ArrowLeft) G.tlane-=2.2*dt; if(G.keys.ArrowRight) G.tlane+=2.2*dt;
-  G.tlane=Math.max(-.85,Math.min(.85,G.tlane));
-  G.lane+=(G.tlane-G.lane)*Math.min(1,dt*14);
-  if(G.pendingFire&&Math.abs(G.lane-G.tlane)<.04){ G.pendingFire=false; fire(); }
+  if(G.keys.ArrowLeft) G.aimA=(G.aimA||0)-1.1*dt; if(G.keys.ArrowRight) G.aimA=(G.aimA||0)+1.1*dt;
+  G.aimA=Math.max(-1.1,Math.min(1.1,G.aimA||0));
   G.shake=Math.max(0,G.shake-dt); G.flash=Math.max(0,(G.flash||0)-dt);
   // road + roadside scenery drift toward the player
   const drift=.35*dt; G.scroll+=drift;
@@ -297,7 +255,6 @@ function update(dt){
   G.playT+=dt;
   // tempo: ~7 s calm, ~3 s surge where tyypät come faster and closer together
   G.tempoT=(G.tempoT||0)+dt; const cyc=G.tempoT%10; G.surge=(G.phase==='wave'&&cyc>7)?1.6:1;
-  if(G.keys.ArrowLeft||G.keys.ArrowRight) G.didMove=true;
   if(G.hitstop>0){G.hitstop-=dt;return}
   if(G.cool>0){ G.cool-=dt; if(G.cool<=0){ G.cool=0; G.reload=.4; tone(523,.06,'sine',.05); } }
   const n=G.enemies.length;
@@ -308,8 +265,7 @@ function update(dt){
   if(G.phase==='wave' && G.spawnT<=0 && n<G.maxOn && G.popped+n<G.goal+2 && G.endT<0){
     spawn(); const fill=n/G.maxOn; G.spawnT=(fill<.25?.6:fill<.5?1.5:2.7)/(1+G.li*.1)/G.pace/G.surge;
   }
-  if(G.tut){} else if(!G.cur&&targets().some(e=>e.z<ZF+.5)) nextAmmo();
-  else if(G.cur&&!targets().some(e=>e.ans===G.cur)&&!G.shots.some(s=>!s.bounced&&s.ans===G.cur&&!s.dead)) nextAmmo();
+  refreshStacks();
   const boost=n<=1?1.5:1;
   for(const e of [...G.enemies]){
     if(e.frozen){ e.lane=e.bl; e.shake=Math.max(0,e.shake-dt); e.shield=Math.max(0,(e.shield||0)-dt); e.missT=Math.max(0,(e.missT||0)-dt); if(e.block>0)e.block-=dt; continue; }
@@ -333,7 +289,7 @@ function update(dt){
     b.shake=Math.max(0,b.shake-dt); b.segs.forEach(g=>{g.missT=Math.max(0,g.missT-dt); g.flash=Math.max(0,g.flash-dt);});
     b.fireT=(b.fireT??2)-dt;
     if(b.fireT<=0&&b.z<ZF){ const alive=b.segs.map((g,i)=>g.alive?i:-1).filter(i=>i>=0);
-      if(Math.random()<.6) throwLetter(b); else enemyFire(b.z, Math.random()<.5?G.lane:segLane(alive[Math.floor(Math.random()*alive.length)]));
+      if(Math.random()<.6) throwLetter(b); else enemyFire(b.z, Math.random()<.5?0:segLane(alive[Math.floor(Math.random()*alive.length)]));
       b.fireT=(2.4+Math.random()*1.2)/G.pace; }
     if(b.z<=ZLOSE+.15) bossReachedLine(); }
   updateBolts(dt); G.hurt=Math.max(0,G.hurt-dt);
@@ -345,6 +301,10 @@ function update(dt){
     if(s.bounced){s.trail.push([s.sx,s.sy,s.r]); if(s.trail.length>7)s.trail.shift();
       s.sx+=s.vx*dt;s.sy+=s.vy*dt;s.vy+=1100*dt;s.spin+=s.vx*.02*dt;s.r=Math.min(RB*.75,s.r*(1+dt*1.6));s.life-=dt;continue;}
     const z0=s.z; s.z+=s.vz*dt;
+    { const [x]=shotXY(s,s.z); s.lane=(x-W/2)/(HW*sc(s.z)); if(Math.abs(s.lane)>1.7){ s.dead=true; continue; } }
+    // any disc knocks an incoming red bolt out of the air
+    { const bo=G.bolts.find(b=>!b.dead&&Math.abs(b.z-s.z)<.18&&Math.abs(b.lane-s.lane)<.2);
+      if(bo){ bo.dead=true; s.dead=true; const [bx,by]=shotXY(s,s.z); burst(bx,by,'#FF8A1E',16,240); G.parts.push({ring:true,x:bx,y:by,r:RB*sc(s.z)*.6,life:.35,max:.35,col:'#FFD21E'}); tone(500,.1,'square',.05,.5); continue; } }
     if(G.boss&&G.boss.z>z0-.2&&G.boss.z<s.z+.2){ const b=G.boss, i=bossSegAt(s.lane);
       if(i>=0&&b.segs[i].alive){ const g=b.segs[i];
         if(g.ans===s.ans){ hitBossSeg(i,s); continue; }

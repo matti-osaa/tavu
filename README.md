@@ -5,8 +5,10 @@ Tyypät ovat kirjaimia ja sanoja tutuista ja vieraista kirjoitusjärjestelmistä
 Selainpeli, jossa opitaan kyrillisiä, kreikkalaisia ja katakanakirjaimia sekä ruotsin ja englannin sanoja. Tyypät kävelevät tietä pitkin kohti pelaajaa, ja ne tuhotaan ampumalla oikealla vastineella.
 
 ## Pelaaminen
-- ← → liikuttaa tykkiä, välilyönti/Enter ampuu, ↑ ↓ vaihtaa ammusta.
-- Kosketusnäytöllä: ◀ Ammu ▶ -napit, tien napautus siirtää tykkiä, ammuslaatikon napautus vaihtaa ammusta.
+
+- Alareunassa on kuminauha ja kolme kiekkopinoa. Napauta pinoa tai vedä kiekko nauhaan, vedä nauhaa taaksepäin ja päästä irti: kiekko lentää pisteviivan suuntaan.
+- Näppäimistö: 1 2 3 tai ↑ ↓ valitsee pinon, ← → kääntää tähtäystä, välilyönti/Enter ampuu.
+- Kiekko pudottaa myös vihollisten punaiset ammukset.
 - Kartalta valitaan teema (kauden mukaan / Halloween / perus), vaikeustaso ja kirjainkoko.
 
 ## Kehitys

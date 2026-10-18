@@ -62,7 +62,7 @@ docs/ARKKITEHTUURI.md   tämä tiedosto
 - `G` on käynnissä olevan tason koko tila (tyypät, ammukset, partikkelit, elämät, pisteet). Kartalla `G` on `null`.
 - `save` sisältää tallennetut tähdet, nähdyt kirjaimet ja asetukset. Avain `kotro-karkkijahti-v1` säilytettiin prototyypistä, jotta aiemmat tähdet säilyvät.
 - Maailma on pseudo-3D: `lane` −1…1 on tie poikittain ja `z` etäisyys (1 = tykki, 4,2 = horisontti). `px(lane,z)`, `py(z)` ja `sc(z)` muuntavat ruutukoordinaateiksi.
-- Ammus on yksi laatikko maan tasossa (`ammoBox()` actors.js:ssä); laukaus, kosketusalue ja piirto käyttävät samaa paikkaa.
+- Ampuminen on kuminauha (`js/game/input.js`): `slingGeo()` antaa laudan mitat, `G.stacks` kolme pinoa (`refreshStacks()` pitää huolen, että ainakin yksi sopii tiellä olevaan tyyppään), `G.cur` on nauhaan ladattu kiekko. Kiekko kulkee tähtäysviivaa pitkin: `shotXY(s,z)` laskee sen ruutupaikan ja siitä `lane`-arvon osumatarkistukseen.
 - Kahdella ensimmäisellä tasolla (`G.plain`) tyypät ovat pelkkiä kirjaimia: ei silmiä, raajoja, hattuja, kurpitsoja, juoksijoita eikä ampujia.
 
 ## Seuraavia mahdollisia askelia

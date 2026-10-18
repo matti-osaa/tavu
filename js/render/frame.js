@@ -27,7 +27,7 @@ function draw(){
     if(p.ring){ctx.strokeStyle=p.col;ctx.globalAlpha=a;ctx.lineWidth=Math.max(2,Math.round(6*a));const q=p.r*2*(1+(1-a)*2.2);ctx.strokeRect(p.x-q/2,p.y-q/2,q,q);ctx.globalAlpha=1;continue;}
     ctx.globalAlpha=Math.min(1,a*1.5); ctx.fillStyle=p.col; const q=Math.max(2,p.sz); ctx.fillRect(Math.round(p.x-q/2),Math.round(p.y-q/2),q,q); ctx.globalAlpha=1;
   }
-  drawCannon();
+  drawSling();
   if(G.hurt>0){ctx.fillStyle=`rgba(232,40,50,${G.hurt*1.2})`;ctx.fillRect(-20,-20,W+40,H+40);}
   if(G.flash>0){ctx.fillStyle=`rgba(255,253,235,${G.flash*2.5})`;ctx.fillRect(-20,-20,W+40,H+40);}
   G.muzzle.forEach(drawMuzzle);
@@ -67,28 +67,46 @@ function drawAlarm(){
   }
 }
 
-/* Help animation when the player hasn't managed to move and fire within 15 s:
-   a pointing finger drags the cannon left and right, then taps the ammo cube. Loops until the player acts. */
-function drawHelpHand(){
-  const t=(G.playT-15)%3.2, u=Math.max(30,RB*.75), cx=px(G.lane,ZCAN), cubeY=py(2.3), roadY=BY-u*.2;
-  let hx, hy, press=0, label;
-  if(t<1.6){ // drag along the road
-    const k=t/1.6; hx=cx+Math.sin(k*Math.PI*2)*u*1.8; hy=roadY; press=.6; label=isTouch?'VEDÄ':'← →';
-  } else if(t<2.2){ // move up to the cube
-    const k=(t-1.6)/.6, e=k*k*(3-2*k); hx=cx; hy=roadY+(cubeY-roadY)*e; label=isTouch?'NAPAUTA':'VÄLILYÖNTI';
-  } else { // tap the road ahead
-    const k=(t-2.2)/1; hx=cx; hy=cubeY+(k<.25?k*4*6:Math.max(0,(.5-k)*4*6)); press=k<.5?1:0; label=isTouch?'NAPAUTA':'VÄLILYÖNTI';
-    if(k>.2&&k<.8){ const r=u*(.4+(k-.2)*2); ctx.strokeStyle=`rgba(255,255,255,${.8-(k-.2)})`; ctx.lineWidth=4; ctx.strokeRect(hx-r,hy-r,r*2,r*2); }
-  }
-  const p=Math.max(3,Math.round(u*.11)); // pixel size of the hand
-  // pointing hand in pixel blocks (fingertip at hx,hy)
+/* Pixel pointing hand, fingertip at (hx,hy) */
+function drawHand(hx,hy,press,label){
+  const u=Math.max(30,RB*.75), p=Math.max(3,Math.round(u*.11));
   const HAND=['..XX......','.XWWX.....','.XWWX.....','.XWWXXX...','.XWWXWWXX.','XXWWXWWXWX','XWWWWWWWWX','XWWWWWWWWX','.XWWWWWWX.','..XWWWWX..','..XXXXXX..'];
   const ox=hx-p*3, oy=hy-p*.5;
   ctx.save(); ctx.globalAlpha=.95;
   HAND.forEach((row,ry)=>[...row].forEach((c,rx)=>{ if(c==='.')return; ctx.fillStyle=c==='X'?'#2B2333':(press?'#FFF1C9':'#FFFFFF'); ctx.fillRect(Math.round(ox+rx*p),Math.round(oy+ry*p),p,p); }));
-  ctx.font=`700 ${Math.round(Math.max(14,u*.4))}px ${PXF}`; ctx.textAlign='center'; ctx.textBaseline='top';
-  const ly=oy+HAND.length*p+6; ctx.fillStyle='#2B2333'; ctx.fillText(label,hx+p*2+2,ly+2); ctx.fillStyle='#FFE15A'; ctx.fillText(label,hx+p*2,ly);
+  if(label){ ctx.font=`700 ${Math.round(Math.max(14,u*.4))}px ${PXF}`; ctx.textAlign='center'; ctx.textBaseline='top';
+    const ly=oy+HAND.length*p+6; ctx.fillStyle='#2B2333'; ctx.fillText(label,hx+p*2+2,ly+2); ctx.fillStyle='#FFE15A'; ctx.fillText(label,hx+p*2,ly); }
   ctx.restore();
+}
+/* The sling move, acted out by the hand: take the right disc from its stack, drop it in the band,
+   pull back away from the target and let go. t runs 0..3.4 s in a loop. */
+function drawSlingDemo(t,target){
+  const g=slingGeo(), i=G.stacks?G.stacks.findIndex(s=>s.ans===target.ans):-1;
+  const tx=px(target.lane,target.z), ty=py(target.z)-RB*sc(target.z)*.9;
+  const dx=tx-g.cx, dy=ty-g.cy, l=Math.hypot(dx,dy)||1, pull=g.maxPull*.8, Px=g.cx-dx/l*pull, Py=g.cy-dy/l*pull;
+  const ease=k=>k*k*(3-2*k);
+  let hx,hy,press=0,ghost=null;
+  const loaded=G.cur===target.ans;
+  if(!loaded&&i>=0&&t<1.3){ // carry from the stack to the band
+    const sx=g.sx[i], sy=g.sy;
+    if(t<.3){ hx=sx; hy=sy; press=1; }
+    else { const k=ease(Math.min(1,(t-.3)/.8)); hx=sx+(g.cx-sx)*k; hy=sy+(g.cy-sy)*k; press=1; ghost=[hx,hy-g.r*.4]; }
+  } else { const t2=loaded?t%2.1:(t-1.3);
+    if(t2<.25){ hx=g.cx; hy=g.cy; press=1; }
+    else if(t2<1.2){ const k=ease((t2-.25)/.95); hx=g.cx+(Px-g.cx)*k; hy=g.cy+(Py-g.cy)*k; press=1;
+      // show the stretch and the aim line it makes
+      ctx.save(); ctx.globalAlpha=.6; ctx.strokeStyle='#D23A3A'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(g.cx-g.post,g.cy); ctx.lineTo(hx,hy); ctx.lineTo(g.cx+g.post,g.cy); ctx.stroke();
+      for(let d=g.r*2;d<l;d+=18){ ctx.fillStyle='#FFFFFF'; ctx.globalAlpha=.6*k*(1-d/l); ctx.fillRect(g.cx+dx/l*d-3,g.cy+dy/l*d-3,6,6); } ctx.restore(); }
+    else { const k=Math.min(1,(t2-1.2)/.5); hx=Px; hy=Py+k*8; press=0;
+      if(k<1){ ctx.save(); ctx.globalAlpha=1-k; ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=4; const q=g.r*(1+k*2); ctx.strokeRect(g.cx-q,g.cy-q,q*2,q*2); ctx.restore(); } }
+  }
+  if(ghost){ ctx.save(); ctx.globalAlpha=.75; drawDisc(ghost[0],ghost[1],g.r,dispAns(target.ans),AMMO_COL,{maxW:W*.3}); ctx.restore(); }
+  drawHand(hx,hy,press,'');
+}
+/* Help when the player hasn't loaded and fired within 15 s: the hand shows the move on the nearest tyyppä */
+function drawHelpHand(){
+  const tg=[...G.enemies].filter(e=>!e.air).sort((a,b)=>a.z-b.z)[0]; if(!tg) return;
+  drawSlingDemo((G.playT-15)%3.4,tg);
 }
 
 /* Words released by a defeated boss: they burst out, then hover with a gentle bob */
@@ -101,28 +119,16 @@ function drawLoot(){
   });
 }
 
-/* Tutorial overlay: shows the pair (ammo letter = foreign letter) and a hand that does the move */
+/* Tutorial overlay: shows the pair (disc = foreign letter) and the hand doing the sling move */
 function drawTutorial(){
   const T=G.tut; if(T.step>1||T.done) return;
-  const tgt=G.enemies.find(e=>e.ans===G.cur); if(!tgt) return;
-  // the pair at the top: [gold cube with ammo] = [foreign letter]
-  const s=Math.min(W*.18,76), y=H*.13, cx=W/2, pulse=(Math.sin(G.t*5)+1)/2;
+  const tgt=T.target; if(!tgt||!G.enemies.includes(tgt)) return;
+  const s=Math.min(W*.18,76), y=H*.13, cx=W/2;
   ctx.save();
   ctx.fillStyle='rgba(27,20,36,.55)'; ctx.fillRect(cx-s*2.2,y-s*.25,s*4.4,s*1.5);
-  cube(cx-s*1.8,y,s,AMMO_COL,false);
-  ctx.font=`900 ${Math.round(s*.72)}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillStyle='#FFFFFF'; ctx.fillText(dispAns(G.cur),cx-s*1.3,y+s*.52);
-  ctx.fillText('=',cx,y+s*.5);
+  drawDisc(cx-s*1.3,y+s*.5,s*.5,dispAns(tgt.ans),AMMO_COL,{maxW:s*1.6});
+  ctx.font=`900 ${Math.round(s*.72)}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#FFFFFF'; ctx.fillText('=',cx,y+s*.5);
   smoothText(tgt.disp,cx+s*1.3,y+s*.86,s*1.05,tgt.col,false);
-  // the hand: tap the road in front of the target (moves there first in step 1)
-  const t=T.t%2.4, u=Math.max(30,RB*.75), tx=px(tgt.lane,2.0), ty=py(2.0);
-  const p=Math.max(3,Math.round(u*.11)); let hx=tx, hy=ty, press=0;
-  if(T.step===1&&t<1){ const k=t; hx=px(-.3,ZCAN)+(tx-px(-.3,ZCAN))*k; hy=BY-u*.2+(ty-(BY-u*.2))*k; }
-  else { const k=(t-(T.step===1?1:0))%1.4; hy=ty+(k<.2?k*30:Math.max(0,(.4-k)*30)); press=k<.4?1:0;
-    if(k>.15&&k<.7){ const r=u*(.4+(k-.15)*2); ctx.strokeStyle=`rgba(255,255,255,${.9-(k-.15)})`; ctx.lineWidth=4; ctx.strokeRect(hx-r,hy-r,r*2,r*2);} }
-  const HAND=['..XX......','.XWWX.....','.XWWX.....','.XWWXXX...','.XWWXWWXX.','XXWWXWWXWX','XWWWWWWWWX','XWWWWWWWWX','.XWWWWWWX.','..XWWWWX..','..XXXXXX..'];
-  HAND.forEach((row,ry)=>[...row].forEach((c,rx)=>{ if(c==='.')return; ctx.fillStyle=c==='X'?'#2B2333':(press?'#FFF1C9':'#FFFFFF'); ctx.fillRect(Math.round(hx-p*3+rx*p),Math.round(hy-p*.5+ry*p),p,p); }));
-  if(!isTouch){ ctx.font=`700 ${Math.round(Math.max(14,u*.4))}px ${PXF}`; ctx.textBaseline='top'; const lab=T.step===1?'← →  VÄLILYÖNTI':'VÄLILYÖNTI';
-    ctx.fillStyle='#2B2333'; ctx.fillText(lab,hx+2,hy+HAND.length*p+8); ctx.fillStyle='#FFE15A'; ctx.fillText(lab,hx,hy+HAND.length*p+6); }
   ctx.restore();
+  drawSlingDemo(T.t%3.4,tgt);
 }

@@ -70,42 +70,78 @@ function drawCandy(e){
   }
 }
 function shotE(s,z){const t=Math.max(0,Math.min(1,(z-(s.z0||ZCAN))/.7)), e=1-Math.pow(1-t,2); return (s.E0||RB)*(1-e)+RB*.95*e;}
+/* A disc (kiekko): round wooden-rimmed puck with the letter on top. Long words make it a pill. */
+function drawDisc(x,y,r,label,col,o={}){
+  ctx.save(); ctx.font=`900 ${Math.round(r*(label.length>2?.78:label.length>1?.95:1.15))}px ${LTF}`;
+  let fs=parseFloat(ctx.font), tw=ctx.measureText(label).width;
+  const maxW=o.maxW||r*5; let w=Math.max(r*2,tw+r*.9); if(w>maxW){ fs*=(maxW-r*.9)/tw; w=maxW; ctx.font=`900 ${fs}px ${LTF}`; tw=ctx.measureText(label).width; }
+  const hw=w/2, rr=r, dk=shade(col,-70), th=Math.max(3,r*.22);
+  const shape=(dy,inset)=>{ ctx.beginPath(); const L=x-hw+inset, R=x+hw-inset, rad=rr-inset;
+    ctx.moveTo(L+rad,y-rad+dy); ctx.lineTo(R-rad,y-rad+dy); ctx.arc(R-rad,y+dy,rad,-Math.PI/2,Math.PI/2); ctx.lineTo(L+rad,y+rad+dy); ctx.arc(L+rad,y+dy,rad,Math.PI/2,Math.PI*1.5); ctx.closePath(); };
+  if(o.shadow!==false){ ctx.fillStyle='rgba(20,12,30,.28)'; shape(th+3,0); ctx.fill(); }
+  ctx.fillStyle=dk; shape(th,0); ctx.fill();                       // the edge (thickness)
+  ctx.fillStyle=col; shape(0,0); ctx.fill();
+  ctx.strokeStyle=shade(col,-35); ctx.lineWidth=Math.max(2,r*.1); shape(0,r*.2); ctx.stroke(); // inner groove
+  ctx.fillStyle='rgba(255,255,255,.28)'; ctx.beginPath(); ctx.ellipse(x-hw*.25,y-r*.45,Math.max(4,hw*.35),r*.16,0,0,Math.PI*2); ctx.fill();
+  if(o.charge!=null&&o.charge<1){ ctx.fillStyle=AMMO_COL; ctx.beginPath(); ctx.moveTo(x,y); ctx.arc(x,y,r*.92,-Math.PI/2,-Math.PI/2+Math.PI*2*o.charge); ctx.closePath(); ctx.fill(); }
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillText(label,x+1.5,y+2.5); ctx.fillStyle='#FFFFFF'; ctx.fillText(label,x,y+1);
+  ctx.restore(); return w;
+}
 function drawShot(s){
   if(s.bounced){const r=s.r, a=Math.min(1,s.life*2);
-    ctx.save(); ctx.globalAlpha=a*.35; ctx.fillStyle=s.col;
-    s.trail.forEach((t,i)=>{const q=t[2]*(.5+.5*(i+1)/s.trail.length); ctx.fillRect(t[0]-q/2,t[1]-q/2,q,q);});
-    ctx.globalAlpha=a; ctx.translate(s.sx,s.sy); ctx.rotate(Math.round(s.spin/(Math.PI/4))*(Math.PI/4));
-    const L=s.lab||s.ans;
-    if(wordMode()) sign(0,0,Math.max(18,r*1.2),L,'','#9C93A8'); else {ctx.fillStyle='#2B2333'; ctx.fillRect(-r-2,-r-2,2*r+4,2*r+4); ctx.fillStyle='#9C93A8'; ctx.fillRect(-r,-r,2*r,2*r);
-      ctx.font=`800 ${Math.round(r*(L.length>2?.8:L.length>1?1:1.3))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff'; ctx.fillText(L,0,1);}
-    ctx.restore(); return;}
-  const s0=sc(s.z), x=px(s.lane,s.z), r=Math.max(14,RB*.62*s0), y=py(s.z)-shotE(s,s.z)*s0;
-  // pixel trail
-  ctx.fillStyle=s.col; for(let i=1;i<=4;i++){const zt=Math.max(ZCAN,s.z-i*.12), q=r*.5*(1-i/5); ctx.globalAlpha=.5*(1-i/5); ctx.fillRect(px(s.lane,zt)-q/2,py(zt)-shotE(s,zt)*sc(zt)-q/2,q,q);}
-  ctx.globalAlpha=1;
-  const L=s.lab||s.ans;
-  if(wordMode()){sign(x,y,Math.max(22,r*1.4),L,G.fi[s.ans],s.col);return;}
-  cube(x-r,y-r,r*2,s.col,false);
-  ctx.font=`800 ${Math.round(r*(L.length>2?.85:L.length>1?1.05:1.4))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillText(L,x+2,y+3); ctx.fillStyle='#FFFFFF'; ctx.fillText(L,x,y+1);
+    ctx.save(); ctx.globalAlpha=a*.35; ctx.fillStyle='#9C93A8';
+    s.trail.forEach((t,i)=>{const q=t[2]*(.5+.5*(i+1)/s.trail.length); ctx.beginPath(); ctx.arc(t[0],t[1],q/2,0,Math.PI*2); ctx.fill();});
+    ctx.globalAlpha=a; drawDisc(s.sx,s.sy,r,s.lab||s.ans,'#9C93A8',{maxW:r*6}); ctx.restore(); return;}
+  const s0=sc(s.z), r=Math.max(12,RB*.55*s0), [x,y]=shotXY(s,s.z), L=s.lab||s.ans;
+  ctx.save(); for(let i=1;i<=4;i++){const zt=Math.max(s.z0,s.z-i*.1), [tx,ty]=shotXY(s,zt), q=r*(1-i/5); ctx.globalAlpha=.35*(1-i/5); ctx.fillStyle=s.col; ctx.beginPath(); ctx.arc(tx,ty,q,0,Math.PI*2); ctx.fill();}
+  ctx.restore();
+  drawDisc(x,y,r,L,s.col,{maxW:r*6});
+  if(wordMode()&&G.fi[s.ans]){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(10,r*.6))}px ${LTF}`; ctx.textAlign='center'; ctx.fillStyle='#2B2333'; ctx.fillText(G.fi[s.ans],x+1,y+r*1.9+1); ctx.fillStyle='#FFF'; ctx.fillText(G.fi[s.ans],x,y+r*1.9); ctx.restore(); }
 }
-// The ammo box: one block on the ground with the letter you shoot. Nothing else.
-function ammoBox(){ const u=Math.max(30,RB*.75), s=u*1.6; return {x:Math.round(px(G.lane,ZCAN)), y:Math.round(BY+6)-s/2, s, u}; }
-function drawCannon(){
-  if(!G.cur)return;
-  const B=ammoBox(), x=B.x, u=B.u, ground=B.y+B.s/2;
-  const ready=G.cool<=0, charge=1-Math.max(0,G.cool)/COOL;
-  const col=ready?G.curCol:'#8E8A96', ans=dispAns(G.cur), rl=1-Math.pow(1-G.reload,3), rec=Math.round(G.recoil*4);
-  ctx.fillStyle='rgba(30,20,40,.25)'; ctx.fillRect(x-B.s*.6,ground-u*.12,B.s*1.2,u*.3);
-  if(wordMode()){const sh=u*.95*(.6+.4*rl); sign(x,ground-sh*.6+rec,sh,ans,G.fi[G.cur],col);
-    if(!ready){ const bw=u*1.6; ctx.fillStyle='#2B2333'; ctx.fillRect(x-bw/2-2,ground-sh*1.1-12,bw+4,8); ctx.fillStyle=AMMO_COL; ctx.fillRect(x-bw/2,ground-sh*1.1-10,bw*charge,4); } return;}
-  const bs=B.s*(.55+.45*rl), bx=x-bs/2, byy=ground-bs+rec;
-  cube(bx,byy,bs,col,false);
-  if(!ready){ const fh=bs*charge; ctx.fillStyle=AMMO_COL; ctx.fillRect(bx,byy+bs-fh,bs,fh); }   // gold fills up while recharging
-  ctx.font=`800 ${Math.round(bs*(ans.length>2?.42:ans.length>1?.55:.75))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillText(ans,x+2,byy+bs/2+3); ctx.fillStyle='#FFFFFF'; ctx.fillText(ans,x,byy+bs/2+1);
+/* The board at the bottom: wooden plank, two posts and the rubber band, three stacks of discs */
+function drawSling(){
+  const g=slingGeo(), r=g.r, ready=G.cool<=0, charge=1-Math.max(0,G.cool)/COOL;
+  // wooden board
+  const top=BY+g.TB*.02;
+  ctx.fillStyle='#7A4E2C'; ctx.fillRect(0,top,W,H-top);
+  for(let k=0;k<5;k++){ const y=top+6+k*(H-top)/5; ctx.fillStyle='rgba(0,0,0,.12)'; ctx.fillRect(0,Math.round(y),W,2); ctx.fillStyle='rgba(255,255,255,.06)'; ctx.fillRect(0,Math.round(y)+2,W,2); }
+  ctx.fillStyle='#4E3019'; ctx.fillRect(0,top,W,5); ctx.fillStyle='#A06A3E'; ctx.fillRect(0,top+5,W,3);
+  // aim line (only with a disc in the band)
+  if(G.cur&&(G.pull||G.kbAim||!isTouch||G.tut)){
+    const [ux,uy,l]=aimDir(), strong=!!G.pull||G.kbAim, steps=40;
+    ctx.save();
+    for(let i=2;i<steps;i++){ const d=i*16, x=g.cx+ux*d, y=g.cy+uy*d; if(y<HY+6||x<-10||x>W+10) break;
+      const a=(strong?.85:.35)*(1-i/steps), q=Math.max(3,7*(1-i/steps));
+      ctx.globalAlpha=a; ctx.fillStyle='#2B2333'; ctx.fillRect(x-q/2-1,y-q/2-1,q+2,q+2); ctx.fillStyle='#FFFFFF'; ctx.fillRect(x-q/2,y-q/2,q,q); }
+    ctx.restore();
+  }
+  // posts
+  const pw=r*.7, ph=r*1.3;
+  [-1,1].forEach(sd=>{ const x=g.cx+sd*g.post; cube(x-pw/2,g.cy-ph*.55,pw,'#6B4A2E',true,3+sd); ctx.fillStyle='#4E3019'; ctx.fillRect(x-pw/2,g.cy-ph*.55+pw,pw,ph-pw); });
+  // band: from post to the pull point (or straight), drawn as a thick rubber strap
+  const P=G.pull||{x:g.cx,y:g.cy}, bw=Math.max(4,r*.24);
+  const strap=(x1,y1,x2,y2)=>{ ctx.strokeStyle='#2B2333'; ctx.lineWidth=bw+3; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.strokeStyle='#D23A3A'; ctx.lineWidth=bw; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); };
+  ctx.save(); ctx.lineCap='round';
+  strap(g.cx-g.post,g.cy-ph*.35,P.x,P.y+(G.cur?r*.3:0)); strap(g.cx+g.post,g.cy-ph*.35,P.x,P.y+(G.cur?r*.3:0));
+  ctx.restore();
+  // stacks
+  if(G.stacks) G.stacks.forEach((s,i)=>{ if(!s.ans) return;
+    s.t=Math.min(1,(s.t||0)+(G.dt||0)*4); const x=g.sx[i], y=g.sy, pop=s.t<1?1+Math.sin(s.t*Math.PI)*.25:1, col=ready?AMMO_COL:'#8E8A96';
+    const lab=dispAns(s.ans), mw=W*.29;
+    for(let k=3;k>=1;k--) drawDisc(x,y+k*Math.max(4,r*.2),r,'',shade(col,-12*k),{shadow:k===3,maxW:mw});
+    if(G.tut&&G.tut.target&&s.ans===G.tut.target.ans&&!G.cur&&!G.carry){ const pl=(Math.sin(G.t*6)+1)/2; ctx.save(); ctx.strokeStyle=`rgba(255,225,90,${.5+pl*.5})`; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(x,y+4,r*(1.35+pl*.2),0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+    drawDisc(x,y,r*pop,lab,col,{charge:ready?null:charge,shadow:false,maxW:mw});
+    if(wordMode()&&G.fi[s.ans]){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(11,r*.42))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#FFE9C8'; ctx.fillText(G.fi[s.ans],x,y+r*1.55); ctx.restore(); }
+  });
+  // the band and the loaded disc go on top of the stacks, so a deep pull stays visible
+  ctx.save(); ctx.lineCap='round'; if(G.pull){ strap(g.cx-g.post,g.cy-ph*.35,P.x,P.y+r*.3); strap(g.cx+g.post,g.cy-ph*.35,P.x,P.y+r*.3); } ctx.restore();
+  if(G.cur){ const sq=G.pull?1+Math.min(.15,Math.hypot(P.x-g.cx,P.y-g.cy)/g.maxPull*.15):1;
+    drawDisc(P.x,P.y,r*sq,dispAns(G.cur),AMMO_COL,{maxW:Math.min(W*.5,r*7)}); }
+  if(G.carry) drawDisc(G.carry.x,G.carry.y-r*.4,r*1.1,dispAns(G.carry.ans),AMMO_COL,{maxW:Math.min(W*.5,r*7)});
 }
-function drawCubeHint(){}   // the cube needs no decoration: tap it to switch, drag it to scroll
+function drawCannon(){ drawSling(); }
 function flashBtn(cls){const b=$('bf'); if(!b)return; b.classList.remove('hit','miss'); void b.offsetWidth; b.classList.add(cls); setTimeout(()=>b.classList.remove(cls),500);}
 function pill(x,y,h,col,txt,sub){sign(x,y,h,txt,sub,col);}
 function drawPair(){}

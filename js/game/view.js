@@ -10,7 +10,7 @@ const px=(lane,z)=>W/2+lane*HW*sc(z);
 function resize(){
   const r=stage.getBoundingClientRect(); W=r.width;H=r.height;DPR=Math.min(2,window.devicePixelRatio||1);
   cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
-  HY=H*.27; BY=H-Math.max(78,H*.15); HW=Math.min(W*.48,340); RB=Math.max(40,Math.min(70,W*.15));
+  HY=H*.27; BY=H-Math.max(130,H*.22); HW=Math.min(W*.48,340); RB=Math.max(40,Math.min(70,W*.15));   // below BY: the wooden board with the sling
 }
 addEventListener('resize',()=>{if(!$('game').hidden)resize()});
 

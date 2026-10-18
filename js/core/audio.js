@@ -35,12 +35,12 @@ const sHit=()=>{const f=LOW[Math.floor(Math.random()*LOW.length)]; tone(150,.22,
 let wails=0;
 function sScream(c){ c=c||ac;
   if(!soundOn||!c||wails>=2)return; wails++;
-  const t=c.currentTime+.02, dur=.95+Math.random()*.35, p0=330+Math.random()*220, end=t+dur;
+  const t=c.currentTime+.02, dur=.6+Math.random()*.25, p0=330+Math.random()*220, end=t+dur;
   const out=c.createGain(); out.gain.setValueAtTime(0,t);
-  out.gain.linearRampToValueAtTime(.32,t+.04); out.gain.setValueAtTime(.32,t+.18);
+  out.gain.linearRampToValueAtTime(.12,t+.04); out.gain.setValueAtTime(.12,t+.18);
   // two sobbing dips, then fade
-  out.gain.linearRampToValueAtTime(.14,t+dur*.42); out.gain.linearRampToValueAtTime(.26,t+dur*.5);
-  out.gain.linearRampToValueAtTime(.1,t+dur*.72); out.gain.linearRampToValueAtTime(.18,t+dur*.78);
+  out.gain.linearRampToValueAtTime(.05,t+dur*.42); out.gain.linearRampToValueAtTime(.09,t+dur*.5);
+  out.gain.linearRampToValueAtTime(.04,t+dur*.72); out.gain.linearRampToValueAtTime(.06,t+dur*.78);
   out.gain.exponentialRampToValueAtTime(.001,end);
   out.connect(c.destination);
   // vowel "a" formants sliding toward "o"
@@ -77,21 +77,33 @@ let speechReady=false;
   try{ loadVoices(); const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }catch(e){} },{passive:true}));
 function wailText(text,lang){
   const l=lang.slice(0,2), low=text.toLocaleLowerCase(lang);
-  if(l==='ja') return text+'ーーー！';
+  if(l==='ja') return text+'ー';
   const V=VOWELS[l]||'aeiou';
   let i=-1; for(let k=low.length-1;k>=0;k--) if(V.includes(low[k])){i=k;break;}
-  if(i<0) return OPEN[l]? low+OPEN[l].repeat(4)+'!' : null;              // a lone consonant: "б" → "бaaaa!"
-  return low.slice(0,i+1)+low[i].repeat(4)+low.slice(i+1)+'!';
+  if(i<0) return OPEN[l]? low+OPEN[l].repeat(2)+'!' : null;              // a lone consonant: "б" → "бaaaa!"
+  return low.slice(0,i+1)+low[i].repeat(2)+low.slice(i+1)+'!';
+}
+// Browser speech is fragile (Chrome jams if you cancel and speak right away, iOS needs a touch first),
+// so: never interrupt a cry in progress, keep the utterance referenced, and if speech does not start
+// within half a second, play the synth wail instead. After two failures speech is skipped for the session.
+let curCry=null, ttsFails=0;
+function pickVoice(lang){
+  const l=lang.slice(0,2).toLowerCase(), m=voices.filter(x=>x.lang.replace('_','-').toLowerCase().startsWith(l));
+  return m.find(x=>x.localService&&x.lang.replace('_','-').toLowerCase()===lang.toLowerCase())||m.find(x=>x.localService)||m[0];
 }
 function sDie(text,lang){
   if(!soundOn) return;
-  const v=window.speechSynthesis&&lang&&voices.find(x=>x.lang.replace('_','-').toLowerCase().startsWith(lang.slice(0,2).toLowerCase()));
-  const say=v&&wailText(text,lang);
-  if(!say){ sScream(); return; }
-  try{ speechSynthesis.cancel();
+  if(!window.speechSynthesis||!lang||ttsFails>=2){ sScream(); return; }
+  if(!voices.length) loadVoices();
+  const v=pickVoice(lang), say=v&&wailText(text,lang);
+  if(!say||speechSynthesis.speaking||speechSynthesis.pending){ sScream(); return; }
+  try{
     const u=new SpeechSynthesisUtterance(say); u.voice=v; u.lang=v.lang;
-    u.pitch=1.5+Math.random()*.5; u.rate=.75+Math.random()*.15; u.volume=1;
-    speechSynthesis.speak(u);
+    u.pitch=1.2+Math.random()*.3; u.rate=.95+Math.random()*.15; u.volume=.35;   // a small, quiet cry under the POKS
+    let started=false; u.onstart=()=>{started=true; ttsFails=0;};
+    u.onend=u.onerror=()=>{ if(curCry===u) curCry=null; };
+    curCry=u; speechSynthesis.speak(u);
+    setTimeout(()=>{ if(!started&&curCry===u){ ttsFails++; curCry=null; try{speechSynthesis.cancel()}catch(e){} sScream(); } },500);
   }catch(e){ sScream(); }
 }
 // Ricochet: a sharp woody "tok" + springy boing, clearly different from a hit
