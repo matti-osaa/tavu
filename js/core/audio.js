@@ -44,8 +44,15 @@ function loadCries(wid){
 }
 function playCry(wid,ch){
   const b=CRY.buf[wid], e=CRY.idx&&CRY.idx[wid]&&CRY.idx[wid][ch]; if(!b||!e||!ac) return false;
-  const src=ac.createBufferSource(), g=ac.createGain(); src.buffer=b; src.playbackRate.value=.94+Math.random()*.14;
-  g.gain.value=.55; src.connect(g).connect(ac.destination); src.start(ac.currentTime+.03,e[0],e[1]+.05); return true;
+  // every cry comes out a little different: random pitch, a random rise or sag, wobble and voice colour
+  const R=(a,b)=>a+Math.random()*(b-a), t=ac.currentTime+.03;
+  const src=ac.createBufferSource(), g=ac.createGain(), f=ac.createBiquadFilter(); src.buffer=b;
+  const r0=R(.78,1.32), r1=r0*R(.72,1.12), len=(e[1]+.05)/((r0+r1)/2);
+  src.playbackRate.setValueAtTime(r0,t); src.playbackRate.linearRampToValueAtTime(r1,t+len);
+  const lfo=ac.createOscillator(), lg=ac.createGain(); lfo.frequency.value=R(4,9); lg.gain.value=r0*R(0,.06); lfo.connect(lg).connect(src.playbackRate);
+  f.type='peaking'; f.frequency.value=R(500,2600); f.Q.value=R(.7,2.5); f.gain.value=R(-6,9);
+  g.gain.value=R(.42,.6); src.connect(f).connect(g).connect(ac.destination);
+  src.start(t,e[0],e[1]+.05); lfo.start(t); lfo.stop(t+len+.1); return true;
 }
 
 // Death wail: a synthesised voice crying "aaaa…". A sawtooth "voice" goes through three vowel
