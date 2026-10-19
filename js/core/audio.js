@@ -130,8 +130,10 @@ function speakCry(say,v){
 }
 function sDie(text,lang){
   if(!soundOn) return;
-  if(G&&playCry(G.w.id,text)) return;
-  if(!window.speechSynthesis||!lang||performance.now()<ttsOffUntil){ sScream(); return; }
+  if(G&&playCry(G.w.id,text)){ window._cries=(window._cries||0)+1; return; }
+  // device speech only when the recorded cries can't load (page opened from a file); phones get the synth wail
+  window._fallback=(window._fallback||0)+1;
+  if(location.protocol!=='file:'||!window.speechSynthesis||!lang||performance.now()<ttsOffUntil){ sScream(); return; }
   if(!voices.length) loadVoices();
   const v=pickVoice(lang), say=v&&wailText(text,lang);
   if(!say){ sScream(); return; }

@@ -115,6 +115,8 @@ function fireKeyboard(){
 }
 
 /* ---------- Pointer ---------- */
+function slowGeo(){ const m=emGeo(); return {x:W-m.x, y:m.y, r:m.r}; }
+function onSlow(p){ const m=slowGeo(); return Math.hypot(p.x-m.x,p.y-m.y)<m.r*1.5; }
 function onEm(p){ const m=emGeo(); return Math.hypot(p.x-m.x,p.y-m.y)<m.r*1.5; }
 function stackAt(p){ const g=slingGeo(); if(p.y<BY) return -1; let best=-1,bd=1e9;
   g.sx.forEach((x,i)=>{ const d=Math.abs(p.x-x); if(d<g.slotW/2&&d<bd){bd=d;best=i;} }); return best; }
@@ -122,6 +124,7 @@ cv.addEventListener('pointerdown',e=>{
   if(!G||!G.running) return; audio();
   const p=canvasPoint(e);
   if(onEm(p)&&!G.tut){ emergency(); return; }
+  if(onSlow(p)&&!G.tut){ useSlow(); return; }
   const i=stackAt(p); if(i<0) return;
   const g=slingGeo(), s=G.stacks[i]; if(!s||!s.ans){ tone(110,.05,'square',.03); return; }
   drag={id:e.pointerId,i,x0:p.x,y0:p.y,t0:performance.now(),moved:false};
@@ -159,6 +162,7 @@ addEventListener('keydown',e=>{
   if(e.repeat)return;
   if(e.key===' '||e.key==='Enter'){ if(!G.running&&$('go'))$('go').click(); else fireKeyboard(); e.preventDefault(); return; }
   if(e.key==='x'||e.key==='X'){ emergency(); e.preventDefault(); }
+  if(e.key==='z'||e.key==='Z'){ useSlow(); e.preventDefault(); }
   if(e.key>='1'&&e.key<='6'){ quickFire(+e.key-1); e.preventDefault(); }
   if(e.key==='ArrowUp'||e.key==='ArrowDown'){ const n=slingGeo().n; G.sel=((G.sel||0)+(e.key==='ArrowUp'?1:n-1))%n; G.kbAim=true; e.preventDefault(); }
 });

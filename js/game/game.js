@@ -14,7 +14,7 @@ function startLevel(wi,si){
   if(si===0){ G.speed*=.75; G.goal=Math.min(G.goal,10); }   // first level: slower and shorter
   G.plain=si<2;
   G.rocks=makeRocks(si);
-  G.decals=Array.from({length:90},(_,i)=>({lane:(Math.random()*2-1)*2.4, z:1.05+Math.pow(Math.random(),.8)*(ZF-.6), type:['tuft','tuft','flower','pebble','wear','tuft'][i%6], seed:i}));                                                // first levels: tyypät are just letters, nothing else
+  G.decals=Array.from({length:90},(_,i)=>({lane:(Math.random()*2-1)*2.4, z:1.05+Math.pow(Math.random(),.8)*(ZF-.6), type:['tuft','tuft','flower','pebble','wear','tuft'][i%6], seed:i})).sort((a,b)=>b.z-a.z);   // sorted once, far to near                                                // first levels: tyypät are just letters, nothing else
   G.assist=si<2||save.diff==='easy';                          // beginner help: matching tyypät glow, vastine labels
   if(!save.tutDone&&!isWord&&w.levels.length){ G.tut={step:0,t:0}; }
   $('map').hidden=true; $('game').hidden=false; resize(); loadCries(w.id);
@@ -183,9 +183,15 @@ function floatText(x,y,txt,col,big){ G.texts.push({x,y,txt,col,life:1.3,big}); }
 
 /* Streak reward: every 5 hits in a row everything slows down for a while */
 const ZAP_Z0=1.75, ZAP_Z1=2.25;   // the electric strip (easy only)
+function useSlow(){
+  if(!G||!G.running||G.tut||!(G.slowCharges>0)||G.slowT>0){ tone(110,.05,'square',.03); return; }
+  G.slowCharges--; G.slowT=6; floatText(W/2,H*.4,'HIDASTUS!','#5FD3FF',true);
+  [660,520,400,300].forEach((f,i)=>tone(f,.18,'triangle',.08,1,i*.09));
+}
 function comboReward(x,y){
-  if(G.combo>0&&G.combo%5===0){ G.slowT=6; floatText(W/2,H*.4,'HIDASTUS!','#5FD3FF',true);
-    [660,520,400,300].forEach((f,i)=>tone(f,.18,'triangle',.08,1,i*.09)); }
+  // every 5 hits in a row you earn a slow-down charge; use it with the clock button when things get close
+  if(G.combo>0&&G.combo%5===0&&(G.slowCharges||0)<2){ G.slowCharges=(G.slowCharges||0)+1; floatText(W/2,H*.4,'HIDASTIN +1','#5FD3FF',true);
+    [300,400,520,660].forEach((f,i)=>tone(f,.12,'triangle',.07,1,i*.07)); }
 }
 /* Personality reactions to a wrong disc */
 function grabDisc(e,s){   // hoarder: keeps the disc, grows, and holds it up as a 3-hit shield

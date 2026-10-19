@@ -163,6 +163,16 @@ function drawSling(){
     if(pulled&&s.ans){ band(x-half,by,P.x,P.y+r*.35,0); }   // the near strand goes over the disc
     if(wordMode()&&G.fi[lab]&&!pulled&&s.ans){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(10,r*.42))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#FFE9C8'; ctx.fillText(G.fi[lab],x,y+r*1.2+3*step); ctx.restore(); }
   });
+  // slow-down button (top right): earned with 5-hit streaks, shows how many charges you have
+  if(!G.tut){ const m=slowGeo(), n=G.slowCharges||0, on=n>0&&!(G.slowT>0);
+    ctx.save(); ctx.globalAlpha=n>0||G.slowT>0?1:.45;
+    ctx.fillStyle='#2B2333'; ctx.beginPath(); ctx.arc(m.x,m.y+4,m.r+3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=on?'#2E86C1':'#5A5560'; ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.fill();
+    if(G.slowT>0){ ctx.fillStyle='rgba(95,211,255,.85)'; ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.arc(m.x,m.y,m.r*.9,-Math.PI/2,-Math.PI/2+Math.PI*2*(G.slowT/6)); ctx.closePath(); ctx.fill(); }
+    ctx.strokeStyle='#FFFFFF'; ctx.lineWidth=Math.max(2,m.r*.14); ctx.lineCap='round';
+    ctx.beginPath(); ctx.arc(m.x,m.y,m.r*.55,0,Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(m.x,m.y-m.r*.38); ctx.moveTo(m.x,m.y); ctx.lineTo(m.x+m.r*.28,m.y+m.r*.1); ctx.stroke();
+    if(n>0){ ctx.fillStyle='#FFD21E'; ctx.beginPath(); ctx.arc(m.x+m.r*.75,m.y-m.r*.7,m.r*.42,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#2B2333'; ctx.font=`900 ${Math.round(m.r*.6)}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(n,m.x+m.r*.75,m.y-m.r*.66); }
+    ctx.restore(); }
   // emergency button: blows everything back up the road, then recharges for a minute
   if(!G.tut){ const m=emGeo(), ready=(G.emT||0)<=0, k=1-(G.emT||0)/EM_COOL;
     ctx.save();

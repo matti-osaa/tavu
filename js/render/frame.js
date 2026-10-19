@@ -182,3 +182,26 @@ function drawSplat(sp){
   ctx.fillStyle='#FFFFFF'; ctx.font=`900 ${Math.round(R*.9)}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(sp.lab,0,R*.05);
   ctx.restore();
 }
+
+/* Crash log. A phone browser that runs out of memory kills the page without any error, so every
+   2 s we note what the game is doing. If the page dies mid-level, the next load finds the note
+   still saying "running" and keeps it as the crash report (open the game with #bugi to see it). */
+const HB_KEY='tavu-hb';
+try{ const prev=JSON.parse(localStorage.getItem(HB_KEY)||'null');
+  if(prev&&prev.running){ localStorage.setItem('tavu-lastbug','Peli kaatui ilman virheilmoitusta (selain sulki sivun).\n'+JSON.stringify(prev)); }
+  localStorage.removeItem(HB_KEY); }catch(_){}
+let _hbFrames=0, _hbT=performance.now();
+setInterval(()=>{
+  const now=performance.now(), fps=Math.round(_hbFrames*1000/(now-_hbT)); _hbFrames=0; _hbT=now;
+  try{
+    if(!G||!G.running&&G.endT<0&&!G.limboOn){ localStorage.removeItem(HB_KEY); return; }
+    const hb={running:true, aika:new Date().toLocaleTimeString('fi-FI'), maailma:G.w.id, taso:G.si, vaihe:G.phase, fps,
+      tyypat:G.enemies.length, partikkelit:G.parts.length, kiekot:G.shots.length, bossi:!!G.boss, hp:Math.round(G.hp),
+      huudot:window._cries||0, varahuudot:window._fallback||0, aani:ac?ac.state:'-', aaniladattu:Object.keys(CRY.buf).join(','),
+      muisti:performance.memory?Math.round(performance.memory.usedJSHeapSize/1e6)+'MB':'?', ua:navigator.userAgent.slice(0,80)};
+    localStorage.setItem(HB_KEY,JSON.stringify(hb));
+  }catch(_){}
+},2000);
+(function countFrames(){ _hbFrames++; requestAnimationFrame(countFrames); })();
+// leaving or reloading the page on purpose is not a crash
+addEventListener('pagehide',()=>{ try{ localStorage.removeItem(HB_KEY); }catch(_){} });

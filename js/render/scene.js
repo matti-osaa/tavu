@@ -53,7 +53,7 @@ function drawDeco(d){
 
 function drawDecals(T){
   if(!G.decals) return; const hw=G.season&&G.season.id==='halloween';
-  for(const d of [...G.decals].sort((a,b)=>b.z-a.z)){
+  for(const d of G.decals){
     const s0=sc(d.z), x=Math.round(px(d.lane,d.z)), y=Math.round(py(d.z)), u=Math.max(1.5,RB*s0*.09);
     if(x<-20||x>W+20) continue;
     const onRoad=Math.abs(d.lane)<1;
