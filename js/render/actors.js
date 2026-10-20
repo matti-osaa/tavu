@@ -58,7 +58,7 @@ function drawCandy(e){
   } else if(e.ans!==G.cur) e.pinged=false;
   if(e.pumpkin&&G.season&&G.season.body) G.season.body(cx,by,TW,TH,u,e.seed||1);
   // a soft squash-and-stretch with every step, so even plain letters walk with a bounce
-  { const sq=Math.sin(step*2)*.06*(e.vz>.05?1:.3); ctx.save(); ctx.translate(cx,by); ctx.scale(1+sq,1-sq); ctx.translate(-cx,-by);
+  { const sq=Math.round(Math.sin(step*2)*(e.vz>.05?3:1))*.02;   // a few fixed squash steps (see the glyph-cache note in view.js) ctx.save(); ctx.translate(cx,by); ctx.scale(1+sq,1-sq); ctx.translate(-cx,-by);
     rows.forEach((r,i)=>smoothText(r,cx,by-(rows.length-1-i)*LH,fs,e.col,e.shield>.2)); ctx.restore(); }
   if(e.shieldHp>0&&e.grab){ // hoarder's shield: the grabbed disc, held up in front, cracking with every right hit
     const sw=Math.max(TW*.8,R*1.6), sh=TH*.75, sx=cx-sw/2+Math.sin(G.t*3+e.ph)*u, sy=by-TH*.55-sh/2;

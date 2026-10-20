@@ -1,5 +1,13 @@
 /* Canvas, pseudo-3D projection and shared game globals. */
 const cv=$('cv'), ctx=cv.getContext('2d'), stage=$('stage'), ov=$('ov'), ammoEl=$('ammo');
+/* iPhone Safari keeps a glyph cache for every font size it draws. Letters growing smoothly as they
+   approach meant thousands of slightly different sizes and the cache grew until the page was killed.
+   So every font size is snapped to one of a limited set of steps (about 4 % apart). */
+(()=>{ const d=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'font');
+  const snap=n=>{ n=+n; if(n<=14) return Math.max(6,Math.round(n)); return Math.round(Math.exp(Math.round(Math.log(n)*24)/24)); };
+  Object.defineProperty(ctx,'font',{configurable:true, get(){ return d.get.call(this); },
+    set(v){ d.set.call(this,String(v).replace(/(\d+(?:\.\d+)?)px/,(m,n)=>snap(n)+'px')); }});
+})();
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 // World space: lane -1..1 across the road, z = distance (ZN at the cannon, ZF where candies appear)
 const ZN=1, ZF=5.2, ZLOSE=1.06, ZCAN=1.0;
