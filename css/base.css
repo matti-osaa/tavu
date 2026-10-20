@@ -247,3 +247,6 @@ body.season-halloween .menu-panel .seg button[aria-checked="false"]{color:var(--
 .pv-fi{font-weight:800;font-size:15px;color:#2F7A4A;margin-top:4px}
 .pv-en{font-size:13px;color:var(--ink-soft)}
 .pv-t,.pv-fi,.pv-en{font-family:"M PLUS Rounded 1c","Nunito",system-ui,sans-serif!important}
+/* world card: language and place name in the same size and font */
+.world h2,.world .script{font-family:var(--font-display);font-size:24px;line-height:1.1;margin:0;letter-spacing:0;text-transform:none;opacity:1}
+.world .script{font-weight:400;opacity:.7}

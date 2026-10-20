@@ -6,7 +6,7 @@
   Tavu.addWorld({
     id:'cyr', name:'Koivumetsä', script:'Kyrillinen', lang:'ru-RU', map, cipher:true, cipherDigraphs:{ja:'Я',ju:'Ю'},
     // familiar shapes → false friends → new shapes → hard ones
-    levels:['АОКМТ','ЕРСНВ','УХЛПД','БГЗИФ','ЖШЧЦЯЮ'],
+    levels:['АОКМТБ','ЕРСНВ','УХЛПД','ГЗИФ','ЖШЧЦЯЮ'],
     words:[
       [['КОТ','kissa'],['ТОРТ','kakku'],['ДОМ','talo'],['НОС','nenä'],['РОТ','suu'],['СОК','mehu'],['МАМА','äiti'],['ПАПА','isä'],['МОРЕ','meri'],['МЕТРО','metro']],
       [['СУП','keitto'],['МОСТ','silta'],['РЫБА','kala'],['ЗУБ','hammas'],['ВОДА','vesi'],['НОГА','jalka'],['РУКА','käsi'],['КНИГА','kirja'],['ШКОЛА','koulu'],['ЖУК','kuoriainen'],['СЫР','juusto'],['ХЛЕБ','leipä'],['МОЛОКО','maito'],['ЛЕС','metsä'],['ГОРОД','kaupunki'],['ДРУГ','ystävä'],['ЧАС','tunti'],['ЛАМПА','lamppu']]
