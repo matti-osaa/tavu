@@ -1,6 +1,6 @@
 /* Latina – Forum. Latinalaiset aakkoset: tyyppä on latinankielinen sana, ammus suomenkielinen. */
 Tavu.addWorld({
-  id:'la', name:'Forum', script:'Latina', lang:'la', map:{}, latin:true, levels:[],
+  sample:'SPQR', id:'la', name:'Forum', script:'Latina', lang:'la', map:{}, latin:true, levels:[],
   words:[
     [['AQUA','vesi'],['TERRA','maa'],['IGNIS','tuli'],['LUX','valo'],['REX','kuningas'],['PUELLA','tyttö'],['PUER','poika'],['AMICUS','ystävä'],['CANIS','koira'],['FELES','kissa'],['EQUUS','hevonen'],['DOMUS','talo'],['VIA','tie'],['BELLUM','sota'],['PAX','rauha'],['MARE','meri']],
     [['MILES','sotilas'],['GLADIUS','miekka'],['SCUTUM','kilpi'],['CASTRA','leiri'],['VICTORIA','voitto'],['LUPUS','susi'],['URSUS','karhu'],['AVIS','lintu'],['ARBOR','puu'],['FLUMEN','joki'],['MONS','vuori'],['SOL','aurinko'],['LUNA','kuu'],['STELLA','tähti'],['LIBER','kirja'],['SCHOLA','koulu']]

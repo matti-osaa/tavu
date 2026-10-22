@@ -3,7 +3,7 @@
 (() => {
   const petals = Array.from({length:14}, () => ({x:Math.random(), y:Math.random(), v:.03+Math.random()*.04, p:Math.random()*6}));
   Tavu.addWorld({
-    id:'kat', name:'Kirsikkapuisto', script:'Katakana', lang:'ja-JP',
+    sample:'カナ', id:'kat', name:'Kirsikkapuisto', script:'Katakana', lang:'ja-JP',
     map:{ア:'a',イ:'i',ウ:'u',エ:'e',オ:'o',カ:'ka',キ:'ki',ク:'ku',ケ:'ke',コ:'ko',サ:'sa',シ:'shi',ス:'su',セ:'se',ソ:'so',タ:'ta',チ:'chi',ツ:'tsu',テ:'te',ト:'to',ナ:'na',ニ:'ni',ヌ:'nu',ネ:'ne',ノ:'no'},
     levels:['アイウエオ','カキクケコ','サシスセソ','タチツテト','ナニヌネノ'],
     words:[

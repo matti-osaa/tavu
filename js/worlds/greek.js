@@ -1,7 +1,7 @@
 /* Kreikka – Saaristo
    Huom. latinaistus on alustava (nykykreikan ääntämisen mukainen) ja odottaa tarkistusta. */
 Tavu.addWorld({
-  id:'gre', name:'Saaristo', script:'Kreikka', lang:'el-GR', cipher:true, cipherPrefer:{i:'Ι',o:'Ο'},
+  sample:'Ωλ', id:'gre', name:'Saaristo', script:'Kreikka', lang:'el-GR', cipher:true, cipherPrefer:{i:'Ι',o:'Ο'},
   map:{Α:'a',Β:'v',Γ:'g',Δ:'d',Ε:'e',Ζ:'z',Η:'i',Θ:'th',Ι:'i',Κ:'k',Λ:'l',Μ:'m',Ν:'n',Ξ:'ks',Ο:'o',Π:'p',Ρ:'r',Σ:'s',Τ:'t',Υ:'y',Φ:'f',Χ:'h',Ψ:'ps',Ω:'o'},
   levels:['ΑΚΜΟΤ','ΡΗΝΧΥ','ΓΔΛΠΣ','ΘΞΦΨΩ'],
   words:[

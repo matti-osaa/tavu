@@ -1,6 +1,6 @@
 /* Englanti – Puistokatu. Latinalaiset aakkoset: tyyppä on englanninkielinen sana, ammus suomenkielinen. */
 Tavu.addWorld({
-  id:'en', name:'Puistokatu', script:'Englanti', lang:'en-GB', map:{}, latin:true, levels:[],
+  sample:'Th', id:'en', name:'Puistokatu', script:'Englanti', lang:'en-GB', map:{}, latin:true, levels:[],
   words:[
     [['DOG','koira'],['CAT','kissa'],['HOUSE','talo'],['CAR','auto'],['BOOK','kirja'],['SUN','aurinko'],['MOON','kuu'],['WATER','vesi'],['BREAD','leipä'],['MILK','maito'],['APPLE','omena'],['FISH','kala'],['BOAT','vene'],['SCHOOL','koulu'],['FRIEND','ystävä']],
     [['FOREST','metsä'],['LAKE','järvi'],['CITY','kaupunki'],['STREET','katu'],['HAND','käsi'],['FOOT','jalka'],['EYE','silmä'],['EAR','korva'],['NOSE','nenä'],['HEART','sydän'],['CAKE','kakku'],['COFFEE','kahvi'],['RAIN','sade'],['SNOW','lumi'],['BIRD','lintu'],['TREE','puu']]

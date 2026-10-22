@@ -1,6 +1,6 @@
 /* Ruotsi – Saaristokylä. Latinalaiset aakkoset: tyyppä on ruotsinkielinen sana, ammus suomenkielinen. */
 Tavu.addWorld({
-  id:'sv', name:'Saaristokylä', script:'Ruotsi', lang:'sv-SE', map:{}, latin:true, levels:[],
+  sample:'Åä', id:'sv', name:'Saaristokylä', script:'Ruotsi', lang:'sv-SE', map:{}, latin:true, levels:[],
   words:[
     [['HUND','koira'],['KATT','kissa'],['HUS','talo'],['BIL','auto'],['BOK','kirja'],['SOL','aurinko'],['MÅNE','kuu'],['VATTEN','vesi'],['BRÖD','leipä'],['MJÖLK','maito'],['ÄPPLE','omena'],['FISK','kala'],['BÅT','vene'],['SKOLA','koulu'],['VÄN','ystävä']],
     [['SKOG','metsä'],['SJÖ','järvi'],['STAD','kaupunki'],['GATA','katu'],['HAND','käsi'],['FOT','jalka'],['ÖGA','silmä'],['ÖRA','korva'],['NÄSA','nenä'],['HJÄRTA','sydän'],['TÅRTA','kakku'],['KAFFE','kahvi'],['GLASS','jäätelö'],['REGN','sade'],['SNÖ','lumi'],['FÅGEL','lintu']]

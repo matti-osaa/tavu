@@ -128,7 +128,7 @@ cv.addEventListener('pointerdown',e=>{
   const i=stackAt(p); if(i<0) return;
   const g=slingGeo(), s=G.stacks[i]; if(!s||!s.ans){ tone(110,.05,'square',.03); return; }
   drag={id:e.pointerId,i,x0:p.x,y0:p.y,t0:performance.now(),moved:false};
-  G.pull={i,x:g.sx[i],y:g.sy}; G.cur=s.ans; G.sel=i; noise(.04,2200,2,.08);
+  G.pull={i,x:g.sx[i],y:g.sy}; G.cur=s.ans; G.sel=i; noise(.04,2200,2,.08); stretchStart();
   try{cv.setPointerCapture(e.pointerId);}catch(_){}
 });
 cv.addEventListener('pointermove',e=>{
@@ -138,11 +138,12 @@ cv.addEventListener('pointermove',e=>{
   const GAIN=1.7;                                   // the band stretches further than the finger moves
   const l=Math.hypot(dx,dy)*GAIN, k=(l>g.maxPull?g.maxPull/l:1)*GAIN;
   G.pull.x=g.sx[drag.i]+dx*k; G.pull.y=g.sy+dy*k;
-  const st=Math.floor(Math.min(l,g.maxPull)/(g.maxPull/5)); if(st!==drag.st){ drag.st=st; tone(140+st*30,.04,'triangle',.05); } // creak while stretching
+  stretchUpdate(Math.min(1,l/g.maxPull));   // rubber squeak follows the pull
 });
 const endDrag=e=>{
   if(!drag||e.pointerId!==drag.id||!G){ drag=null; return; }
   const g=slingGeo(), i=drag.i;
+  stretchStop();
   if(G.pull){
     const dx=g.sx[i]-G.pull.x, dy=g.sy-G.pull.y, l=Math.hypot(dx,dy);
     G.pull=null; G.cur=null;
@@ -153,7 +154,7 @@ const endDrag=e=>{
   drag=null;
 };
 cv.addEventListener('pointerup',endDrag);
-cv.addEventListener('pointercancel',()=>{ drag=null; if(G){ G.pull=null; G.cur=null; } });
+cv.addEventListener('pointercancel',()=>{ stretchStop(); drag=null; if(G){ G.pull=null; G.cur=null; } });
 
 /* ---------- Keyboard ---------- */
 addEventListener('keydown',e=>{

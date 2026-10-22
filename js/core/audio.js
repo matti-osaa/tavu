@@ -162,3 +162,29 @@ const sAlarm=()=>{ for(let i=0;i<6;i++){ tone(880,.14,'square',.06,0,i*.34); ton
 // Boss stomp / roar and defeat
 const sRoar=()=>{ tone(90,.6,'sawtooth',.12,.5); noise(.5,300,.6,.25); };
 const sBossDown=()=>{ noise(.9,500,.5,.5); [0,4,7,12,16,19].forEach((n,i)=>tone(196*Math.pow(2,n/12),.35,'square',.07,0,.3+i*.1)); };
+
+/* Rubber band stretching: a creaky, rising squeak while the band is being pulled.
+   Louder while the finger moves, higher the tighter the band. */
+let STR=null;
+function stretchStart(){
+  if(!soundOn||!ac||STR) return;
+  const o=ac.createOscillator(), o2=ac.createOscillator(), f=ac.createBiquadFilter(), g=ac.createGain(), lfo=ac.createOscillator(), lg=ac.createGain();
+  o.type='sawtooth'; o.frequency.value=70; o2.type='square'; o2.frequency.value=71.5;
+  f.type='bandpass'; f.Q.value=6; f.frequency.value=320; g.gain.value=0;
+  lfo.frequency.value=24; lg.gain.value=12; lfo.connect(lg).connect(o.frequency);   // grainy rubber flutter
+  o.connect(f); o2.connect(f); f.connect(g).connect(ac.destination); o.start(); o2.start(); lfo.start();
+  STR={o,o2,f,g,lfo,last:0,lastT:performance.now()};
+}
+function stretchUpdate(k){   // k = tension 0..1
+  if(!STR||!ac) return; const now=performance.now(), dt=Math.max(1,now-STR.lastT), speed=Math.min(1,Math.abs(k-STR.last)*1000/dt*2.5);
+  STR.last=k; STR.lastT=now; const t=ac.currentTime;
+  STR.o.frequency.setTargetAtTime(70+k*110,t,.03); STR.o2.frequency.setTargetAtTime(71.5+k*112,t,.03);
+  STR.f.frequency.setTargetAtTime(320+k*1400,t,.04);
+  STR.g.gain.setTargetAtTime(.02+speed*.11*(.5+k*.5),t,.03);
+  STR.g.gain.setTargetAtTime(.012+k*.02,t+.08,.12);                                    // a faint hum while held still
+}
+function stretchStop(){
+  if(!STR||!ac) return; const s=STR, t=ac.currentTime; STR=null;
+  s.g.gain.cancelScheduledValues(t); s.g.gain.setTargetAtTime(0,t,.02);
+  [s.o,s.o2,s.lfo].forEach(n=>{ try{ n.stop(t+.15); }catch(_){} });
+}

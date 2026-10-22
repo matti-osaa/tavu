@@ -5,7 +5,7 @@ function renderMap(){
   const box=$('worlds'); box.innerHTML='';
   WORLDS.forEach((w,wi)=>{
     const el=document.createElement('div'); el.className='world'; el.style.background=w.card.bg;
-    el.innerHTML=`<h2>${w.script}</h2><div class="script">${w.name}</div>${Object.keys(w.map).length?`<button class="abc-btn" aria-label="Aakkoset">${Object.keys(w.map).slice(0,2).join('')}</button>`:''}<div class="path"></div>`;
+    el.innerHTML=`<h2>${w.script}</h2><div class="script">${w.name}</div>${Object.keys(w.map).length?`<button class="abc-btn" aria-label="Aakkoset">${w.sample||Object.keys(w.map).slice(0,2).join('')}</button>`:(w.sample?`<div class="abc-btn sample" aria-hidden="true">${w.sample}</div>`:'')}<div class="path"></div>`;
     const ab=el.querySelector('.abc-btn'); if(ab) ab.onclick=()=>openAlphabet(wi);
     const path=el.querySelector('.path'), st=stagesOf(w);
     // long paths (word packs): show the last few done, the open one and a few ahead; the rest as a count
