@@ -1,7 +1,7 @@
 /* Player settings: difficulty (on the map), letter case (hamburger menu). The season follows the calendar. */
 
 /* ---- Difficulty: overall pace and lives ---- */
-const DIFF = {easy:{pace:.55,lives:5}, normal:{pace:.72,lives:4}, hard:{pace:1,lives:3}};
+const DIFF = {easy:{pace:.32,lives:5,goalK:.6}, normal:{pace:.72,lives:4}, hard:{pace:1,lives:3}};
 const diff = () => DIFF[save.diff] || DIFF.normal;
 
 /* ---- Season: chosen by the calendar only (not a player setting).

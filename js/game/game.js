@@ -6,18 +6,20 @@ function startLevel(wi,si){
   G={w,wi,si,li,key:stage.key,phase:'wave',boss:null,alarmT:0,bolts:[],hurt:0,surge:1,playT:0,kills:{},lootMode:false,didMove:false,didFire:false,fresh,older,enemies:[],shots:[],parts:[],texts:[],ammo:[],sel:0,lane:0,tlane:0,hp:100,hpShown:-1,quietT:9,dmgTaken:0,pace:diff().pace,popped:0,
      goal:14+li*3,maxOn:4+li,speed:.5+li*.08,fired:0,correct:0,combo:0,spawnT:.4,t:0,running:false,hitstop:0,shake:0,cool:0,reload:1,recoil:0,
      season:activeSeason(),isWord,fiOf:isWord?Object.fromEntries(w.words[li].map(p=>[p[0],p[1]])):{},
-     fi:isWord?Object.fromEntries(w.words[li].map(p=>w.latin?[p[1],'']:[toLatin(w,p[0]),p[1]])):{},
+     latOf:isWord?Object.fromEntries(w.words[li].filter(p=>p[2]).map(p=>[p[0],p[2]])):{},
+     fi:isWord?Object.fromEntries(w.words[li].map(p=>w.latin?[p[1],'']:[p[2]||toLatin(w,p[0]),p[1]])):{},
      keys:{},seen:seenSet(w.id),endT:-1,scroll:0,pairs:[],muzzle:[],
      deco:Array.from({length:10},(_,i)=>({z:ZN*.75+i*(ZF*1.6/10),side:i%2?1:-1,k:Math.random()}))};
   if(isWord){G.goal=10+li*2;G.maxOn=3+li;G.speed=.4+li*.05;}
   G.speed*=G.pace;
+  if(diff().goalK){ G.goal=Math.max(5,Math.round(G.goal*diff().goalK)); }   // easy: very slow, but fewer tyypät so a level takes about as long
   if(si===0){ G.speed*=.75; G.goal=Math.min(G.goal,10); }   // first level: slower and shorter
   G.plain=si<2;
   G.rocks=makeRocks(si);
   G.decals=Array.from({length:90},(_,i)=>({lane:(Math.random()*2-1)*2.4, z:1.05+Math.pow(Math.random(),.8)*(ZF-.6), type:['tuft','tuft','flower','pebble','wear','tuft'][i%6], seed:i})).sort((a,b)=>b.z-a.z);   // sorted once, far to near                                                // first levels: tyypät are just letters, nothing else
   G.assist=si<2||save.diff==='easy';                          // beginner help: matching tyypät glow, vastine labels
   if(!save.tutDone&&!isWord&&w.levels.length){ G.tut={step:0,t:0}; }
-  $('map').hidden=true; $('game').hidden=false; resize(); loadCries(w.id);
+  $('map').hidden=true; $('game').hidden=false; resize(); loadCries(w.id,isWord?li:null);
   G.cur=null; G.curCol=AMMO_COL;
   buildAmmo(); drawHearts(); prog();
   showIntro();
@@ -25,7 +27,7 @@ function startLevel(wi,si){
 }
 function buildAmmo(){ ammoEl.innerHTML=''; ammoEl.style.display='none'; G.stacks=null; G.pull=null; G.aimA=0; G.sel=0; refreshStacks(); }
 const wordMode=()=>G&&(G.isWord||G.lootMode);
-const ansOf=ch=>G.isWord?(G.w.latin?G.fiOf[ch]:toLatin(G.w,ch)):G.w.map[ch];
+const ansOf=ch=>G.isWord?(G.w.latin?G.fiOf[ch]:(G.latOf[ch]||toLatin(G.w,ch))):G.w.map[ch];
 /* The ammo always has the same colour, so colour never hints at the answer – the player has to read the letter */
 const AMMO_COL='#E9A800';
 // Reload time (s) after a shot before the next disc can be taken
@@ -349,7 +351,7 @@ function hitLine(e){
 function update(dt){
   G.t+=dt;
   clouds.forEach(c=>{c.x+=c.v*dt; if(c.x>1.2)c.x=-.25});
-  G.recoil=Math.max(0,G.recoil-dt*6); G.emT=Math.max(0,(G.emT||0)-dt); G.wind=Math.max(0,(G.wind||0)-dt); G.reload=Math.min(1,G.reload+dt*7);
+  G.recoil=Math.max(0,G.recoil-dt*6); G.emT=Math.max(0,(G.emT||0)-dt); G.tapHint=Math.max(0,(G.tapHint||0)-dt); G.wind=Math.max(0,(G.wind||0)-dt); G.reload=Math.min(1,G.reload+dt*7);
   if(G.keys.ArrowLeft) G.aimA=(G.aimA||0)-1.1*dt; if(G.keys.ArrowRight) G.aimA=(G.aimA||0)+1.1*dt;
   G.aimA=Math.max(-1.1,Math.min(1.1,G.aimA||0));
   G.shake=Math.max(0,G.shake-dt); G.flash=Math.max(0,(G.flash||0)-dt);

@@ -146,8 +146,8 @@ const endDrag=e=>{
   if(G.pull){
     const dx=g.sx[i]-G.pull.x, dy=g.sy-G.pull.y, l=Math.hypot(dx,dy);
     G.pull=null; G.cur=null;
-    if(drag.moved&&l>g.r*.8&&dy<-l*.2) fireSlot(i,dx,dy,l);
-    else if(!drag.moved) quickFire(i);
+    if(drag.moved&&l>g.r*.8&&dy<-l*.2){ fireSlot(i,dx,dy,l); save.pulls=(save.pulls||0)+1; if(save.pulls<=3) persist(); }
+    else if(!drag.moved){ if(G.tut){ G.tapHint=1.2; tone(200,.12,'triangle',.08,1.6); } else quickFire(i); }   // first game: you have to pull
     else tone(120,.08,'sine',.06);                  // pulled sideways/upwards: band just snaps back
   }
   drag=null;

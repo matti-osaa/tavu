@@ -18,6 +18,17 @@ const Tavu = {
      scenery(x, y, u, seed, deco)  draws one roadside object (blocks via cube())
      ambient()  optional extra layer drawn over the ground (falling petals …) */
   addWorld(w){ WORLDS.push(w); },
+  /* A word pack: a long frequency-ordered list [[word, Finnish, optional Latin form], …] for a world.
+     It is cut into word levels of `per` words and added after the world's own word levels.
+     Words are shown in capitals; Greek capitals drop their accents, as Greek does. */
+  addWords(id,list,per=20){
+    const w=WORLDS.find(x=>x.id===id); if(!w) return;
+    const up=s=>id==='gre'?s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().normalize('NFC'):s.toUpperCase();
+    const seen=new Set((w.words||[]).flat().map(p=>p[0]));
+    const items=list.map(p=>[up(p[0]),p[1],p[2]]).filter(p=>p[0]&&!seen.has(p[0])&&(seen.add(p[0]),true));
+    w.words=w.words||[];
+    for(let i=0;i<items.length;i+=per) w.words.push(items.slice(i,i+per).map(p=>p[2]?p:[p[0],p[1]]));
+  },
 
   /* A season pack:
      id, name, active(date) → boolean   when it switches on automatically

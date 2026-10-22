@@ -8,7 +8,12 @@ function renderMap(){
     el.innerHTML=`<h2>${w.script}</h2><div class="script">${w.name}</div>${Object.keys(w.map).length?`<button class="abc-btn" aria-label="Aakkoset">${Object.keys(w.map).slice(0,2).join('')}</button>`:''}<div class="path"></div>`;
     const ab=el.querySelector('.abc-btn'); if(ab) ab.onclick=()=>openAlphabet(wi);
     const path=el.querySelector('.path'), st=stagesOf(w);
-    st.forEach((s,si)=>{
+    // long paths (word packs): show the last few done, the open one and a few ahead; the rest as a count
+    const isOpen=si=>si===0||(save.stars[st[si-1].key]||0)>0||(save.stars[st[si].key]||0)>0||(si>1&&st[si-1].kind==='cipher'&&(save.stars[st[si-2].key]||0)>0);
+    let lastOpen=0; st.forEach((_,si)=>{ if(isOpen(si)) lastOpen=si; });
+    const from=Math.max(0,lastOpen-6), to=Math.min(st.length-1,lastOpen+5);
+    if(from>0){ const c=document.createElement('div'); c.className='node more'; c.innerHTML=`<span>1–${from}</span><div class="stars"></div>`; path.appendChild(c); }
+    st.forEach((s,si)=>{ if(si<from||si>to) return;
       const stars=save.stars[s.key]||0, open=si===0||(save.stars[st[si-1].key]||0)>0||stars>0
         ||(si>1&&st[si-1].kind==='cipher'&&(save.stars[st[si-2].key]||0)>0);   // salakirjoitus is a bonus: it never blocks the path
       const n=document.createElement('div'); n.className='node';
@@ -17,6 +22,7 @@ function renderMap(){
       if(open) n.querySelector('button').onclick=()=>startLevel(wi,si);
       path.appendChild(n);
     });
+    if(to<st.length-1){ const c=document.createElement('div'); c.className='node more'; c.innerHTML=`<span>+${st.length-1-to}</span><div class="stars"></div>`; path.appendChild(c); }
     box.appendChild(el);
   });
 }

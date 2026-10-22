@@ -1,6 +1,6 @@
 # Tavu – Tyypät hyökkäävät!
 
-Tyypät ovat kirjaimia ja sanoja tutuista ja vieraista kirjoitusjärjestelmistä. Ammu, erehdy ja opi, kunnes jokainen tyyppä on tuhottu!
+Vieraskieliset sana- ja kirjaintyypät hyökkäävät. Pystytkö puolustautumaan oppimalla kieltä?
 
 Selainpeli, jossa opitaan kyrillisiä, kreikkalaisia ja katakanakirjaimia sekä ruotsin ja englannin sanoja. Tyypät kävelevät tietä pitkin kohti pelaajaa, ja ne tuhotaan ampumalla oikealla vastineella.
 

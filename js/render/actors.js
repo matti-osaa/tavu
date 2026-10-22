@@ -145,13 +145,22 @@ function drawSling(){
     const p=s.ans?1:ease(Math.max(0,1-(s.wait||0)/REFILL));   // how far the next disc has come up
     // the stack below (disc edges), sinking a little while it pushes
     const step=Math.max(3,r*.2);
-    for(let k=3;k>=1;k--){ ctx.save(); ctx.globalAlpha=.9; drawDisc(x,y+k*step+(1-p)*step,r*.96,'',shade(AMMO_COL,-18*k),{shadow:k===3,maxW:mw}); ctx.restore(); }
-    // pegs
-    ctx.save(); ctx.lineCap='round';
-    [-1,1].forEach(sd=>{ ctx.fillStyle='#3E2614'; ctx.beginPath(); ctx.arc(x+sd*half,by,peg,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#B07A4A'; ctx.beginPath(); ctx.arc(x+sd*half-peg*.3,by-peg*.3,peg*.45,0,Math.PI*2); ctx.fill(); });
-    if(pulled){ band(x-half,by,P.x,P.y+r*.35,0); band(x+half,by,P.x,P.y+r*.35,0); }
-    else band(x-half,by,x+half,by,r*.12);
+    // the slingshot (ritsa): a wooden Y, the band tied to the tips of its prongs
+    const tipY=y-r*.45, forkY=y+r*1.05, baseY=Math.min(H-4,y+r*2.3), wood=Math.max(4,r*.26);
+    ctx.save(); ctx.lineCap='round'; ctx.lineJoin='round';
+    const Y=(col,wd)=>{ ctx.strokeStyle=col; ctx.lineWidth=wd; ctx.beginPath(); ctx.moveTo(x,baseY); ctx.lineTo(x,forkY);
+      ctx.moveTo(x-half,tipY); ctx.quadraticCurveTo(x-half,forkY,x,forkY); ctx.quadraticCurveTo(x+half,forkY,x+half,tipY); ctx.stroke(); };
+    Y('#2E1B0E',wood+4); Y('#8A5A34',wood); Y('rgba(255,220,170,.35)',Math.max(1.5,wood*.3));
+    [-1,1].forEach(sd=>{ ctx.fillStyle='#2E1B0E'; ctx.fillRect(x+sd*half-wood*.7,tipY-wood*.2,wood*1.4,wood*.55); });   // band knots
+    if(pulled){ band(x-half,tipY,P.x,P.y+r*.35,0); }          // back strand (front strand is drawn over the disc)
+    else band(x-half,tipY,x+half,tipY,r*.25);
     ctx.restore();
+    // until the player has learnt it: little arrows under the disc show "pull down"
+    if(s.ans&&!pulled&&((save.pulls||0)<3||G.tut)){ const k=(G.t*1.6+i*.2)%1, hot=G.tapHint>0?1:0;
+      ctx.save(); ctx.strokeStyle=hot?'#FFE15A':'#FFFFFF'; ctx.lineWidth=Math.max(2,r*.12); ctx.lineCap='round';
+      for(let j=0;j<2;j++){ const yy=y+r*1.35+((k+j*.5)%1)*r*1.1, a=Math.sin(((k+j*.5)%1)*Math.PI); ctx.globalAlpha=a*(hot?1:.75);
+        ctx.beginPath(); ctx.moveTo(x-r*.35,yy); ctx.lineTo(x,yy+r*.28); ctx.lineTo(x+r*.35,yy); ctx.stroke(); }
+      ctx.restore(); }
     if(!lab) return;
     // the top disc: rises out of the stack while a new one is being pushed up
     const rise=(1-p)*(r*.9+3*step);
@@ -160,7 +169,7 @@ function drawSling(){
     const sq=pulled?1+Math.min(.12,Math.hypot(P.x-x,P.y-y)/g.maxPull*.12):1;
     ctx.save(); if(!s.ans) ctx.globalAlpha=.55+.45*p;
     drawDisc(P.x,P.y+rise,r*sq,dispAns(lab),s.ans?AMMO_COL:shade(AMMO_COL,-25),{maxW:mw}); ctx.restore();
-    if(pulled&&s.ans){ band(x-half,by,P.x,P.y+r*.35,0); }   // the near strand goes over the disc
+    if(pulled&&s.ans){ band(x+half,y-r*.45,P.x,P.y+r*.35,0); }   // the near strand goes over the disc
     if(wordMode()&&G.fi[lab]&&!pulled&&s.ans){ ctx.save(); ctx.font=`800 ${Math.round(Math.max(10,r*.42))}px ${LTF}`; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#FFE9C8'; ctx.fillText(G.fi[lab],x,y+r*1.2+3*step); ctx.restore(); }
   });
   // slow-down button (top right): earned with 5-hit streaks, shows how many charges you have

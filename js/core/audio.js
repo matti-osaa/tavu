@@ -33,26 +33,32 @@ const sHit=()=>{const f=LOW[Math.floor(Math.random()*LOW.length)]; tone(150,.22,
 /* Recorded cries: one audio sprite per world (audio/cries/<world>.mp3, made with espeak-ng and a
    "dying" slow-down), offsets in audio/cries/index.json. They play the same on every device, so they
    are used first; device speech is only the fallback (e.g. when the page runs from file://). */
-const ASSET_V='20261019a';
-const CRY={idx:null, buf:{}, loading:{}};
-function loadCries(wid){
-  const c=audio(); if(!c||CRY.buf[wid]||CRY.loading[wid]) return; CRY.loading[wid]=true;
-  const idxP=CRY.idx?Promise.resolve(CRY.idx):fetch('audio/cries/index.json?v='+ASSET_V).then(r=>r.json()).then(j=>CRY.idx=j);
-  idxP.then(()=>fetch(`audio/cries/${wid}.mp3?v=${ASSET_V}`)).then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); })
-    .then(a=>new Promise((ok,no)=>c.decodeAudioData(a,ok,no))).then(b=>{ CRY.buf[wid]=b; })
-    .catch(()=>{ CRY.loading[wid]=false; });
+const ASSET_V='20261020a';
+// One small audio file per world chunk: "base" (letters, bosses, reward words) and one per word level (w0, w1 …).
+// Only the chunks of the level being played are kept in memory (phones have little to spare).
+const CRY={idx:{}, buf:{}, want:new Set()};
+function loadCries(wid,li){
+  const c=audio(); if(!c) return;
+  const need=['base'].concat(li!=null?['w'+li]:[]).map(k=>wid+'/'+k);
+  CRY.want=new Set(need);
+  for(const k of Object.keys(CRY.buf)) if(!CRY.want.has(k)) delete CRY.buf[k];      // free other levels' audio
+  const idxP=CRY.idx[wid]?Promise.resolve(CRY.idx[wid]):fetch(`audio/cries/${wid}/index.json?v=${ASSET_V}`).then(r=>r.json()).then(j=>CRY.idx[wid]=j);
+  idxP.then(()=>need.forEach(key=>{ if(CRY.buf[key]) return; CRY.buf[key]='loading';
+    fetch(`audio/cries/${key}.mp3?v=${ASSET_V}`).then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); })
+      .then(a=>new Promise((ok,no)=>c.decodeAudioData(a,ok,no))).then(buf=>{ if(CRY.want.has(key)) CRY.buf[key]=buf; else delete CRY.buf[key]; })
+      .catch(()=>{ delete CRY.buf[key]; }); })).catch(()=>{});
 }
 function playCry(wid,ch){
-  const b=CRY.buf[wid], e=CRY.idx&&CRY.idx[wid]&&CRY.idx[wid][ch]; if(!b||!e||!ac) return false;
+  const e=CRY.idx[wid]&&CRY.idx[wid][ch], b=e&&CRY.buf[wid+'/'+e[0]]; if(!b||typeof b==='string'||!ac) return false;
   // every cry comes out a little different: random pitch, a random rise or sag, wobble and voice colour
   const R=(a,b)=>a+Math.random()*(b-a), t=ac.currentTime+.03;
   const src=ac.createBufferSource(), g=ac.createGain(), f=ac.createBiquadFilter(); src.buffer=b;
-  const r0=R(.78,1.32), r1=r0*R(.72,1.12), len=(e[1]+.05)/((r0+r1)/2);
+  const r0=R(.78,1.32), r1=r0*R(.72,1.12), len=(e[2]+.05)/((r0+r1)/2);
   src.playbackRate.setValueAtTime(r0,t); src.playbackRate.linearRampToValueAtTime(r1,t+len);
   const lfo=ac.createOscillator(), lg=ac.createGain(); lfo.frequency.value=R(4,9); lg.gain.value=r0*R(0,.06); lfo.connect(lg).connect(src.playbackRate);
   f.type='peaking'; f.frequency.value=R(500,2600); f.Q.value=R(.7,2.5); f.gain.value=R(-6,9);
   g.gain.value=R(.42,.6); src.connect(f).connect(g).connect(ac.destination);
-  src.start(t,e[0],e[1]+.05); lfo.start(t); lfo.stop(t+len+.1); return true;
+  src.start(t,e[1],e[2]+.05); lfo.start(t); lfo.stop(t+len+.1); return true;
 }
 
 // Death wail: a synthesised voice crying "aaaa…". A sawtooth "voice" goes through three vowel
