@@ -1,0 +1,4 @@
+/* Pääsiäinen – active when <body> has class season-paasiainen */
+body.season-paasiainen{background:linear-gradient(180deg,#BFE4FF,#FFF4DC)}
+body.season-paasiainen .logo{text-shadow:4px 4px 0 #FF8FC0,8px 8px 0 #A88BFF}
+body.season-paasiainen .slogan{color:#E05A9A}

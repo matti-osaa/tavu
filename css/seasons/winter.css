@@ -1,0 +1,5 @@
+/* Talvi – active when <body> has class season-talvi */
+body.season-talvi{background:linear-gradient(180deg,#8FBFE6,#EAF4FB)}
+body.season-talvi .slogan{color:#2E86C1}
+body.season-talvi .map-inner{background-image:radial-gradient(circle,rgba(255,255,255,.95) 1.5px,transparent 2px);background-size:48px 48px;animation:snowfall2 16s linear infinite}
+@keyframes snowfall2{to{background-position:30px 480px}}

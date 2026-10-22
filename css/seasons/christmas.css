@@ -1,0 +1,10 @@
+/* Joulu – active when <body> has class season-joulu */
+body.season-joulu{background:linear-gradient(180deg,#16214A 0 25%,#24335F 25% 50%,#3E4F86 50% 75%,#5D6FA8 75%)}
+body.season-joulu .logo{text-shadow:4px 4px 0 #D7263D,8px 8px 0 #0E1533}
+body.season-joulu .slogan{color:#FFD23F}
+body.season-joulu .tag{color:#E9F0FF}
+body.season-joulu .seg{background:#24335F}
+body.season-joulu .seg button{color:#E9F0FF}
+body.season-joulu .seg button[aria-checked="true"]{background:#D7263D;color:#FFFFFF}
+body.season-joulu .map-inner{background-image:radial-gradient(circle,rgba(255,255,255,.8) 1.5px,transparent 2px),radial-gradient(circle,rgba(255,255,255,.5) 1px,transparent 1.5px);background-size:60px 60px,37px 37px;animation:snowfall 12s linear infinite}
+@keyframes snowfall{to{background-position:0 600px,20px 370px}}

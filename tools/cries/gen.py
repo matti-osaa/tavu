@@ -48,7 +48,8 @@ def make_clip(w,v,wmap,ch):
         text=ch.lower() if w!='kat' else ch
         x=trim(say(text,v,rate=135,pitch=70,rng=90)); x=die(x,start=.5,r1=.58,trem=.3)
     x=fade(x); return x/(np.max(np.abs(x))+1e-6)*.9
-only=sys.argv[1:]   # optional: world ids to rebuild
+BASEONLY='--base' in sys.argv   # rebuild only the base chunk (e.g. after adding a season), keep word chunks
+only=[a for a in sys.argv[1:] if not a.startswith('--')]   # optional: world ids to rebuild
 for w,d in L.items():
     if only and w not in only: continue
     v=VOICE[w]; wmap={}
@@ -57,7 +58,10 @@ for w,d in L.items():
     if m:
         for a_,b_ in re.findall(r"(\S)\s*:\s*'([^']*)'",m.group(1)): wmap[a_]=b_
     outdir=f'../../audio/cries/{w}'; os.makedirs(outdir,exist_ok=True); index={}
+    if BASEONLY and os.path.exists(f'{outdir}/index.json'):
+        index={k:v for k,v in json.load(open(f'{outdir}/index.json')).items() if v[0]!='base'}
     for cname,items in d['chunks'].items():
+        if BASEONLY and cname!='base': continue
         clips=[]
         for ch in items:
             if ch in ('Ь','Ъ'): continue

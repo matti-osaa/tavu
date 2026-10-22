@@ -8,7 +8,7 @@ const run=f=>vm.runInContext(fs.readFileSync(base+f,'utf8'),ctx,{filename:f});
 run('core/registry.js');
 ['cyrillic','greek','katakana','swedish','english','latin'].forEach(w=>run('worlds/'+w+'.js'));
 fs.readdirSync(base+'content').filter(f=>f.startsWith('words-')).forEach(f=>run('content/'+f));
-run('seasons/halloween.js');
+fs.readdirSync(base+'seasons').filter(f=>f.endsWith('.js')&&!f.includes('-map')).forEach(f=>run('seasons/'+f));
 const audio=fs.readFileSync(base+'core/audio.js','utf8');
 const m=audio.match(/const VOWELS=[\s\S]*?\nfunction wailText[\s\S]*?\n}\n/); vm.runInContext(m[0].replace(/let voices[\s\S]*?\n(?=function wailText)/,''),ctx);
 vm.runInContext('this.W=WORLDS;this.S=SEASONS;this.wt=wailText',ctx);
