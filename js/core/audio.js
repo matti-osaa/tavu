@@ -163,28 +163,34 @@ const sAlarm=()=>{ for(let i=0;i<6;i++){ tone(880,.14,'square',.06,0,i*.34); ton
 const sRoar=()=>{ tone(90,.6,'sawtooth',.12,.5); noise(.5,300,.6,.25); };
 const sBossDown=()=>{ noise(.9,500,.5,.5); [0,4,7,12,16,19].forEach((n,i)=>tone(196*Math.pow(2,n/12),.35,'square',.07,0,.3+i*.1)); };
 
-/* Rubber band stretching: a creaky, rising squeak while the band is being pulled.
-   Louder while the finger moves, higher the tighter the band. */
-let STR=null;
+/* Rubber band stretching: a faint creak (stick-slip ticks) only while the band moves, like Angry Birds.
+   Denser and higher the tighter the band; silent when held still. */
+let STR=null, STR_NOISE=null;
 function stretchStart(){
   if(!soundOn||!ac||STR) return;
-  const o=ac.createOscillator(), o2=ac.createOscillator(), f=ac.createBiquadFilter(), g=ac.createGain(), lfo=ac.createOscillator(), lg=ac.createGain();
-  o.type='sawtooth'; o.frequency.value=70; o2.type='square'; o2.frequency.value=71.5;
-  f.type='bandpass'; f.Q.value=6; f.frequency.value=320; g.gain.value=0;
-  lfo.frequency.value=24; lg.gain.value=12; lfo.connect(lg).connect(o.frequency);   // grainy rubber flutter
-  o.connect(f); o2.connect(f); f.connect(g).connect(ac.destination); o.start(); o2.start(); lfo.start();
-  STR={o,o2,f,g,lfo,last:0,lastT:performance.now()};
+  if(!STR_NOISE){ const n=Math.floor(ac.sampleRate*.03); STR_NOISE=ac.createBuffer(1,n,ac.sampleRate); const d=STR_NOISE.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; }
+  const out=ac.createGain(); out.gain.value=.55; out.connect(ac.destination);
+  STR={out,last:null,acc:0,lastGrain:0};
 }
-function stretchUpdate(k){   // k = tension 0..1
-  if(!STR||!ac) return; const now=performance.now(), dt=Math.max(1,now-STR.lastT), speed=Math.min(1,Math.abs(k-STR.last)*1000/dt*2.5);
-  STR.last=k; STR.lastT=now; const t=ac.currentTime;
-  STR.o.frequency.setTargetAtTime(70+k*110,t,.03); STR.o2.frequency.setTargetAtTime(71.5+k*112,t,.03);
-  STR.f.frequency.setTargetAtTime(320+k*1400,t,.04);
-  STR.g.gain.setTargetAtTime(.02+speed*.11*(.5+k*.5),t,.03);
-  STR.g.gain.setTargetAtTime(.012+k*.02,t+.08,.12);                                    // a faint hum while held still
+// one tiny stick-slip "crk" of rubber against leather: a noise tick plus a short squeaky ring
+function stretchGrain(k){
+  const t=ac.currentTime, s=STR, fr=(700+k*1300)*(.9+Math.random()*.2);
+  const n=ac.createBufferSource(); n.buffer=STR_NOISE; n.playbackRate.value=.8+Math.random()*.4;
+  const f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=fr*2; f.Q.value=9;
+  const g=ac.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.16,t+.002); g.gain.exponentialRampToValueAtTime(.001,t+.018);
+  n.connect(f).connect(g).connect(s.out); n.start(t); n.stop(t+.03);
+  const o=ac.createOscillator(), og=ac.createGain(); o.type='triangle'; o.frequency.setValueAtTime(fr,t); o.frequency.linearRampToValueAtTime(fr*1.06,t+.03);
+  og.gain.setValueAtTime(0,t); og.gain.linearRampToValueAtTime(.035,t+.003); og.gain.exponentialRampToValueAtTime(.001,t+.035);
+  o.connect(og).connect(s.out); o.start(t); o.stop(t+.04);
+}
+function stretchUpdate(k){   // k = tension 0..1; silent while held still, creaks only while the band moves
+  if(!STR||!ac) return; const s=STR;
+  if(s.last===null){ s.last=k; return; }
+  s.acc+=Math.abs(k-s.last); s.last=k;
+  const now=performance.now(), step=.022-k*.01;          // tighter band, denser creak
+  if(s.acc>=step&&now-s.lastGrain>14){ s.acc=0; s.lastGrain=now; stretchGrain(k); }
 }
 function stretchStop(){
-  if(!STR||!ac) return; const s=STR, t=ac.currentTime; STR=null;
-  s.g.gain.cancelScheduledValues(t); s.g.gain.setTargetAtTime(0,t,.02);
-  [s.o,s.o2,s.lfo].forEach(n=>{ try{ n.stop(t+.15); }catch(_){} });
+  if(!STR||!ac) return; const s=STR; STR=null;
+  setTimeout(()=>{ try{ s.out.disconnect(); }catch(_){} },200);
 }
